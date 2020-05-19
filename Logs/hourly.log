@@ -1,0 +1,870 @@
+Tue May 19 08:28:01 UTC 2020
+1. Title graphs
+------------------------------------------
+/home/cobs/anaconda2/lib/python2.7/site-packages/requests/packages/urllib3/connectionpool.py:852: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+  InsecureRequestWarning)
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+<pymysql.connections.Connection object at 0x7f9c1db6dcd0>
+... success
+Reading data from primary instrument
+readDB: Read rows: 375916
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+Data appears to be below 1 minute resolution - filtering to minutes
+ndtype - Timeseries ending at: 2020-05-19 08:25:00+00:00
+Coverage in days: 4.3506944445
+Last effective time series ending at day 2020-05-19 00:00:00
+ -----------------------------------------------------
+ ------------- Starting backward analysis ------------
+ --------------- beginning at last time --------------
+Step0 needed: 0:00:00.000204
+Step1 needed: 0:00:00.002927
+Step2 needed: 0:00:00.334133
+Step3 needed: 0:00:00.007150
+Step4 needed: 0:00:00.333812
+Step5 needed: 0:00:00.006996
+ -----------------------------------------------------
+ ------------- Starting forward analysis -------------
+ -----------------  from first date ------------------
+Running daily chunks forward until  2020-05-16 00:00:00+00:00
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-15 02:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-15 01:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-15 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-15 02:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-15 01:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-15 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+Running daily chunks forward until  2020-05-17 00:00:00+00:00
+Running daily chunks forward until  2020-05-18 00:00:00+00:00
+Running daily chunks forward until  2020-05-19 00:00:00+00:00
+Getting Solare image
+Plotting streams
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+ 
+title_mag.png                                   0%    0     0.0KB/s   --:-- ETAtitle_mag.png                                 100%  264KB 264.2KB/s   00:00    
+
+Key script_title_mag_graph already contained in loglist - checking status
+-> Status remaining unchanged
+++++++++++++++++++++++++++++++++++++++++++++++++
+        mag_graph successfully finished         
+++++++++++++++++++++++++++++++++++++++++++++++++
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+<pymysql.connections.Connection object at 0x7f833cdacc50>
+... success
+readDB: Read rows: 10568
+readDB: Found identical values only:var5
+-------------------------
+Dealing with key: f
+-------------------------
+Dealing with key: t1
+-------------------------
+Dealing with key: var5
+-------------------------
+Dealing with key: z
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+ 
+title_weather.png                               0%    0     0.0KB/s   --:-- ETAtitle_weather.png                             100%  436KB 436.1KB/s   00:00    
+
+Key script_title_weather_graph already contained in loglist - checking status
+-> Status remaining unchanged
+++++++++++++++++++++++++++++++++++++++++++++++++
+      weather_graph successfully finished       
+++++++++++++++++++++++++++++++++++++++++++++++++
+2. Periodic plots
+------------------------------------------
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+<pymysql.connections.Connection object at 0x7f0bb9dee150>
+... success
+Starting part 2:
+readDB: Read rows: 108
+readDB: Found identical values only:str4
+('Length', [108, 108, 108, 108, 108, 108, 108, 108, 0, 0, 0, 108, 0, 108, 108, 108, 108, 108, 108, 0, 0, 0, 0, 108])
+('Found quake streams', [0], [0], [14, 14, 14, 14, 14, 14, 14, 14, 0, 0, 0, 14, 0, 14, 14, 14, 14, 14, 14, 0, 0, 0, 0, 14])
+Combined length: 15
+[[4.5 'EGYPT']
+ [4.5 'EGYPT']
+ [4.7 'CRETE  GREECE']
+ [4.8 'CRETE  GREECE']
+ [4.7 'CRETE  GREECE']
+ [3.1 'POLAND']
+ [4.9 'SWEDEN']
+ [4.9 'SWEDEN']
+ [5.3 'CRETE  GREECE']
+ [5.3 '93km S of Ierapetra, Greece']
+ [4.8 'GREECE']
+ [4.8 'CRETE  GREECE']
+ [5.1 '96km SSW of Ierapetra, Greece']
+ [5.8 '91km SSW of Ierapetra, Greece']
+ [5.8 '89km S of Gra Liyia, Greece']]
+Starting part 3:
+readDB: Read rows: 7339
+readDB: Found identical values only:t2
+readDB: Found identical values only:flag
+readDB: Found identical values only:typ
+readDB: Read rows: 1
+readDB: Found identical values only:time
+readDB: Found identical values only:x
+readDB: Found identical values only:y
+readDB: Found identical values only:z
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   tilt_graph step3 failed 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Plot created .. uploading now
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   tilt_graph step3 failed 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Current failed-upload count = 0
+Writing new count to currentdata
+Key script_periodic_tilt_graph already contained in loglist - checking status
+-> Status remaining unchanged
+Logfile /var/log/magpy/mm-per-tilt.log loaded
+Existing: SAGITTARIUS-PeriodicPlot-tilt3
+Existing: SAGITTARIUS-PeriodicPlot-tilt2
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+... DB on vega connected
+... success
+-----------------------------------
+Starting Supergrad analysis script:
+-----------------------------------
+datetime of processing is: 2020-05-19 08:28:58.743931
+ - Reading Status information
+readDB: Read rows: 0
+No data found
+readDB: Read rows: 23
+readDB: Found identical values only:t1
+readDB: Found identical values only:str1
+readDB: Found identical values only:str3
+readDB: Read rows: 39
+readDB: Found identical values only:t2
+readDB: Found identical values only:var1
+readDB: Found identical values only:df
+readDB: Found identical values only:str3
+ - Reading data files
+readDB: Read rows: 259191
+NS-gradient...read
+readDB: Read rows: 0
+No data found
+EW-gradient...read
+readDB: Read rows: 0
+No data found
+V-gradient...read
+At least one dataset is missing...trying to move on...
+ - Preparing status information
+ - Removing prominent outliers
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+-------------------------
+Dealing with key: dx
+-------------------------
+Dealing with key: dy
+-------------------------
+Dealing with key: dz
+ - NS-outliers removed...
+ - Checking threshold values - removed ...
+ - Filtering data for plot
+ - NS-filtered to 1min-data...
+nsgraph with length 4319 extracted
+('Standard-dev EW: ', 0.0, ' Standard-dev NS: ', 5.5831241195588737, 'Standard-dev V: ', 0.0)
+('mean EW: ', 0.0, ' mean NS: ', -3954.996940699707, 'mean V: ', 0.0)
+More thean two differnces are bad, fallback to worstcase scenario...
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+ 
+supergrad_2020-05-19.png                        0%    0     0.0KB/s   --:-- ETAsupergrad_2020-05-19.png                      100%   48KB  48.3KB/s   00:00    
+
+Key upload_homepage_supergradEWplot already contained in loglist - checking status
+-> Status remaining unchanged
+Key script_periodic_supergrad_graph already contained in loglist - checking status
+-> Status remaining unchanged
+++++++++++++++++++++++++++++++++++++++++++++++++
+    supergrad_graph successfully finished     
+++++++++++++++++++++++++++++++++++++++++++++++++
+Logfile /var/log/magpy/mm-per-supergrad.log loaded
+Existing: SAGITTARIUS-PeriodicPlot-supergrad
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+<pymysql.connections.Connection object at 0x7f4c0d48da50>
+... success
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+readDB: Read rows: 29280
+readDB: Found identical values only:str1
+readDB: Found identical values only:str2
+readDB: Found identical values only:str3
+readDB: Found identical values only:str4
+readDB: Found identical values only:flag
+readDB: Found identical values only:comment
+readDB: Found identical values only:typ
+... reading finished.
+Plotting ...
+ 
+radon_2020-05-19.png                            0%    0     0.0KB/s   --:-- ETAradon_2020-05-19.png                          100%   92KB  92.1KB/s   00:00    
+
+-----------------------------------
+Part1 needs 0:00:09.045948
+-----------------------------------
+Key script_periodic_gamma_graph already contained in loglist - checking status
+-> Status remaining unchanged
+++++++++++++++++++++++++++++++++++++++++++++++++
+    gamma_graph successfully finished     
+++++++++++++++++++++++++++++++++++++++++++++++++
+Logfile /var/log/magpy/mm-per-gamma.log loaded
+Existing: SAGITTARIUS-PeriodicPlot-gamma
+Plotting from 2020-05-16 08:29:00+00:00 to 2020-05-19 08:26:00+00:00
+File saved to /srv/products/graphs/spaceweather/solarwindact_2020-05-19.png.
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+ 
+solarwindact_2020-05-19.png                     0%    0     0.0KB/s   --:-- ETAsolarwindact_2020-05-19.png                   100%  105KB 104.9KB/s   00:00    
+
+Spaceweather plot uploaded
+Logfile /var/log/magpy/mm-per-spaceweather.log loaded
+Existing: SAGITTARIUS-PeriodicPlot-spaceweather
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+... success
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Part 1 - short term weatherchange plot - started at 2020-05-19 08:30:08.358341
+-------------------------------------------------
+Reading Meteo data from /srv/products/data/meteo/meteo-1min_*...
+Starttime is: 2020-05-16 08:30:08.345756
+Endtime: is: 2020-05-19 08:30:08.345756
+...done
+Interpolating missing values...
+...done
+duration is: 255540.0
+dt is: 60.0 seconds
+indices is: [2, 3, 4, 7]
+Running gaussian taper over 30 samples...
+...done
+std( snowheight) is: 0.685740784629
+std( temperature) is: 3.14443039731
+std( wind) is: 1.28760747242
+limits succesfully derived
+Temperature plot successful
+Snowheight plot successful
+Rainfall plot successful
+Windspeed plot successful
+Setting axes limits successful. Placing average valus as text in plot successful.
+File /srv/products/graphs/meteo/MeteoChange_0_2020-05-19.png saved.
+ 
+MeteoChange_0_2020-05-19.png                    0%    0     0.0KB/s   --:-- ETAMeteoChange_0_2020-05-19.png                  100%  171KB 171.1KB/s   00:00    
+
+Short term weatherchange plot - finished at 2020-05-19 08:30:16.779672
+Statusmsg are: {'SAGITTARIUS-Periodicgraphs-weatherchange-1': 'Step1: three day weatherchange plot finished'}
+Logfile /var/log/magpy/mm-dp-weatherchange.log loaded
+Existing: SAGITTARIUS-Periodicgraphs-weatherchange-1
+Tue May 19 08:30:17 UTC 2020
+3. Info channels
+------------------------------------------
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+success
+Checking data until: 2022-05-19
+Database containing 609 datasets
+Existing data loaded ...
+Checking for new objects ...
+Successfully finished
+{u'Telegram-PHA': u'downloading new PHAs successful'}
+Logfile /var/log/magpy/mm-info.log loaded
+Existing: Telegram-PHA
+4. Data Products
+------------------------------------------
+resample: Key str1 not supported!
+interpol: Column key not valid!
+resample: Error interpolating stream. Stream either too large or no data for selected key
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary DB at 138.22.188.195 ...
+...success
+Connecting also secondary DB at 138.22.188.191 ...
+...success
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+##############################################
+Part 1 - weather analysis - started at 2020-05-19 08:30:21.204387
+##############################################
+-----------------------
+1. SOURCE LNM
+-----------------------
+ -- LNM - reading available data sets and apply existing flags ...
+ -- Dealing with LNM_0351_0001_0001
+readDB: Read rows: 4278
+readDB: Found identical values only:str2
+(' -- Got data with range:', (datetime.datetime(2020, 5, 16, 8, 30, 48, 92634), datetime.datetime(2020, 5, 19, 8, 30, 2, 927812)))
+ -- Current Weather: None
+ -- Getting existing flags ...
+ -- Found existing flags: 0
+ -- Determine average rain from LNM
+ -- Merging synop code into resampled stream
+('TODO TEST', 4278)
+Filling 42 gaps
+mergeStreams: Did not find identical timesteps - linearily interpolating stream b...
+- Please note: this method needs considerably longer.
+- Only data within 1/2 the sampling rate distance of stream_a timesteps is used.
+- Put in the larger (higher resolution) stream as stream_a,
+- otherwise you might wait an endless amount of time.
+  a) starting interpolation of stream_b
+     -> needed 0:00:00.007755
+  b) getting indicies of stream_a with stream_b values in the vicinity
+     -> finished 0.99537037037 percent
+     -> finished 10.9953703704 percent
+     -> finished 20.9953703704 percent
+     -> finished 30.9953703704 percent
+     -> finished 40.9953703704 percent
+     -> finished 50.9953703704 percent
+     -> finished 60.9953703704 percent
+     -> finished 70.9953703704 percent
+     -> finished 80.9953703704 percent
+     -> finished 90.9953703704 percent
+     -> needed 0:00:00.115961
+  c) extracting interpolated values of stream_b
+mergeStreams: warning when assigning header values to column var4- missing head
+     -> needed 0:00:00.211339 for var4
+-----------------------
+ 2. SOURCE ULTRASONIC
+-----------------------
+ULTRA - reading available data sets and apply existing flags ...
+ -- Dealing with ULTRASONICDSP_0011006092_0001_0001
+readDB: Read rows: 4320
+(' -- Got data with range:', (datetime.datetime(2020, 5, 16, 8, 30, 46, 982642), datetime.datetime(2020, 5, 19, 8, 30, 1, 693027)))
+ -- Getting existing flags ...
+ -- Found existing flags: 0
+-----------------------
+ /home/cobs/anaconda2/lib/python2.7/site-packages/magpy/stream.py:4614: RuntimeWarning: invalid value encountered in less
+  truefalse = trimmedstream.ndarray[ind] < below
+/home/cobs/anaconda2/lib/python2.7/site-packages/magpy/stream.py:4589: RuntimeWarning: invalid value encountered in greater
+  trueindicies = trimmedstream.ndarray[ind] > above
+3. SOURCE BM35
+-----------------------
+BM35 - reading available data sets and apply existing flags ...
+readDB: Read rows: 520403
+(' -- Got data with range:', (datetime.datetime(2020, 5, 16, 8, 30, 21, 401339), datetime.datetime(2020, 5, 19, 8, 30, 20, 912818)))
+ -- Getting existing flags ...
+ -- Found existing flags: 23
+  -- Writing flags  for sensors BM35_029_0001 to DB
+('  -- New flags:', 0)
+-----------------------
+ 4. SOURCE RCST7
+-----------------------
+RCST7 - reading available data sets and apply existing flags ...
+readDB: Read rows: 105339
+readDB: Found identical values only:f
+readDB: Found identical values only:flag
+readDB: Found identical values only:typ
+ -- Got data ranging from 2020-05-16 08:30:22 to 2020-05-18 21:25:27
+ -- Getting existing flags for RCST7_20160114_0001 ...
+ -- Found 5 flags for given time range
+ -- Cleanup snow height measurement - outlier
+-------------------------
+Dealing with key: x
+ --> Size of flaglist now 0
+ -- Cleanup rain measurement
+ --> flagging of service switch rain bucket failed
+ --> Size of flaglist now 0
+ -- Cleanup temperature measurement
+-------------------------
+Dealing with key: y
+ --> Size of flaglist now 0
+ -- Cleanup pressure measurement
+ --> Size of flaglist now 0
+ -- Cleanup humidity measurement
+ --> Size of flaglist now 0
+ -- Found new flags: 0
+ -- Getting again existing flags for RCST7_20160114_0001 ...
+##########################################
+           Flaglist statistics            
+##########################################
+
+A) Total contents: 5
+
+B) Content for each ID:
+Dataset: RCST7_20160114_0001 	 Amount: 5
+   pressure exceeding value range : 5
+
+ -- Found now 5 flags for given time range
+Test plot with all flags removed
+ -- Determine average rain
+ -- Filter all RCS data columns to 1 min
+-----------------------
+ 5. SOURCE METEO from FP77
+-----------------------
+readDB: Read rows: 4297
+readDB: Found identical values only:var5
+(' -- Got data with range:', (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 7)))
+ -- Found existing flags: 0
+-------------------------
+Dealing with key: f
+-------------------------
+Dealing with key: z
+ -- Cleanup pressure measurement
+ -- Cleanup humidity measurement
+ -- Determine average rain
+Data contents:
+('Length LNM:', 4320, (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 30)))
+('Length Ultra:', 4320, (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 30)))
+('Length RCS:', 3655, (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 18, 21, 25)))
+('Length METEO:', 4297, (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 7)))
+('Length BM35:', 4320, (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 30)))
+-----------------------
+ 6. checking rain values
+-----------------------
+Compare rain data from bucket and LNM
+(datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 30))
+(datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 18, 21, 25))
+('Rain t7 and lnm', array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), array([ 0.,  0.,  0., ...,  0.,  0.,  0.]), 0.0, 3.0001702569257982)
+-----------------------
+ 7. REORDER data file
+-----------------------
+-----------------------
+ 8. CREATING combined one minute data file
+-----------------------
+Merging meteo and rcs data
+Replacing meteo data with raw data from rcs
+Merge: Endtime of stream_b too small
+Filling 641 gaps
+mergeStreams: Found identical timesteps - using simple merge
+ -> new range:  (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 7))
+Merging lnm data
+mergeStreams: Found identical timesteps - using simple merge
+ -> new range:  (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 30))
+Merging ultrasonic data
+mergeStreams: Found identical timesteps - using simple merge
+Merging bm35 data
+mergeStreams: Found identical timesteps - using simple merge
+DONE --------------
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ Writing results to database, group services
+METEO_adj/home/cobs/ANALYSIS/DataProducts/current_weather.py:1093: RuntimeWarning: invalid value encountered in greater_equal
+  axarr[2].fill_between(t,0,y7,where=longextract[7]>=0,facecolor='gray',alpha=0.5)
+/home/cobs/ANALYSIS/DataProducts/current_weather.py:1156: RuntimeWarning: invalid value encountered in greater_equal
+  axarr[1].fill_between(t,0,y3,where=y3>=0,facecolor='gray',alpha=0.5)
+/home/cobs/ANALYSIS/DataProducts/current_weather.py:1171: RuntimeWarning: invalid value encountered in greater_equal
+  axarr[2].fill_between(t,0,y7,where=y7>=0,facecolor='gray',alpha=0.5)
+usted written to DB
+Part 2 - table contents - started at 2020-05-19 08:30:21.204387
+-------------------------------------------------
+('Coverage:', (datetime.datetime(2020, 5, 16, 8, 31), datetime.datetime(2020, 5, 19, 8, 30)))
+(31, 0.0)
+('Assigning values', 0, u'y', 0.0)
+(31, -0.62617299999999998)
+('Assigning values', 1, u'z', -0.78639300000000001)
+(31, 16.739000000000001)
+('Assigning values', 2, u'f', 18.800000000000001)
+(31, 51.511000000000003)
+('Assigning values', 3, u't1', 51.374000000000002)
+(31, 99999.0)
+('Assigning values', 4, u't2', 99999.0)
+(31, 0.5)
+('Assigning values', 5, u'var1', 0.61084840288767472)
+(31, 83.962866540917162)
+('Assigning values', 6, u'var2', 156.59366390700561)
+(31, 0.0)
+('Assigning values', 7, u'var4', 0.0)
+(31, 901.62116278872782)
+('Assigning values', 8, u'var5', 901.66810423802553)
+('Got old', {u'N': [0.0, u'mm/h'], u'Schnee': [u'-', u''], u'P': [901.9292683581848, u'hPA'], u'S': [0.25002800000000003, u'cm'], u'Niederschlag': [None, u'SYNOP'], u'T': [16.8, u'degC'], u'date': [u'2020-05-19 07:30:00', u''], u'rh': [52.954499999999996, u'%'], u'Wind': [2.1424516596642325, u'km/h']})
+(0.0, 0.0, 0.0, 0.0, 0)
+ -- current snow cover probability value: 0.0
+Here2
+Current meteo data written successfully to /srv/products/data/current.data
+Here3
+('DataLine', 'Date:2020-05-19 08:30:00,T(degC):18.8,rh(%):51.4,P(hPA):0.0,S(cm):-1,N(mm/h):0.0,Wind(m/s):0.6,Niederschlag:None,Am Boden:-\\n')
+ 
+currentmeteo.csv                                0%    0     0.0KB/s   --:-- ETAcurrentmeteo.csv                              100%  125     0.1KB/s   00:00    
+
+ -- Upload to conrad homepage successful
+ 
+current.data                                    0%    0     0.0KB/s   --:-- ETAcurrent.data                                  100%  752     0.7KB/s   00:00    
+
+ -- Upload to conrad homepage successful
+Part 3 - short term weather plot - started at 2020-05-19 08:30:21.204387
+-------------------------------------------------
+(2878, 2878, 2878, 2878, 2878)
+ 
+Meteo_0_2020-05-19.png                          0%    0     0.0KB/s   --:-- ETAMeteo_0_2020-05-19.png                        100%   91KB  90.7KB/s   00:00    
+
+Part 4 - long term weather plot - started at 2020-05-19 08:30:21.204387
+-------------------------------------------------
+Please note: long term plot only generated from cron or root
+('Long term plot', [364051, 0, 364051, 364051, 364051, 364051, 364051, 364051, 364051, 0, 364051, 364051, 0, 0, 0, 0, 0, 364051, 0, 0, 0, 0, 0, 0], datetime.datetime(2020, 5, 19, 8, 30, 21, 204387), datetime.datetime(2019, 5, 21, 8, 30, 21, 204387))
+float64
+float64
+('LongTerm Parameter', 364051, 364051, 364051, 364051, 364051)
+Max values redefined
+plot generated
+ 
+Meteo_1.png                                     0%    0     0.0KB/s   --:-- ETAMeteo_1.png                                   100%  135KB 134.7KB/s   00:00    
+
+Part 5 - Save meteo data on Broker - started at 2020-05-19 08:30:21.204387
+-------------------------------------------------
+ -- Uploading table to database on internal ZAMG broker:
+    Tablename: DataID
+Step 5: connected to broker
+Script weather analysis finished at 2020-05-19 08:32:36.012677
+-------------------------------------
+Logfile /var/log/magpy/mm-dp-weather.log loaded
+Existing: SAGITTARIUS-DataProducts-weather-5a
+Existing: SAGITTARIUS-DataProducts-weather-5b
+Existing: SAGITTARIUS-DataProducts-weather-2
+Existing: SAGITTARIUS-DataProducts-weather-3
+Existing: SAGITTARIUS-DataProducts-weather-1e
+Existing: SAGITTARIUS-DataProducts-weather-1d
+Existing: SAGITTARIUS-DataProducts-weather-1g
+Existing: SAGITTARIUS-DataProducts-weather-1f
+Existing: SAGITTARIUS-DataProducts-weather-1a
+Existing: SAGITTARIUS-DataProducts-weather-4
+Existing: SAGITTARIUS-DataProducts-weather-1c
+Existing: SAGITTARIUS-DataProducts-weather-1b
+Existing: SAGITTARIUS-DataProducts-weather-1h
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+<pymysql.connections.Connection object at 0x7f2f964f05d0>
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+-----------------------------------
+Part1 needs 0:00:00.000370
+-----------------------------------
+-----------------------------------
+PART 2:
+Reading SCA Gamma data...
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/radon/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE COBSEXP_2_2020-05-19.txt'
+*resp* '250 DELE command successful'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/radon/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE COBSEXP_2_2020-05-18.txt'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,165,176).'
+*resp* '227 Entering Passive Mode (138,22,188,129,133,158).'
+*cmd* u'STOR COBSEXP_2_2020-05-19.txt'
+*cmd* u'STOR COBSEXP_2_2020-05-18.txt'
+*resp* '150 Opening BINARY mode data connection for COBSEXP_2_2020-05-19.txt'
+*resp* '150 Opening BINARY mode data connection for COBSEXP_2_2020-05-18.txt'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+[ array([737557.0, 737557.0006944444, 737557.0013888889, ..., 737564.33125,
+       737564.3319444444, 737564.3326388889], dtype=object)
+ array([25882.0, 26543.0, 26009.0, ..., 24717.0, 24471.0, 24541.0], dtype=object)
+ array([], dtype=object) array([], dtype=object) array([], dtype=object)
+ array([6.809, 6.809, 6.809, ..., 6.809, 6.809, 6.809], dtype=object)
+ array([], dtype=object)
+ array([11.87, 11.87, 11.87, ..., 11.87, 11.87, 11.87], dtype=object)
+ array([], dtype=object) array([], dtype=object) array([], dtype=object)
+ array([], dtype=object) array([], dtype=object) array([], dtype=object)
+ array([], dtype=object) array([], dtype=object) array([], dtype=object)
+ array([], dtype=object) array([], dtype=object) array([], dtype=object)
+ array([], dtype=object) array([], dtype=object) array([], dtype=object)
+ array([], dtype=object)]
+-----------------------------------
+PART 4:
+Loading and filetering RCSG0temp data
+RCS: found data from Richards Perl script
+RCS: found data from Richards Perl script
+RCS: found data from Richards Perl script
+RCS: found data from Richards Perl script
+RCS: found data from Richards Perl script
+RCS: found data from Richards Perl script
+RCS: found data from Richards Perl script
+Logfile /var/log/magpy/mm-dp-scaradon.log loaded
+Existing: SAGITTARIUS-DataProducts-SCAradon
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+<pymysql.connections.Connection object at 0x7f39e64ae050>
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+-----------------------------------
+Part1 needs 0:00:00.001796
+-----------------------------------
+Logfile /var/log/magpy/mm-dp-rcsupload.log loaded
+Existing: SAGITTARIUS-DataProducts-RCSupload
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/environment/sgo'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/environment/sgo'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/environment/sgo'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/environment/sgo'
+*resp* '250 CWD command successful'
+*cmd* 'DELE RCS-T7-2020-05-19_00-00-00.txt'
+*resp* '250 CWD command successful'
+*cmd* 'DELE RCS-G0anw-2020-05-18_00-00-00.txt'
+*resp* '250 CWD command successful'
+*cmd* 'DELE RCS-T7-2020-05-18_00-00-00.txt'
+*resp* '250 CWD command successful'
+*cmd* 'DELE RCS-G0anw-2020-05-19_00-00-00.txt'
+*resp* '550 RCS-T7-2020-05-19_00-00-00.txt: No such file or directory'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '550 RCS-G0anw-2020-05-19_00-00-00.txt: No such file or directory'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,142,92).'
+*cmd* u'STOR RCS-G0anw-2020-05-18_00-00-00.txt'
+*resp* '227 Entering Passive Mode (138,22,188,129,146,121).'
+*cmd* u'STOR RCS-T7-2020-05-18_00-00-00.txt'
+*resp* '150 Opening BINARY mode data connection for RCS-G0anw-2020-05-18_00-00-00.txt'
+*resp* '150 Opening BINARY mode data connection for RCS-T7-2020-05-18_00-00-00.txt'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+Using TensorFlow backend.
+Basemap is not installed. No map plotting support!
+Cannot import osgeo. Some functions won't work!
+osgeo not installed. No country object support.
+Basemap is not installed. No map plotting support!
+No netCDF4 support.
+Scipy coherence function not available.
+Attempting to connect to database...
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to cobsdb, (cobs,138.22.188.195)!
+Done
+('Version', 'v0.3.97')
+readDB: Read rows: 309307
+Traceback (most recent call last):
+  File "src/gic_dailyplot.py", line 160, in <module>
+    data_OUT = prepare_output_dataset(starttime, endtime, MAG_stream=magdata, returntime=True)
+TypeError: prepare_output_dataset() got an unexpected keyword argument 'MAG_stream'
+Tue May 19 08:35:59 UTC 2020

@@ -1,0 +1,658 @@
+#!/usr/bin/env python
+"""
+MagPy - RCS Analysis 
+Analyze Weather measurements from different sources
+Sources are RCST7, LNM, ULTRASONIC, PRESSURE 
+Provides:
+- General minute METEO date for plots and distribution 
+- Provide some specific combinantions for certain projects
+- Analysis checks of data validity in source data
+"""
+from magpy.stream import *   
+from magpy.database import *   
+from magpy.transfer import *
+import magpy.mpplot as mp
+import magpy.opt.emd as emd
+import magpy.opt.cred as mpcred
+
+try: 
+    from magpy.opt.analysismonitor import *
+    analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
+    analysisdict = analysisdict.load()
+except:
+    print ("Analysis monitor failed")
+    pass
+
+"""
+# ################################################
+#             General definitions
+# ################################################
+"""
+
+dbpasswd=mpcred.lc('cobsdb','passwd')
+try:
+    # Test MARCOS 1
+    print "Connecting to primary MARCOS..."
+    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
+    print db
+except:
+    print "... failed"
+    try:
+        # Test MARCOS 2
+        print "Connecting to secondary MARCOS..."
+        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
+        print db
+    except:
+        print "... failed -- aborting"
+        sys.exit()
+
+
+remotepath = 'zamg/images/graphs/meteorology'
+remotedatapath = 'zamg/images/data'
+#radonproject = '/srv/project/radon/tables'  # filename like meteo-sgo-1min_year.cdf
+imagepath = '/srv/products/graphs/meteo'
+meteoproductpath = '/srv/products/data/meteo'
+datapath = '/srv/products/data/meteo'
+path2log = '/home/cobs/ANALYSIS/Logs/transfer_weather.log'
+cred = 'cobshomepage'
+brokercred = 'broker'
+sgopath = '/srv/archive/SGO'
+#sgopath = '/mnt/vega/My\ Book/archive/SGO/'
+
+analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
+# next two line only necessary for first run
+#analysisdict['data_threshold_rain_RCST7_20160114_0001'] = [0.0,'<',0.3]
+#analysisdict.save('/home/cobs/ANALYSIS/Logs/AnalysisMonitor.pkl')
+analysisdict = analysisdict.load()
+
+fd = datetime.utcnow()
+e = fd+timedelta(days=1)
+highb = e - timedelta(days=1)
+mb = e - timedelta(days=2)
+hb = e - timedelta(days=365)
+filedate = datetime.strftime(fd,"%Y-%m-%d")
+
+
+dbdateformat = "%Y-%m-%d %H:%M:%S.%f"
+
+
+# Getting credentials for homepage upload
+address=mpcred.lc(cred,'address')
+user=mpcred.lc(cred,'user')
+passwd=mpcred.lc(cred,'passwd')
+port=mpcred.lc(cred,'port')
+
+# Getting credentials for cobs1 upload
+brokeraddress=mpcred.lc(brokercred,'address')
+brokeruser=mpcred.lc(brokercred,'user')
+brokerpasswd=mpcred.lc(brokercred,'passwd')
+brokerport=mpcred.lc(brokercred,'port')
+
+product1 = True  # creates one minute cumulative meteo file, one second bm35 file, and data table
+product2 = False  # table inputs
+product3 = False  # creates short term plots
+product4 = False  # creates long term plots
+product5 = False
+
+
+"""
+# ################################################
+#             part 1
+# ################################################
+ combines combinations of columns from different files into one data set
+ example: an filtered one-minute output of all meteorological data
+"""
+windsens = ''
+lnmsens = ''
+
+
+if product1:
+    print "Part 1 - weather analysis - started at", fd
+    # Define time frame  - for past data analysis use: starttime='2012-10-12'
+    dayrange = 3
+    endtime = datetime.utcnow()
+    starttime = endtime-timedelta(days=dayrange)
+    starttime = datetime(2017,3,1)
+    endtime = datetime(2017,5,3)
+    #source = 'database'
+    source = 'archive'
+    #add2db = True
+    add2db = False
+
+    # ############################
+    # # READ data
+    # ############################
+    # datasources are
+    # LNM - Visibity, synop code, Rain, temperature
+    # ULTRASONIC - windspeed, winddirection, temperature
+    # T7 - Rain, temperature, humidity, pressure, snowheight
+    # METEO - as T7, not well filtered, but realtime
+    # BM35 - pressure
+    # others to be added
+
+    # --------------------------------------------------------    
+    # LNM - read suitable data from all available instruments and construct a combined dataset
+    # Rain: x,df , Temperature: t1, Particle: f, visibility: y, synopcode?, Particles slow: dx Particles fast: dy
+    print ("LNM - reading available data sets and apply existing flags ...")
+    lnmlist = dbselect(db, 'DataID', 'DATAINFO','SensorID LIKE "LNM%"')
+    lnmsens=[]
+    for lnm in lnmlist:
+        last = dbselect(db,'time',lnm,expert="ORDER BY time DESC LIMIT 1")
+        if datetime.strptime(last[0], dbdateformat) > starttime:
+            lnmsens.append(lnm)
+    lnmst = DataStream([],{},np.asarray([[] for key in KEYLIST]))
+    for lnm in lnmsens:
+        try:
+            if source == 'database':
+                data = readDB(db,lnm,starttime=starttime,endtime=endtime)
+            else:
+                data = read(os.path.join(sgopath,lnm[:-5],'raw/*'),starttime=starttime,endtime=endtime)
+        except:
+            data = DataStream()
+
+        if data.length()[0] > 0:
+            print (" -- Getting existing flags ...")
+            flaglist = db2flaglist(db,data.header.get("SensorID"))
+            print (" -- Found existing flags: {}".format(len(flaglist)))
+            data = data.flag(flaglist)
+            data = data.remove_flagged()
+            lnmst.extend(data.container,data.header,data.ndarray)
+    print (" -- Determine average rain from LNM")
+    if lnmst.length()[0] > 0:
+        res2 = lnmst.steadyrise('x', timedelta(minutes=60),sensitivitylevel=0.002)
+        lnmst= lnmst._put_column(res2, 'df', columnname='Percipitation',columnunit='mm/1h')
+        lnmst= lnmst.resample(lnmst._get_key_headers(),period=60,startperiod=60)
+
+    # --------------------------------------------------------    
+    # ULTRA - read suitable data from all available instruments and construct a combined dataset
+    # Temperature: t2, Windspeed: var1, WindDir: var1
+    print ("ULTRA - reading available data sets and apply existing flags ...")
+    ultralist = dbselect(db, 'DataID', 'DATAINFO','SensorID LIKE "ULTRASONIC%"')
+    ultrasens=[]
+    for ultra in ultralist:
+        last = dbselect(db,'time',ultra,expert="ORDER BY time DESC LIMIT 1")
+        if datetime.strptime(last[0], dbdateformat) > starttime:
+            ultrasens.append(ultra)
+    ultrast = DataStream([],{},np.asarray([[] for key in KEYLIST]))
+    for ultra in ultrasens:
+        try:
+            if source == 'database':
+                data = readDB(db,ultra,starttime=starttime,endtime=endtime)
+            else:
+                data = read(os.path.join(sgopath,ultra[:-5],'raw/*'),starttime=starttime,endtime=endtime)
+        except:
+            data = DataStream()
+
+        if data.length()[0] > 0:
+            #data = readDB(db,ultra,starttime=starttime,endtime=endtime)
+            print (" -- Getting existing flags ...")
+            flaglist = db2flaglist(db,data.header.get("SensorID"))
+            print (" -- Found existing flags: {}".format(len(flaglist)))
+            data = data.flag(flaglist)
+            data = data.remove_flagged()
+            ultrast.extend(data.container,data.header,data.ndarray)
+    if ultrast.length()[0] > 0:
+        ultrast= ultrast.resample(ultrast._get_key_headers(),period=60,startperiod=60)
+
+
+    # --------------------------------------------------------    
+    # BM35 - read suitable data from all available instruments and construct a combined dataset
+    # Pressure: var3 
+    print ("BM35 - reading available data sets and apply existing flags ...")
+    bm3list = dbselect(db, 'DataID', 'DATAINFO','SensorID LIKE "BM35%" and DataID LIKE "%_0001"')
+    bm3sens=[]
+    for bm3 in bm3list:
+        last = dbselect(db,'time',bm3,expert="ORDER BY time DESC LIMIT 1")
+        if datetime.strptime(last[0], dbdateformat) > starttime:
+            bm3sens.append(bm3)
+    bm3st = DataStream([],{},np.asarray([[] for key in KEYLIST]))
+    for bm3 in bm3sens:
+        ## Please note: this approach needs to be changed if several BM35 are running in parallel
+        try:
+            if source == 'database':
+                data = readDB(db,bm3,starttime=starttime,endtime=endtime)
+            else:
+                data = read(os.path.join(sgopath,bm3[:-5],'raw/*'),starttime=starttime,endtime=endtime)
+        except:
+            data = DataStream()
+        if data.length()[0] > 0:
+            bm3st.extend(data.container,data.header,data.ndarray)
+    if bm3st.length()[0] > 0:
+        bm3st= bm3st.filter(filter_width=timedelta(seconds=3.33333333),resample_period=1)
+        print (" -- Getting existing flags ...")
+        flaglist = db2flaglist(db,bm3st.header.get("SensorID"))
+        print (" -- Found existing flags: {}".format(len(flaglist)))
+        bm3st = bm3st.flag(flaglist)
+        bm3st = bm3st.remove_flagged()
+        flaglist2 = bm3st.flag_range(keys=['var3'],above=1000, text='pressure exceeding value range',flagnum=3)
+        flaglist3 = bm3st.flag_range(keys=['var3'],below=750, text='pressure below value range',flagnum=3)
+        #print flaglist
+        if add2db:
+            print ("Writing to DB: {}".format(bm3st.header.get('SensorID')))
+            print ("New flags:", len(flaglist2)+len(flaglist3))
+            if len(flaglist2) > 0:
+                flaglist2db(db,flaglist2)
+            if len(flaglist3) > 0:
+                flaglist2db(db,flaglist3)
+            # write to DB
+            writeDB(db, bm3st)
+        #print ("2", bm3st.ndarray)
+        # drop flags
+        bm3st = bm3st.flag(flaglist2)
+        bm3st = bm3st.flag(flaglist3)
+        bm3st=bm3st.remove_flagged()
+        bm3st=bm3st.filter() # minute data
+
+    # --------------------------------------------------------    
+    # RCS - Get data from RCS (no version/revision control in rcs) 
+    # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
+    print ("RCST7 - reading available data sets and apply existing flags ...")
+    try:
+        if source == 'database':
+            rcst7st = readDB(db,'RCST7_20160114_0001_0001',starttime=starttime)
+        else:
+            rcst7st = read(os.path.join(sgopath,'RCST7_20160114_0001','raw/*'),starttime=starttime,endtime=endtime)
+    except:
+        rcst7st = DataStream()
+
+    if rcst7st.length()[0]>0:
+        print (" -- Getting existing flags ...")
+        flaglist = db2flaglist(db,rcst7st.header.get("SensorID"))
+        print (" -- Found existing flags: {}".format(len(flaglist)))
+        rcst7st = rcst7st.flag(flaglist)
+        #mp.plot(rcst7st,annotate=True)
+        rcst7st = rcst7st.remove_flagged()
+        #mp.plot(rcst7st,annotate=True)
+        rcst7st.header['col-y'] = 'T'
+        rcst7st.header['unit-col-y'] = 'deg C'
+        rcst7st.header['col-t2'] = 'rh'
+        rcst7st.header['unit-col-t2'] = 'percent'
+        rcst7st.header['col-f'] = 'P'
+        rcst7st.header['unit-col-f'] = 'hPa'
+        rcst7st.header['col-x'] = 'snowheight'
+        rcst7st.header['unit-col-x'] = 'cm'
+        print ("Cleanup snow height measurement")
+        rcst7st = rcst7st.flag_outlier(keys=['x'],timerange=timedelta(days=5),threshold=3)
+        print (" -- Cleanup rain measurement")
+        try:
+            flaglist = rcst7st.bindetector('z',1,['t1','z'],rcst7st.header.get("SensorID"),'Maintanence switch for rain bucket',markallon=True)
+        except:
+            flaglist = []
+        print ("Cleanup temperature measurement")
+        flaglist0 = rcst7st.flag_outlier(keys=['y'],timerange=timedelta(hours=12),returnflaglist=True)
+        flaglist.extend(flaglist0)
+        print (" -- Cleanup pressure measurement")
+        flaglist1 = rcst7st.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], below=800,text='pressure below value range')
+        flaglist.extend(flaglist1)
+        flaglist15 = rcst7st.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], above=1000,text='pressure exceeding value range')
+        flaglist.extend(flaglist15)
+        print (" -- Cleanup humidity measurement")
+        flaglist2 = rcst7st.flag_range(keys=['t2'], flagnum=3, keystoflag=['t2'], above=100, below=0)
+        flaglist.extend(flaglist2)
+        rcst7st = rcst7st.flag(flaglist)
+        #mp.plot(rcst7st,annotate=True)
+        print (" -- Found new flags: {}".format(len(flaglist)))
+        if add2db:
+            if len(flaglist) > 0:
+                print ("Adding {} flags to database: Sensor {}".format(len(flaglist),rcst7st.header.get('SensorID')))
+                flaglist2db(db,flaglist)
+        #mp.plot(rcst7st, annotate=True)
+        rcst7st = rcst7st.remove_flagged()
+        # Now Drop flag and comment line - necessary because of later filling of gaps
+        flagpos = KEYLIST.index('flag')
+        commpos = KEYLIST.index('comment')
+        rcst7st.ndarray[flagpos] = np.asarray([])
+        rcst7st.ndarray[commpos] = np.asarray([]) 
+         ## Now use missingvalue treatment
+        rcst7st.ndarray[1] = rcst7st.missingvalue(rcst7st.ndarray[1],120,threshold=0.05,fill='interpolate')
+        print ("Test plot with all flags removed")
+        #mp.plot(rcst7st, annotate=True)
+        print (" -- Determine average rain")
+        res = rcst7st.steadyrise('t1', timedelta(minutes=60),sensitivitylevel=0.002)
+        rcst7st= rcst7st._put_column(res, 'var1', columnname='Percipitation',columnunit='mm/1h')
+        print (" -- Filter all RCS data columns to 1 min")
+        filtrcst7st = rcst7st.filter(missingdata='interpolate')
+    else:
+        filtrcst7st = DataStream()
+        
+    #if add2db:
+    #    print ("Save Filtered data to database")
+    #    writeDB(db, filtrcst7st)
+
+    # --------------------------------------------------------    
+    # METEO - Get data from RCS (no version/revision control in rcs) 
+    # Schnee: z, Temperature: f, Humidity: t1, Pressure: var5
+    try:
+        if source == 'database':
+            meteost = readDB(db,'METEO_T7_0001_0001',starttime=starttime)
+        else:
+            meteost = read(os.path.join(sgopath,'METEO_T7_0001','raw/*'),starttime=starttime,endtime=endtime)
+    except:
+        meteost = DataStream()
+    if meteost.length()[0] > 0:
+        flaglist = db2flaglist(db,meteost.header.get("SensorID"))
+        print (" -- Found existing flags: {}".format(len(flaglist)))
+        meteost = meteost.flag(flaglist)
+        meteost = meteost.remove_flagged()
+        #mp.plot(rcst7st)
+        meteost = meteost.flag_outlier(keys=['f','z'],timerange=timedelta(days=5),threshold=3)
+        # meteo data is not flagged
+        meteost = meteost.remove_flagged()
+        print (" -- Cleanup pressure measurement")
+        flaglist1 = meteost.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], below=800,text='pressure below value range')
+        flaglist.extend(flaglist1)
+        flaglist15 = meteost.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], above=1000,text='pressure exceeding value range')
+        flaglist.extend(flaglist15)
+        print (" -- Cleanup humidity measurement")
+        flaglist2 = meteost.flag_range(keys=['t1'], flagnum=3, keystoflag=['t1'], above=100, below=0)
+        flaglist.extend(flaglist2)
+        meteost = meteost.flag(flaglist)
+        meteost = meteost.remove_flagged()
+        print (" -- Determine average rain")
+        res = meteost.steadyrise('dx', timedelta(minutes=60),sensitivitylevel=0.002)
+        meteost= meteost._put_column(res, 'y', columnname='Percipitation',columnunit='mm/1h')
+
+        flagpos = KEYLIST.index('flag')
+        commpos = KEYLIST.index('comment')
+        meteost.ndarray[flagpos] = np.asarray([])
+        meteost.ndarray[commpos] = np.asarray([])
+
+    print ("Data contents:")
+    print ("Length LNM:",lnmst.length()[0])
+    print ("Length Ultra:",ultrast.length()[0])
+    print ("Length RCS:",rcst7st.length()[0],filtrcst7st.length()[0])
+    print ("Length METEO:", meteost.length()[0])
+    print ("Length BM35:", bm3st.length()[0])
+
+
+    # ############################
+    # # Extract values
+    # ############################
+
+    # now get: filter data to 1 minute
+    print ("Compare rain data from bucket and LNM")
+    res = np.asarray([el for el in filtrcst7st.ndarray[7] if not np.isnan(el)])
+    res2 = np.asarray([el for el in lnmst.ndarray[15] if not np.isnan(el)][:len(res)])  # limit to the usually shorter rcst7 timeseries
+    if len(res) > 1440*int(dayrange*0.5) and not np.mean(res) == 0:
+        istwert = np.abs((np.mean(res) - np.mean(res2))/np.mean(res))
+        sollwert = 0.3
+        print (istwert,sollwert)
+        #analysisdict.check({'data_threshold_rain_RCST7_20160114_0001': [istwert,'<',sollwert]})
+        if np.abs((np.mean(res) - np.mean(res2))/np.mean(res)) > 0.3:
+            print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print ("Current Weather: large differences between rain measurements !!") # add this to consistency log
+            print (np.mean(res), np.mean(res2))
+            print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # you can switch to lnm data by activating the following two lines
+            #data2 = data2._put_column(res2, 't2', columnname='Niederschlag',columnunit='mm/1h')
+            #data = mergeStreams(data,data2,keys=['t2'],mode='replace')
+    
+
+    #  Get average T, Rain, etc-> extract current synop
+    # take only last 30 min of all data sets
+    #lnmst._drop_column('str2')
+
+    # ############################
+    # # Create a new one minute combined record
+    # ############################
+    # Maintainance: x, Rain: y, Snow: z, Temperature: f, Humidity: t1, t2, var1, var2, var3, Synop: var4, Pressure: var5,
+    # rain, windspeed, winddirection, synop, 
+
+    # start from Meteo data and gradually merge new data from rcs, ultra and lnm and bm35 to fill remaining gaps
+
+    # Meteo
+    meteost._drop_column('x')
+    meteost._drop_column('t2')
+    meteost._drop_column('var1')
+    meteost._drop_column('var2')
+    meteost._drop_column('var3')
+    meteost._drop_column('var4')
+    meteost._drop_column('dx')
+    meteost._drop_column('dy')
+    meteost._drop_column('dz')
+    meteost._drop_column('df')
+    result = meteost
+    if filtrcst7st.length()[0] > 0:
+        # RCS
+        # -- reformating to meteo structure
+        # Schnee: x->z, Temperature: y->f,  Maintainance: z, Pressure: f->var5, Rain: var1->y, Humidity: t2->t1
+        filtrcst7st._move_column('f','var5')
+        filtrcst7st._move_column('y','f')
+        filtrcst7st._move_column('x','z')
+        filtrcst7st._drop_column('x')
+        filtrcst7st._move_column('var1','y')
+        filtrcst7st._move_column('t2','t1')
+        filtrcst7st._drop_column('t2')
+        filtrcst7st._drop_column('var1')
+        filtrcst7st._drop_column('var2')
+        filtrcst7st._drop_column('var3')
+        filtrcst7st._drop_column('var4')
+        print ("Merging meteo and rcs data")
+        result = mergeStreams(result, filtrcst7st, mode='replace')
+        result = result.remove_flagged()
+        #mp.plot(result, annotate=True)
+    result.header['col-y'] = 'rain'
+    result.header['unit-col-y'] = 'mm/h'
+    result.header['col-z'] = 'snow'
+    result.header['unit-col-z'] = 'cm'
+    result.header['col-f'] = 'T'
+    result.header['unit-col-f'] = 'deg C'
+    result.header['col-t1'] = 'rh'
+    result.header['unit-col-t1'] = 'percent'
+    result.header['col-var4'] = 'synop'
+    result.header['unit-col-var4'] = '4680'
+    result.header['col-var5'] = 'P'
+    result.header['unit-col-var5'] = 'hPa'
+    #mp.plot(result)
+    if lnmst.length()[0] > 0:
+        # LNM
+        # Temperature: t1->f, Synop: str1->int(var4), Rain: df->y, Pressure: d->var5, Humidity: t2->t1
+        lnmst._drop_column('x')
+        lnmst._move_column('y','t2')
+        lnmst._drop_column('z')
+        lnmst._move_column('t1','f')
+        lnmst._drop_column('t1')
+        lnmst._drop_column('var1')
+        lnmst._drop_column('var2')
+        lnmst._drop_column('var3')
+        lnmst._move_column('str1','var4')
+        #lnmst._drop_column('str1')
+        #lnmst._drop_column('str2')
+        lnmst._drop_column('var5')
+        lnmst._drop_column('dx')
+        lnmst._drop_column('dy')
+        lnmst._drop_column('dz')
+        lnmst._move_column('df','y')
+        lnmst._drop_column('df')
+        #result = lnmst
+        result.header['col-y'] = 'rain'
+        result.header['unit-col-y'] = 'mm/h'
+        result.header['col-f'] = 'T'
+        result.header['unit-col-f'] = 'deg C'
+        result.header['col-t2'] = 'visibility'
+        result.header['unit-col-t2'] = 'm'
+        result.header['col-var4'] = 'synop'
+        result.header['unit-col-var4'] = '4680'
+        print ("Merging lnm data")
+        result = mergeStreams(result, lnmst, mode='insert')
+    if ultrast.length()[0] > 0:
+        # Ultra
+        # Temperature: t2->f, Windspeed: var1, WindDir: var2
+        ultrast._move_column('t2','f')
+        ultrast._drop_column('t2')
+        print ("Merging ultrasonic data")
+        result = mergeStreams(result, ultrast, mode='insert') #, keys=['var1','var2'])
+    if bm3st.length()[0] > 0:
+        # BM35
+        # pressure: var3->var5
+        bm3st._move_column('var3','var5')
+        bm3st._drop_column('var3')
+        print ("Merging bm35 data")
+        result = mergeStreams(result, bm3st, mode='insert') #, keys=['var1','var2'])
+
+    # save result to products
+    result.write(meteoproductpath,filenamebegins='meteo-1min_',dateformat='%Y',coverage='year', mode='replace',format_type='PYCDF')
+    result.write(meteoproductpath,filenamebegins='test_meteo-1min_',dateformat='%Y',coverage='year', mode='replace',format_type='PYASCII')
+
+
+if product2 and product1:
+    print "Part 2 - table contents - started at", fd
+
+    # Get the last 30 min
+    lastdate = result.ndarray[0][-1]
+    shortextract = result._select_timerange(starttime=num2date(lastdate)-timedelta(minutes=30), endtime=lastdate)
+    poscom = KEYLIST.index('comment')
+    posflag = KEYLIST.index('flag')
+    shortextract[poscom] = np.asarray([])
+    shortextract[posflag] = np.asarray([])
+    print shortextract
+    # get means
+    #mp.plot(result)
+
+    shortstream = DataStream([],result.header,shortextract)
+    vallst = [0 for key in KEYLIST]
+    for idx,key in enumerate(result._get_key_headers()):
+        shortstream = shortstream._drop_nans(key)
+        mean = shortstream.mean(key,meanfunction='median')
+        vallst[idx] = mean
+        print ("Assigning values", idx, key, mean)
+    # print ("Res", vallst)
+    # save extracts to project directories
+    writeline = r'Date:{z},T(degC):{a:.1f},rh(%):{b:.1f},P(hPA):{c:.1f},S(cm):{d:.0f},N(mm/h):{e:.1f},Wind(m/s):{f:.1f}\n'.format(z=str(num2date(lastdate).replace(tzinfo=None)), a=vallst[2],b=vallst[3],c=vallst[7],d=vallst[1],e=vallst[0],f=vallst[5])
+    print ("DataLine", writeline)
+    with open(os.path.join(datapath,'currentmeteo.csv'), 'wb') as myfile:
+        myfile.write(writeline)
+    ftpdatatransfer(localfile=os.path.join(datapath,'currentmeteo.csv'),ftppath=remotedatapath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
+
+    # save current conditions
+
+if product3 and product1:
+    print "Part 3 - short term weather plot - started at", fd
+
+    import pylab
+    # ############################
+    # # Create plots ???? -> move to plot
+    # ############################
+    result.ndarray[2] = result.missingvalue(result.ndarray[2],3600,threshold=0.05,fill='interpolate')
+    result.ndarray[3] = result.missingvalue(result.ndarray[3],600,threshold=0.05,fill='interpolate')
+
+    longextract = result._select_timerange(starttime=datetime.utcnow()-timedelta(days=2), endtime=endtime)
+
+    t = longextract[0]
+    y2 = longextract[2]
+    y3 = longextract[3]
+    y4 = longextract[4]
+    y7 = longextract[7]
+
+    max1a = np.nanmax(y2)
+    if max1a < 10 or np.isnan(max1a):
+        max1a = 10
+    max1b = np.nanmax(y3)
+    if max1b < 100 or np.isnan(max1b):
+        max1b = 100
+    max2a = np.nanmax(y7)
+    if max2a < 12 or np.isnan(max2a):
+        max2a = 12
+
+    fig, axarr = plt.subplots(3, sharex=True, figsize=(15,9))
+    # first plot (temperature)
+    axarr[0].set_ylabel('T [$ \circ$C]')
+    axarr[0].plot_date(t,y4,'-',color='lightgray')
+    axarr[0].fill_between(t,0,y4,where=y4<0,facecolor='blue',alpha=0.5)
+    axarr[0].fill_between(t,0,y4,where=y4>=0,facecolor='red',alpha=0.5)
+    #ax0 = axarr[0].twinx()
+    #ax0.set_ylim([0,100])
+    #ax0.set_ylabel('RH [%]')
+    #ax0.plot_date(longextract[0],longextract[5],'-',color='green')
+    axarr[1].set_ylabel('S [cm]')
+    axarr[1].set_ylim([0,max1b])
+    axarr[1].plot_date(longextract[0],longextract[3],'-',color='gray')
+    axarr[1].fill_between(t,0,y3,where=longextract[3]>=0,facecolor='gray',alpha=0.5)
+    ax1 = axarr[1].twinx()
+    ax1.set_ylabel('N [mm/h]',color='blue')
+    ax1.set_ylim([0,max1a])
+    ax1.plot_date(t,y2,'-',color='blue')
+    ax1.fill_between(t,0,y2,where=y2>=0,facecolor='blue',alpha=0.5)
+    axarr[2].set_ylabel('Wind [m/s]')
+    axarr[2].set_ylim([0,max2a])
+    axarr[2].plot_date(t,y7,'-',color='gray')
+    axarr[2].fill_between(t,0,y7,where=longextract[7]>=0,facecolor='gray',alpha=0.5)
+    savepath = os.path.join(imagepath,'Meteo_0_'+filedate+'.png')
+    pylab.savefig(savepath)
+    #plt.show()
+    ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
+
+
+if product4:
+    print "Part 4 - long term weather plot - started at", fd
+
+    longterm=read(os.path.join(meteoproductpath,'meteo-1min*'), starttime=hb,endtime=fd)
+
+    print ("Long term plot", longterm.length(), fd, hb)
+    t = longterm.ndarray[0]
+    y2 = longterm.ndarray[2]  # Rain
+    y3 = longterm.ndarray[3]  # Snow
+    y4 = longterm.ndarray[4]  # Temp
+    y7 = longterm.ndarray[7]
+
+    max1a = np.nanmax(y2)
+    if max1a < 10 or np.isnan(max1a):
+        max1a = 10
+    max1b = np.nanmax(y3)
+    if max1b < 100 or np.isnan(max1b):
+        max1b = 100
+    max2a = np.nanmax(y7)
+    if max2a < 12 or np.isnan(max2a):
+        max2a = 12
+
+    fig, axarr = plt.subplots(3, sharex=True, figsize=(15,9))
+    # first plot (temperature)
+    axarr[0].set_ylabel('T [$ \circ$C]')
+    axarr[0].plot_date(t,y4,'-',color='lightgray')
+    try:
+        axarr[0].fill_between(t,0,y4,where=y4<0,facecolor='blue',alpha=0.5)
+        axarr[0].fill_between(t,0,y4,where=y4>=0,facecolor='red',alpha=0.5)
+    except:
+        pass
+    #ax0 = axarr[0].twinx()
+    #ax0.set_ylim([0,100])
+    #ax0.set_ylabel('RH [%]')
+    #ax0.plot_date(longextract[0],longextract[5],'-',color='green')
+    axarr[1].set_ylabel('S [cm]')
+    axarr[1].set_ylim([0,max1b])
+    axarr[1].plot_date(longextract[0],longextract[3],'-',color='gray')
+    try:
+        axarr[1].fill_between(t,0,y3,where=longextract[3]>=0,facecolor='gray',alpha=0.5)
+    except:
+        pass
+    ax1 = axarr[1].twinx()
+    ax1.set_ylabel('N [mm/h]',color='blue')
+    ax1.set_ylim([0,max1a])
+    ax1.plot_date(t,y2,'-',color='blue')
+    try:
+        ax1.fill_between(t,0,y2,where=y2>=0,facecolor='blue',alpha=0.5)
+    except:
+        pass
+    axarr[2].set_ylabel('Wind [m/s]')
+    axarr[2].set_ylim([0,max2a])
+    axarr[2].plot_date(t,y7,'-',color='gray')
+    try:
+        axarr[2].fill_between(t,0,y7,where=longextract[7]>=0,facecolor='gray',alpha=0.5)
+    except:
+        pass
+    savepath = os.path.join(imagepath,'Meteo_1.png')
+    pylab.savefig(savepath)
+    #plt.show()
+    ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
+
+if product5:
+    print "Part 5 - Save meteo data on Broker - started at", fd
+    filename = 'meteo-1min_2017.cdf'
+    source = os.path.join(meteoproductpath,filename)
+    dest = brokeruser+'@'+brokeraddress+':/home/cobs/TABLES/meteo/'+filename
+    print (source, dest)
+    scptransfer(source, dest, brokerpasswd)
+
+print ("Script weather analysis finished at", datetime.utcnow())  
+print ("-------------------------------------")    
+

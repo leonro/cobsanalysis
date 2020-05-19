@@ -1,0 +1,948 @@
+Sat May 16 03:10:01 UTC 2020
+1. Identify primary instrument
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+('Checking ', 'LEMI036_1_0002_0002')
+(86400, '2020-05-16 03:05:14.000000', '2020-05-15 03:05:15.000000')
+(datetime.datetime(2020, 5, 16, 3, 5, 14), datetime.datetime(2020, 5, 15, 3, 5, 15))
+Coverage OK - using LEMI036_1_0002_0002
+('Checking ', 'GP20S3NSS2_012201_0001_0001')
+(86400, datetime.datetime(2020, 5, 16, 3, 5, 36, 299724))
+Test 1 OK: data  available and last value not null
+(datetime.datetime(2020, 5, 16, 3, 5, 36, 299724), datetime.datetime(2020, 5, 15, 3, 5, 24, 321113))
+Test 2 OK: correct amount of data covering the last day
+Get primary -> Using Variometer LEMI036_1_0002_0002 and Scalar GP20S3NSS2_012201_0001_0001
+Dumping instruments as usual in the old way...
+... done
+('Got', {u'magnetism': {u'QD enddate': [u'2020-05-06', u''], u'k-time': [u'2020-05-16 01:30', u''], u'k': [0.0, u''], u'primary scalar': [u'GP20S3NSS2_012201_0001_0001', u''], u'k-warning': [0, u''], u'k-valid': [u'', u''], u'primary vario': [u'LEMI036_1_0002_0002', u''], u'QD analysis date': [u'2020-05-16', u'']}, u'meteo': {u'N': [0.0, u'mm/h'], u'Schnee': [u'-', u''], u'P': [901.0442221909235, u'hPA'], u'S': [1.156, u'cm'], u'Niederschlag': [None, u'SYNOP'], u'T': [2.358, u'degC'], u'date': [u'2020-05-16 02:29:00', u''], u'rh': [96.271, u'%'], u'Wind': [1.8, u'km/h']}, u'logging': {u'magnetismplots': [u'2020-05-16 02:53', u''], u'seismoNEICdata': [u'2020-05-16 03:01', u''], u'seismoATdata': [u'2020-05-16 03:01', u''], u'failedupload2homepage': 0}})
+Logfile /var/log/magpy/mm-dp-getprimary.log loaded
+Existing: SAGITTARIUS-DataProducts-getprimary-vario
+Existing: SAGITTARIUS-DataProducts-getprimary-process
+Existing: SAGITTARIUS-DataProducts-getprimary-scalar
+Existing: SAGITTARIUS-DataProducts-getprimary-write
+Sat May 16 03:10:04 UTC 2020
+2. Automatic flags
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+...success
+ -------------------------------------------
+ Dealing with sensorgroup GSM90_6
+ -------------------------------------------
+0:05:00
+   -> Found ['GSM90_6107631_0001_0001', 'GSM90_6107632_0001_0001']
+ a) select 1 second or highest resolution data
+Sensor: GSM90_6107631_0001_0001 -> Samplingrate: 3.0
+Sensor: GSM90_6107632_0001_0001 -> Samplingrate: 3.0
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for GSM90_6107631_0001_0001
+   Valid data for GSM90_6107632_0001_0001
+ d) Flagging data
+   - got 2400 datapoints
+   - getting existing flags for GSM90_6107631_0001
+   - found 0 existing flags
+  - determining new outliers
+False
+-------------------------
+Dealing with key: f
+  - new flags: 0
+RESULT: found [] new flags
+   - got 2400 datapoints
+   - getting existing flags for GSM90_6107632_0001
+   - found 0 existing flags
+  - determining new outliers
+False
+-------------------------
+Dealing with key: f
+  - new flags: 0
+RESULT: found [] new flags
+ -------------------------------------------
+ Dealing with sensorgroup GP20S3NSS2
+ -------------------------------------------
+None
+   -> Found ['GP20S3NSS2_012201_0001_0001']
+ a) select 1 second or highest resolution data
+Sensor: GP20S3NSS2_012201_0001_0001 -> Samplingrate: 1.0
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for GP20S3NSS2_012201_0001_0001
+ d) Flagging data
+   - got 7200 datapoints
+   - getting existing flags for GP20S3NSS2_012201_0001
+   - found 0 existing flags
+  - determining new outliers
+False
+-------------------------
+Dealing with key: f
+  - new flags: 0
+RESULT: found [] new flags
+ -------------------------------------------
+ Dealing with sensorgroup GSM90_14245
+ -------------------------------------------
+None
+   -> Found ['GSM90_14245_0002_0001', 'GSM90_14245_0002_0002', 'GSM90_14245_0002_0003']
+ a) select 1 second or highest resolution data
+Sensor: GSM90_14245_0002_0001 -> Samplingrate: 0.2
+Sensor: GSM90_14245_0002_0002 -> Samplingrate: 1.0
+Sensor: GSM90_14245_0002_0003 -> Samplingrate: 0.5
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for GSM90_14245_0002_0002
+ d) Flagging data
+   - got 7200 datapoints
+   - getting existing flags for GSM90_14245_0002
+   - found 0 existing flags
+  - determining new outliers
+False
+-------------------------
+Dealing with key: f
+  - new flags: 0
+RESULT: found [] new flags
+ -------------------------------------------
+ Dealing with sensorgroup FGE
+ -------------------------------------------
+None
+   -> Found ['FGE_S0252_0001_0001']
+ a) select 1 second or highest resolution data
+Sensor: FGE_S0252_0001_0001 -> Samplingrate: 1.0
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+ d) Flagging data
+ -------------------------------------------
+ Dealing with sensorgroup LEMI025
+ -------------------------------------------
+None
+   -> Found ['LEMI025_22_0002_0001', 'LEMI025_22_0002_0002', 'LEMI025_22_0003_0001', 'LEMI025_22_0003_0002', 'LEMI025_1_0001_0001', 'LEMI025_1_0001_0002', 'LEMI025_28_0002_0001', 'LEMI025_28_0002_0002', 'LEMI025_28_0002_0003', 'LEMI025_28_0002_0004', 'LEMI025_28_0002_0005']
+ a) select 1 second or highest resolution data
+Sensor: LEMI025_22_0002_0001 -> Samplingrate: 0.1
+Sensor: LEMI025_22_0002_0002 -> Samplingrate: 1.0
+Sensor: LEMI025_22_0003_0001 -> Samplingrate: 0.1
+Sensor: LEMI025_22_0003_0002 -> Samplingrate: 1.0
+Sensor: LEMI025_1_0001_0001 -> Samplingrate: 0.1
+Sensor: LEMI025_1_0001_0002 -> Samplingrate: 1.0
+Sensor: LEMI025_28_0002_0001 -> Samplingrate: 0.1
+Sensor: LEMI025_28_0002_0002 -> Samplingrate: 1.0
+Sensor: LEMI025_28_0002_0003 -> Samplingrate: 0.1
+Sensor: LEMI025_28_0002_0004 -> Samplingrate: 0.1
+Sensor: LEMI025_28_0002_0005 -> Samplingrate: 0.1
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for LEMI025_22_0003_0002
+ d) Flagging data
+   - got 7200 datapoints
+'
+*resp* '550 wic20200504qmin.min: No such file or directory'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,162,73).'
+*cmd* u'STOR wic20200504qsec.sec'
+*resp* '227 Entering Passive Mode (138,22,188,129,134,241).'
+*cmd* u'STOR wic20200504qmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200504qsec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200504qmin.min'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: False
+  -- Uploading minute data to GIN: 20200504
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: True
+Uploading QD data for 20200503
+  -- THREAD for IAGA qsec data to FTP: 20200503
+  -- THREAD for IAGA qmin data to FTP: 20200503
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+  -- Uploading second data to GIN - active now
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200503qsec.sec'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200503qmin.min'
+*resp* '550 wic20200503qsec.sec: No such file or directory'
+*resp* '550 wic20200503qmin.min: No such file or directory'
+*cmd* 'TYPE I'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,174,247).'
+*cmd* u'STOR wic20200503qmin.min'
+*resp* '22   - getting existing flags for LEMI025_22_0003
+   - found 0 existing flags
+  - determining new outliers
+True
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+  - new flags: 0
+RESULT: found [] new flags
+ -------------------------------------------
+ Dealing with sensorgroup LEMI036
+ -------------------------------------------
+None
+   -> Found ['LEMI036_1_0002_0001', 'LEMI036_1_0002_0002', 'LEMI036_3_0001_0001', 'LEMI036_3_0001_0002']
+ a) select 1 second or highest resolution data
+Sensor: LEMI036_1_0002_0001 -> Samplingrate: 0.1
+Sensor: LEMI036_1_0002_0002 -> Samplingrate: 1.0
+Sensor: LEMI036_3_0001_0001 -> Samplingrate: 0.1
+Sensor: LEMI036_3_0001_0002 -> Samplingrate: 1.0
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for LEMI036_1_0002_0002
+   Valid data for LEMI036_3_0001_0002
+ d) Flagging data
+   - got 7200 datapoints
+   - getting existing flags for LEMI036_1_0002
+   - found 0 existing flags
+  - determining new outliers
+True
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+  - new flags: 0
+RESULT: found [] new flags
+   - got 7200 datapoints
+   - getting existing flags for LEMI036_3_0001
+   - found 0 existing flags
+  - determining new outliers
+True
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+  - new flags: 0
+RESULT: found [] new flags
+ -------------------------------------------
+ Dealing with sensorgroup POS1
+ -------------------------------------------
+0:01:40
+   -> Found ['POS1_N432_0001_0001', 'POS1_N456_0001_0001']
+ a) select 1 second or highest resolution data
+Sensor: POS1_N432_0001_0001 -> Samplingrate: 5.0
+Sensor: POS1_N456_0001_0001 -> Samplingrate: 5.0
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+ d) Flagging data
+ -------------------------------------------
+ Dealing with sensorgroup BM35
+ -------------------------------------------
+None
+   -> Found ['BM35_033_0001_0001', 'BM35_033_0001_0002', 'BM35_029_0001_0001', 'BM35_029_0001_0002']
+ a) select 1 second or highest resolution data
+Sensor: BM35_033_0001_0001 -> Samplingrate: 0.488
+Sensor: BM35_033_0001_0002 -> Samplingrate: 1.0
+Sensor: BM35_029_0001_0001 -> Samplingrate: 0.498
+Sensor: BM35_029_0001_0002 -> Samplingrate: 1.0
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for BM35_029_0001_0002
+ d) Flagging data
+   - got 7200 datapoints
+   - getting existing flags for BM35_029_0001
+   - found 0 existing flags
+  - flagging data below lower limit
+  - flagging data above higher limit
+RESULT: found [] new flags
+ -------------------------------------------
+ Dealing with sensorgroup GSM90_3
+ -------------------------------------------
+0:05:00
+   -> Found ['GSM90_31968_0002_0001']
+ a) select 1 second or highest resolution data
+Sensor: GSM90_31968_0002_0001 -> Samplingrate: 4.007
+ b) checking sampling rate of failed sensors
+ c) Check for recent data
+   Valid data for GSM90_31968_0002_0001
+ d) Flagging data
+   - got 1796 datapoints
+   - getting existing flags for GSM90_31968_0002
+   - found 0 existing flags
+  - determining new outliers
+False
+-------------------------
+Dealing with key: f
+  - new flags: 0
+RESULT: found [] new flags
+------------------------------------------
+ Step1 flagging finished
+------------------------------------------
+Cleaning up all records
+##########################################
+           Flaglist statistics            
+##########################################
+
+A) Total contents: 319316
+
+B) Content for each ID:
+Dataset: GSM90_14245_0002-LEMI025_22_0003 	 Amount: 2
+Dataset: GP20S3EWS2_111201_0001 	 Amount: 5
+Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A7 	 Amount: 6
+Dataset: BLV_LEMI025_22_0003_GSM90_6107631_0001_A2 	 Amount: 6
+Dataset: BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 	 Amount: 6
+Dataset: BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_H1 	 Amount: 6
+Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A7 	 Amount: 6
+Dataset: BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_H1 	 Amount: 6
+Dataset: POS1_N432_0001-GSM90_14245_0002 	 Amount: 9
+Dataset: LEMI036_1_0002-LEMI025_22_0002 	 Amount: 9
+Dataset: BLV_LEMI025_22_0003_GSM90_14245_0002_A2 	 Amount: 12
+Dataset: BLV_FGE_S0252_0001_POS1_N432_0001_A16 	 Amount: 14
+Dataset: BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_A2 	 Amount: 18
+Dataset: BM35_033_0001 	 Amount: 21
+Dataset: BM35_029_0001 	 Amount: 23
+Dataset: BLV_LEMI036_1_0002_POS1_N432_0001_A2 	 Amount: 24
+Dataset: BLV_FGE_S0252_0001_POS1_N432_0001_A2 	 Amount: 27
+Dataset: BLV_FGE_S0252_0001_GSM90_14245_0002_A2 	 Amount: 30
+Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A16 	 Amount: 30
+Dataset: BLV_LEMI025_22_0002_POS1_N432_0001_A2 	 Amount: 36
+Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A2 	 Amount: 42
+Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A2 	 Amount: 48
+Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A16 	 Amount: 66
+Dataset: GSM-19W_3101329_0001 	 Amount: 256
+Dataset: GP20S3V_911005_0001 	 Amount: 399
+Dataset: GSM90_6107631_0001 	 Amount: 1205
+Dataset: FGE_S0252_0001 	 Amount: 1445
+Dataset: POS1_N432_0001 	 Amount: 2949
+Dataset: GSM90_31968_0002 	 Amount: 3195
+Dataset: LEMI025_22_0002 	 Amount: 4682
+Dataset: GP20S3NSS2_012201_0001 	 Amount: 4771
+Dataset: POS1_N456_0001 	 Amount: 11983
+Dataset: GSM90_6107632_0001 	 Amount: 12179
+Dataset: GSM90_14245_0002 	 Amount: 14641
+Dataset: GP20S3NS_012201_0001 	 Amount: 18806
+Dataset: LEMI025_28_0002 	 Amount: 20446
+Dataset: LEMI036_1_0002 	 Amount: 22566
+Dataset: LEMI025_22_0003 	 Amount: 23940
+Dataset: LEMI036_3_0001 	 Amount: 76200
+Dataset: RCST7_20160114_0001 	 Amount: 99201
+
+Logfile /var/log/magpy/mm-dp-flagging.log loaded
+Existing: SAGITTARIUS-DataProducts-flagging-step1
+Sat May 16 03:10:56 UTC 2020
+3. Running magnetic analysis
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary DB at 138.22.188.195 ...
+...success
+Connecting also secondary DB at 138.22.188.191 ...
+...success
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+----------------------------------------------------------------
+Part 1: Create adjusted one second data from primary instruments
+----------------------------------------------------------------
+ a) get primary instruments
+Found LEMI036_1_0002_0002 as primary variometer and GP20S3NSS2_012201_0001_0001 as scalar instrument
+ b) getting variometer data, applying flags, offsets, WGS coordinates LEMI036_1_0002_0002
+readDB: Read rows: 184221
+     -- getting flags from DB: 0
+   -- applying deltas
+applyDeltas: No delta values found - returning unmodified stream
+   -- offsets
+  - applying compensation fields: x=-20.7425, y=0.0, z=-43.865
+  -- rotation
+Found rotation angle of -0.582
+  - applying rotation: alpha=-0.582 determined in 2018
+ c) getting scaladata, flags and offsets: GP20S3NSS2_012201_0001_0001
+readDB: Read rows: 184231
+readDB: could not identify time! Column sectime contains None, which cannot be interpreted as time by the testtime method
+readDB: Found identical values only:sectime
+('Test', array([ array([ 737559.00000519,  737559.00001682,  737559.00002848, ...,
+        737561.13241074,  737561.13242237,  737561.13243389]),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64),
+       array([ 48731.153591,  48731.154362,  48731.15439 , ...,  48727.944156,
+        48727.937322,  48727.953943]),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64), array([], dtype=float64),
+       array([], dtype=float64)], dtype=object))
+     -- obtained data - last F = 48727.953943
+     -- getting flags from DB: 0
+     -- applying deltasB:
+     -- corrections performed -last F = 48726.382943
+ d) performing simple baseline correction based on pier A2
+    LEMI036_1_0002_0002 and GP20S3NSS2_012201_0001_0001
+    using BLV data
+  - Found 6 flags for baseline values
+  - Basevalues for last 100 days:
+  - Delta H = 24.8032928712 +/- 0.904929517263
+  - Delta D = 4.25256301095 +/- 0.000947068084959
+  - Delta Z = -20.0821341993 +/- 0.410021354811
+  - Running Analysis jobs ... 
+Key data_threshold_amount_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
+-> Status remaining unchanged
+Key data_actuality_time_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
+-> Status remaining unchanged
+Key data_threshold_base_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
+-> Status remaining unchanged
+  - Performing constant basevalue correction
+ e) combining data sets, adding header, writing sec and min data
+mergeStreams: Found identical timesteps - using simple merge
+('  - preliminary data file after MERGE:', [184221, 184221, 184221, 184221, 184221, 184221, 184221, 0, 184221, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+  - Saving one second data - IAGA
+  - Saving one second data - CDF
+writeIMAGCDF: current Publication level 2 does not allow to set StandardName
+writeIMAGCDF: Found F column
+writeIMAGCDF: given components are XYZF. Checking F column...
+writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
+writeIMAGCDF: current Publication level 2 does not allow to set StandardName
+writeIMAGCDF: Found F column
+writeIMAGCDF: given components are XYZF. Checking F column...
+writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
+writeIMAGCDF: current Publication level 2 does not allow to set StandardName
+writeIMAGCDF: Found F column
+writeIMAGCDF: given components are XYZF. Checking F column...
+writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
+184221
+  - Saving one minute data - IAGA
+  - Saving one minute adjusted data to database
+Writing adjusted data to primary DB
+Writing adjusted data to secondary DB
+-----------------------------------
+Part1 needs 0:00:55.149588
+-----------------------------------
+----------------------------------------------------------------
+Part 2: Publish adjusted data
+----------------------------------------------------------------
+  uploading one second data to ZAMG Server and eventually to GIN
+Uploading data for 20200516
+  -- THREAD for IAGA data to FTP: 20200516
+('Submitting to gin if no other curl job detected: active_pid = ', True)
+#################################
+ !!!!!!!!!!!!! curl still active sending data in next round
+Uploading data for 20200514
+  -- THREAD for IAGA data to FTP: 20200514
+('Submitting to gin if no other curl job detected: active_pid = ', True)
+#################################
+ !!!!!!!!!!!!! curl still active sending data in next round
+----------------------------------------------------------------
+Part 3: determine quasidefinite data
+----------------------------------------------------------------
+  - Current weekday: 5
+ a) Checking whether current time is suitable for QD
+    - QD calculation will be performed on day 5 between 3:00 and 4:00
+  - Running Quasidefinitve data determinations - checking for new flags
+ b) QD time - checking actuality of flags
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/variation/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200516psec.sec'
+     -- found flags: 27337
+     -- last flag modification with ID 2 or 3 at 2020-05-13 13:38:59.805969
+ - Found new flags -> assuming QD conditions for the week before
+ c) suitable QD time and flags found - now checking whether QD determination has already been performed within the current time period
+    - last analysis performed on 2020-05-16 (today: 2020-05-16)
+  -> QD determination already performed (or tried) in this period
+-----------------------------------
+Part3 needs 0:00:05.735851
+-----------------------------------
+----------------------------------------------------------------
+Part 5: create plots and upload them to webpage
+----------------------------------------------------------------
+('Part5 - Creating plot:', u'LEMI036_1_0002_0002', u'GP20S3NSS2_012201_0001_0001')
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+ndtype - Timeseries ending at: 2020-05-16 03:10:00+00:00
+Coverage in days: 2.1319444445
+Last effective time series ending at day 2020-05-16 00:00:00
+ -----------------------------------------------------
+ ------------- Starting backward analysis ------------
+ --------------- beginning at last time --------------
+Step0 needed: 0:00:00.000129
+Step1 needed: 0:00:00.003140
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/variation/'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/variation/'
+Step2 needed: 0:00:00.507093
+Step3 needed: 0:00:00.005433
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/variation/'
+Step4 needed: 0:00:00.510770
+Step5 needed: 0:00:00.005111
+ -----------------------------------------------------
+ ------------- Starting forward analysis -------------
+ -----------------  from first date ------------------
+Running daily chunks forward until  2020-05-15 00:00:00+00:00
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200516pmin.min'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200514psec.sec'
+*resp* '227 Entering Passive Mode (138,22,188,129,128,67).'
+*cmd* u'STOR wic20200516psec.sec'
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 02:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 01:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+*resp* '250 CWD command/home/cobs/anaconda2/lib/python2.7/site-packages/magpy/database.py:1974: UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+  if not col[0] or col[0] in ['nan', '-','']: #remove place holders
+ successful'
+*cmd* 'DELE wic20200514pmin.min'
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 02:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 01:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+Running daily chunks forward until  2020-05-16 00:00:00+00:00
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '150 Opening BINARY mode data connection for wic20200516psec.sec'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+Checking kvals
+Index: 0, time: 2020-05-14 19:30:00+00:00, kval: 1
+Index: 1, time: 2020-05-14 22:30:00+00:00, kval: 1
+Index: 2, time: 2020-05-15 01:30:00+00:00, kval: 0
+Index: 3, time: 2020-05-15 04:30:00+00:00, kval: 0
+Index: 4, time: 2020-05-15 07:30:00+00:00, kval: 2
+Index: 5, time: 2020-05-15 10:30:00+00:00, kval: 2
+Index: 6, time: 2020-05-15 13:30:00+00:00, kval: 1
+Index: 7, time: 2020-05-15 16:30:00+00:00, kval: 1
+Index: 8, time: 2020-05-15 19:30:00+00:00, kval: 0
+Index: 9, time: 2020-05-15 22:30:00+00:00, kval: 0
+Index: 10, time: 2020-05-16 01:30:00+00:00, kval: 0
+Index: 11, time: 2020-05-16 04:30:00+00:00, kval: 0
+10
+None
+Expect k of 0 until 2020-05-16 01:30 + 1.5 hours UTC (current time = 2020-05-16 03:12:01.605915)
+K value has been updated to 0
+  -> Now writing kvals to database
+  -> Done
+  -> Now writing kvals to secondary database
+ -- Starting scptransfer with timeout 300
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,136,254).'
+*cmd* u'STOR wic20200514psec.sec'
+*resp* '227 Entering Passive Mode (138,22,188,129,153,37).'
+*cmd* u'STOR wic20200516pmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200514psec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200516pmin.min'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+*resp* '227 Entering Passive Mode (138,22,188,129,138,134).'
+*cmd* u'STOR wic20200514pmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200514pmin.min'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+ 
+magvar_2020-05-16.png                           0%    0     0.0KB/s   --:-- ETAmagvar_2020-05-16.png                         100%   99KB  98.5KB/s   00:00    
+
+ -- now removing temporary file...
+  - Uploading of plots successful
+-----------------------------------
+All Parts needed: 0:01:31.418114
+-----------------------------------
+{'SAGITTARIUS-DataProducts-magnetism-step5b': 'determinig k successfull', 'SAGITTARIUS-DataProducts-magnetism-step3b': 'last quasidefinitive calculation successful', 'SAGITTARIUS-DataProducts-magnetism-step3c': 'qd coverage ok', 'SAGITTARIUS-DataProducts-magnetism-step3a': 'last suitability test for quasidefinitive finished', 'SAGITTARIUS-DataProducts-magnetism-step4': 'last upload of QD successful', 'SAGITTARIUS-DataProducts-magnetism-step5': 'uploading plots successful', 'SAGITTARIUS-DataProducts-magnetism-step2': 'upload successful', 'SAGITTARIUS-DataProducts-magnetism-obligatory directories': 'all accessible', 'SAGITTARIUS-DataProducts-magnetism-step1d': 'baseline correction successful', 'SAGITTARIUS-DataProducts-magnetism-step1e': 'all data files saved', 'SAGITTARIUS-DataProducts-mag7 Entering Passive Mode (138,22,188,129,164,252).'
+*cmd* u'STOR wic20200503qsec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200503qmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200503qsec.sec'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: False
+  -- Uploading minute data to GIN: 20200503
+  -> Answer: True
+Uploading QD data for 20200502
+  -- THREAD for IAGA qsec data to FTP: 20200502
+  -- THREAD for IAGA qmin data to FTP: 20200502
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+  -- Uploading second data to GIN - active now
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200502qsec.sec'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200502qmin.min'
+*resp* '550 wic20200502qsec.sec: No such file or directory'
+*resp* '550 wic20200502qmin.min: No such file or directory'
+*cmd* 'TYPE I'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,161,88).'
+*cmd* u'STOR wic20200502qsec.sec'
+*resp* '227 Entering Passive Mode (138,22,188,129,170,90).'
+*cmd* u'STOR wic20200502qmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200502qsec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200502qmin.min'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: False
+  -- Uploading minute data to GIN: 20200502
+*resp* '226 Transfer complete'
+*cmdnetism-step1a': 'primary instruments selected', 'SAGITTARIUS-DataProducts-magnetism-step1b': 'variometer data loaded', 'SAGITTARIUS-DataProducts-magnetism-step1c': 'scalar data loaded'}
+Logfile /var/log/magpy/mm-dp-magnetism.log loaded
+Existing: SAGITTARIUS-DataProducts-magnetism-step5b
+Existing: SAGITTARIUS-DataProducts-magnetism-step3b
+Existing: SAGITTARIUS-DataProducts-magnetism-step3c
+Existing: SAGITTARIUS-DataProducts-magnetism-step3a
+Existing: SAGITTARIUS-DataProducts-magnetism-step4
+Existing: SAGITTARIUS-DataProducts-magnetism-step5
+Existing: SAGITTARIUS-DataProducts-magnetism-step2
+Existing: SAGITTARIUS-DataProducts-magnetism-obligatory directories
+Existing: SAGITTARIUS-DataProducts-magnetism-step1d
+Existing: SAGITTARIUS-DataProducts-magnetism-step1e
+Existing: SAGITTARIUS-DataProducts-magnetism-step1a
+Existing: SAGITTARIUS-DataProducts-magnetism-step1b
+Existing: SAGITTARIUS-DataProducts-magnetism-step1c
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+Sat May 16 03:14:02 UTC 2020
+4. Activity information 
+Getuser: Running from crontab -- trying Logname to identify user
+Getuser: ... succes - using cobs
+Accessing credential file: /home/cobs/.magpycred
+Connecting to primary MARCOS...
+success
+Reading k values from database
+readDB: Read rows: 5
+readDB: Found identical values only:var3
+[ array([ 737560.6875,  737560.8125,  737560.9375,  737561.0625,  737561.1875])
+ array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
+ array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
+ array([ 1.,  0.,  0.,  0.,  0.])
+ array([ 5.62751932,  4.29402582,  2.87028577,  3.09780685,  0.38633938])
+ array([ 1.,  1.,  1.,  1.,  1.]) array([], dtype=float64)
+ array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
+ array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
+ array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
+ array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
+ array([], dtype=float64)]
+Current k-value: 0.0
+Valid until: 2020-05-16 06:00:00
+Updating json
+K warning data has been updated
+Successfully finished
+Sat May 16 03:14:03 UTC 2020
+* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: True
+Uploading QD data for 20200501
+  -- THREAD for IAGA qsec data to FTP: 20200501
+  -- THREAD for IAGA qmin data to FTP: 20200501
+  -- Uploading second data to GIN - active now
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200501qsec.sec'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200501qmin.min'
+*resp* '550 wic20200501qsec.sec: No such file or directory'
+*cmd* 'TYPE I'
+*resp* '550 wic20200501qmin.min: No such file or directory'
+*cmd* 'TYPE I'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,182,221).'
+*cmd* u'STOR wic20200501qmin.min'
+*resp* '227 Entering Passive Mode (138,22,188,129,130,25).'
+*cmd* u'STOR wic20200501qsec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200501qmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200501qsec.sec'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: True
+  -- Uploading minute data to GIN: 20200501
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: True
+Uploading QD data for 20200430
+  -- THREAD for IAGA qsec data to FTP: 20200430
+  -- THREAD for IAGA qmin data to FTP: 20200430
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+  -- Uploading second data to GIN - active now
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* 'PASS *********'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200430qsec.sec'
+*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
+*cmd* 'CWD /data/magnetism/wic/quasidefinitive/'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '250 CWD command successful'
+*cmd* 'DELE wic20200430qmin.min'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '250 DELE command successful'
+*cmd* 'TYPE I'
+*resp* '227 Entering Passive Mode (138,22,188,129,154,202).'
+*cmd* u'STOR wic20200430qsec.sec'
+*resp* '200 Type set to I'
+*cmd* 'PASV'
+*resp* '150 Opening BINARY mode data connection for wic20200430qsec.sec'
+*resp* '227 Entering Passive Mode (138,22,188,129,168,49).'
+*cmd* u'STOR wic20200430qmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200430qmin.min'
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: True
+  -- Uploading minute data to GIN: 20200430
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+  -> Answer: True
+ !!!!!!!!!!!!!!! QD data upload failed
+----------------------------------------------------------------
+Part 5: create plots and upload them to webpage
+----------------------------------------------------------------
+('Part5 - Creating plot:', u'LEMI036_1_0002_0002', u'GP20S3NSS2_012201_0001_0001')
+-------------------------
+Dealing with key: x
+-------------------------
+Dealing with key: y
+-------------------------
+Dealing with key: z
+ndtype - Timeseries ending at: 2020-05-16 03:00:00+00:00
+Coverage in days: 2.125
+Last effective time series ending at day 2020-05-16 00:00:00
+ -----------------------------------------------------
+ ------------- Start/home/cobs/anaconda2/lib/python2.7/site-packages/magpy/database.py:1974: UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+  if not col[0] or col[0] in ['nan', '-','']: #remove place holders
+ing backward analysis ------------
+ --------------- beginning at last time --------------
+Step0 needed: 0:00:00.000139
+Step1 needed: 0:00:00.003095
+Step2 needed: 0:00:00.531098
+Step3 needed: 0:00:00.006709
+Step4 needed: 0:00:00.526596
+Step5 needed: 0:00:00.005543
+ -----------------------------------------------------
+ ------------- Starting forward analysis -------------
+ -----------------  from first date ------------------
+Running daily chunks forward until  2020-05-15 00:00:00+00:00
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 02:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 01:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 02:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 01:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-05-14 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+Running daily chunks forward until  2020-05-16 00:00:00+00:00
+Checking kvals
+Index: 0, time: 2020-05-14 19:30:00+00:00, kval: 1.0
+Index: 1, time: 2020-05-14 22:30:00+00:00, kval: 1.0
+Index: 2, time: 2020-05-15 01:30:00+00:00, kval: 0.0
+Index: 3, time: 2020-05-15 04:30:00+00:00, kval: 0.0
+Index: 4, time: 2020-05-15 07:30:00+00:00, kval: 2.0
+Index: 5, time: 2020-05-15 10:30:00+00:00, kval: 2.0
+Index: 6, time: 2020-05-15 13:30:00+00:00, kval: 1.0
+Index: 7, time: 2020-05-15 16:30:00+00:00, kval: 1.0
+Index: 8, time: 2020-05-15 19:30:00+00:00, kval: 0.0
+Index: 9, time: 2020-05-15 22:30:00+00:00, kval: 0.0
+Index: 10, time: 2020-05-16 01:30:00+00:00, kval: 0.0
+10
+None
+Expect k of 0.0 until 2020-05-16 01:30 + 1.5 hours UTC (current time = 2020-05-16 03:15:40.406383)
+K value has been updated to 0.0
+  -> Now writing kvals to database
+  -> Done
+  -> Now writing kvals to secondary database
+  -> Done
+ -- Starting scptransfer with timeout 300
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
+*resp* '221 Goodbye.'
+ 
+magvar_2020-05-16.png                           0%    0     0.0KB/s   --:-- ETAmagvar_2020-05-16.png                         100%   98KB  98.3KB/s   00:00    
+
+ -- now removing temporary file...
+  - Uploading of plots successful
+-----------------------------------
+All Parts needed: 0:14:55.748738
+-----------------------------------
+{'SAGITTARIUS-DataProducts-magnetism-step5b': 'determinig k successfull', 'SAGITTARIUS-DataProducts-magnetism-step3b': 'QD data between 2020-04-29 00:00:00 and 2020-05-07 00:00:00 calculated and published (parameter: rotangle=-0.582)', 'SAGITTARIUS-DataProducts-magnetism-step3c': 'qd coverage ok', 'SAGITTARIUS-DataPro

@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+
+"""
+Skeleton for graphs
+"""
+
+from magpy.stream import *   
+from magpy.database import *   
+from magpy.transfer import *
+import magpy.mpplot as mp
+import magpy.opt.emd as emd
+import magpy.opt.cred as mpcred
+
+
+import itertools
+from threading import Thread
+
+dbpasswd = mpcred.lc('cobsdb','passwd')
+try:
+    # Test MARCOS 1
+    print "Connecting to primary MARCOS..."
+    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
+    print db
+except:
+    print "... failed"
+    try:
+        # Test MARCOS 2
+        print "Connecting to secondary MARCOS..."
+        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
+        print db
+    except:
+        print "... failed -- aborting"
+        sys.exit()
+
+endtime = datetime.utcnow()
+duration = 2
+starttime = datetime.strptime(datetime.strftime(endtime-timedelta(days=duration),"%Y-%m-%d"),"%Y-%m-%d")
+dbdateformat1 = "%Y-%m-%d %H:%M:%S.%f"
+dbdateformat2 = "%Y-%m-%d %H:%M:%S"
+# Create a day list
+daylist = []
+delta = endtime - starttime
+for i in range(delta.days + 1):
+    daylist.append(datetime.strftime(starttime + timedelta(days=i),"%Y-%m-%d"))
+
+print ("Delivering data for dates:", daylist)
+
+productpath = '/srv/products/data/meteo/pressure'
+archivepath = '/srv/archive'
+
+zamgcred = 'zamg'
+zamgaddress=mpcred.lc(zamgcred,'address')
+zamguser=mpcred.lc(zamgcred,'user')
+zamgpasswd=mpcred.lc(zamgcred,'passwd')
+zamgport=mpcred.lc(zamgcred,'port')
+
+
+part1 = True
+if part1:
+    """
+    Upload bm35 one second data to zamg server
+    """
+    p1start = datetime.utcnow()
+    bm3list = dbselect(db, 'DataID', 'DATAINFO','SensorID LIKE "BM35%" AND DataSamplingRate Like "1.%"')
+    bm3sens=[]
+    for bm3 in bm3list:
+        last = dbselect(db,'time',bm3,expert="ORDER BY time DESC LIMIT 1")
+        try:
+            ttime = datetime.strptime(last[0], dbdateformat1)
+        except:
+            ttime = datetime.strptime(last[0], dbdateformat2)
+        if ttime > starttime:
+            bm3sens.append(bm3)
+    bm3st = DataStream([],{},np.asarray([[] for key in KEYLIST]))
+    for bm3 in bm3sens:
+        # select the one with meta information indicating outside sensor
+        bm35 = readDB(db,bm3,starttime=starttime)
+        bm35.write(productpath,filenamebegins=bm3+'_', format_type='PYASCII')
+
+        for da in daylist:
+            # Send in background mode
+            Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(productpath,bm3+'_'+da+'.txt'),'ftppath':'/data/meteo/BM35','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/bm35-transfer.log'}).start()
+    p1end = datetime.utcnow()
+    print "-----------------------------------"
+    print "Part1 needs", p1end-p1start
+    print "-----------------------------------"
+
+
+part2 = False
+if part2:
+    """
+    Upload lnm data to zamg server
+    """
+    p2start = datetime.utcnow()
+    for da in daylist:
+        name = 'LNM_0351_0001_'+da+'.asc'
+        lnmpath = os.path.join(archivepath,'SGO','LNM_0351_0001','raw',name)
+        # Send in background mode
+        Thread(target=ftpdatatransfer, kwargs={'localfile':lnmpath,'ftppath':'/data/meteo/LNM','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/lnm-transfer.log'}).start()
+    p2end = datetime.utcnow()
+    print "-----------------------------------"
+    print "Part2 needs", p2end-p2start
+    print "-----------------------------------"
+    # Done by senddata.py on MARTAS
+
+part3 = False
+if part3:
+    """
+    Transform Environment data
+    """
+    # Done by senddata.py on MARTAS

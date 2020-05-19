@@ -1,0 +1,152 @@
+#!/usr/bin/env python
+
+"""
+Magnetism products and graphs
+"""
+
+from magpy.stream import *   
+from magpy.database import *   
+from magpy.transfer import *
+import magpy.mpplot as mp
+import magpy.opt.emd as emd
+import magpy.opt.cred as mpcred
+import io, pickle
+
+import itertools
+from threading import Thread
+from subprocess import check_output   # used for checking whether send process already finished
+
+try: 
+    from magpy.opt.analysismonitor import *
+    analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
+    analysisdict = analysisdict.load()
+except:
+    print ("Analysis monitor failed")
+    pass
+
+dbpasswd = mpcred.lc('cobsdb','passwd')
+try:
+    # Test MARCOS 1
+    print "Connecting to primary MARCOS..."
+    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
+    print db
+except:
+    print "... failed"
+    try:
+        # Test MARCOS 2
+        print "Connecting to secondary MARCOS..."
+        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
+        print db
+    except:
+        print "... failed -- aborting"
+        sys.exit()
+
+endtime = datetime.utcnow()
+daystodeal = 1
+starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
+date = datetime.strftime(endtime,"%Y-%m-%d")
+dbdateformat = "%Y-%m-%d %H:%M:%S.%f"
+today1 = datetime.strftime(endtime,"%Y%m%d")
+yesterd1 = datetime.strftime(endtime-timedelta(days=daystodeal),"%Y%m%d")
+
+#Instrument Lists
+scalalist = ['GP20S3NS_012201_0001_0001','GP20S3EW_111201_0001_0001']
+
+part1 = True
+if part1:
+    """
+    Create second filtered records of Lemi and GSM
+    """
+    print ("Starting part 1:")
+    p1start = datetime.utcnow()
+    for inst in scalalist:
+        if inst.startswith('GP20S3'):
+            print ("Dealing with instrument {}".format(inst))
+            scalar = dbgetlines(db,inst,7200)
+            for c in ['x','y','z']:
+                i = ['x','y','z'].index(c)
+                scalart=scalar.copy()
+                scarart=scalart.removeduplicates()
+                #scalart=scalart.get_gaps()
+
+                print ("Part 1: Found Supergrad F - using sensor {}".format(i+1))
+                scalart = scalart._move_column(c,'f')
+                print ("Part 2: Moved column {} to f".format(c))
+                scalart = scalart.multiply({'f':0.001})
+                scalart = scalart._drop_column('x')
+                scalart = scalart._drop_column('y')
+                scalart = scalart._drop_column('z')
+                scalart = scalart._drop_column('dx')
+                scalart = scalart._drop_column('dy')
+                scalart = scalart._drop_column('dz')
+                #scalart = scalart._drop_column('var5')
+
+                print ("Part 3: Checking validity of data")
+                ok = True
+                try:
+                    mean,std = scalart.mean('f',std=True)
+                    if mean > 50000 or mean < 47000 or std > 400:
+                        print ("Part 3: Data invalid - Mean= {} and Stddev={}".format(mean, std))
+                        ok = False
+                except:
+                    pass
+
+                if ok:
+                    print ("Part 4: Accumulating meta info and writing")
+
+                    #print (scalar.header.get('SensorID'))
+                    oldid = scalart.header.get('SensorID').split('_')
+                    newname = '{}S{}'.format(oldid[0],i+1)
+                    scalart.header['SensorName'] = newname
+                    print (scalart.header.get('SensorSerialNum'))
+                    try:
+                        scalart.header['SensorSerialNum'] = oldid[1]
+                        scalart.header['SensorRevision'] = oldid[2]
+                        oldid[0] = newname    
+                        scalart.header['SensorID'] = '_'.join(oldid)
+                        scalart.header['DataRevision'] = '0001'
+                        dataid = '_'.join([scalart.header.get('SensorID'),'0001'])
+                        scalart.header['DataID'] = dataid
+                        piers = scalart.header.get('DataPier')
+                        piers = piers.split(',')
+                        pier = piers[i]
+                        scalart.header['DataPier'] = pier
+                        deltas = scalart.header.get('DataDeltaValues')
+                        deltas = deltas.replace('x','f')
+                        deltas = deltas.replace('y','f')
+                        deltas = deltas.replace('z','f')
+                        deltas = deltas.split(',')
+                        delta = deltas[i]
+                        de=delta.split('_')
+                        delta = "{}_{}".format(de[0],float(de[1])*0.001)
+                        scalart.header['DataDeltaValues'] = delta
+                        values = scalart.header.get('ColumnContents').split(',')
+                        val = values[i]
+                        if not val.startswith('F'):
+                            val = 'F'+val.lower()
+                        scalart.header['ColumnContents'] = ',,,{},,,,,,,,,,,,,,,,,,,'.format(val)
+                        scalart.header['ColumnUnits'] = ',,,nT,,,,,,,,,,,,,,,,,,,' 
+                        scalart.header['SensorKeys'] = 'f'
+                        scalart.header['SensorElements'] = val
+                        scalart.header['col-f'] = val
+                        scalart.header['unit-col-f'] = 'nT'
+                    except:
+                        pass
+                    #print (scalart.length())
+                    #print (scalart.ndarray[4])
+                    writeDB(db,scalart) #,tablename=dataid)
+
+    p1end = datetime.utcnow()
+    print "-----------------------------------"
+    print "Part1 needs", p1end-p1start
+    print "-----------------------------------"
+
+part2 = True
+if part2:
+    """
+    Create and submit variation data
+    Use one specific variometer and scalar instrument with current data
+    Done here to be as close as possible to data acquisition
+    """
+    pass
+

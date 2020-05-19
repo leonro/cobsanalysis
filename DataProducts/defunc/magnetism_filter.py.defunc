@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+
+"""
+Magnetism products and graphs
+"""
+
+from magpy.stream import *   
+from magpy.database import *   
+from magpy.transfer import *
+import magpy.mpplot as mp
+import magpy.opt.emd as emd
+import magpy.opt.cred as mpcred
+import io, pickle
+
+import itertools
+from threading import Thread
+from subprocess import check_output   # used for checking whether send process already finished
+
+try: 
+    from magpy.opt.analysismonitor import *
+    analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
+    analysisdict = analysisdict.load()
+except:
+    print ("Analysis monitor failed")
+    pass
+
+dbpasswd = mpcred.lc('cobsdb','passwd')
+try:
+    # Test MARCOS 1
+    print "Connecting to primary MARCOS..."
+    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
+    print db
+except:
+    print "... failed"
+    try:
+        # Test MARCOS 2
+        print "Connecting to secondary MARCOS..."
+        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
+        print db
+    except:
+        print "... failed -- aborting"
+        sys.exit()
+
+endtime = datetime.utcnow()
+daystodeal = 1
+starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
+date = datetime.strftime(endtime,"%Y-%m-%d")
+dbdateformat = "%Y-%m-%d %H:%M:%S.%f"
+today1 = datetime.strftime(endtime,"%Y%m%d")
+yesterd1 = datetime.strftime(endtime-timedelta(days=daystodeal),"%Y%m%d")
+yesterd2 = datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
+weekago = datetime.strftime(endtime-timedelta(days=6),"%Y-%m-%d")
+
+vpath = '/srv/products/data/magnetism/variation/'
+vpathsec = '/srv/products/data/magnetism/variation/sec/'
+vpathmin = '/srv/products/data/magnetism/variation/min/'
+vpathcdf = '/srv/products/data/magnetism/variation/cdf/'
+qpath = '/srv/products/data/magnetism/quasidefinitive/'
+qpathsec = '/srv/products/data/magnetism/quasidefinitive/sec/'
+qpathcdf = '/srv/products/data/magnetism/quasidefinitive/cdf/'
+figpath = '/srv/products/graphs/magnetism/'
+
+#Instrument Lists
+variolist = ['LEMI036_1_0002_0002','LEMI025_22_0003_0002','FGE_S0252_0001_0001']
+highreslst = ['LEMI025_22_0003_0001','LEMI036_1_0002_0001','GSM90_14245_0002_0001']
+#scalalist = ['GSM90_14245_0002_0002','GP20S3NS_012201_0001_0001','GP20S3EW_111201_0001_0001','POS1_N432_0001_0001']
+#scalalist = ['GSM90_14245_0002_0002','POS1_N432_0001_0001']
+scalalist = ['GSM90_14245_0002_0002','GP20S3NS_012201_0001_0001','POS1_N432_0001_0001']
+
+submit2gin = True
+gincred = 'gin'
+ginaddress=mpcred.lc(gincred,'address')
+ginuser=mpcred.lc(gincred,'user')
+ginpasswd=mpcred.lc(gincred,'passwd')
+
+zamgcred = 'zamg'
+zamgaddress=mpcred.lc(zamgcred,'address')
+zamguser=mpcred.lc(zamgcred,'user')
+zamgpasswd=mpcred.lc(zamgcred,'passwd')
+zamgport=mpcred.lc(zamgcred,'port')
+
+cred = 'cobshomepage'
+address=mpcred.lc(cred,'address')
+user=mpcred.lc(cred,'user')
+passwd=mpcred.lc(cred,'passwd')
+port=mpcred.lc(cred,'port')
+remotepath = 'zamg/images/graphs/magnetism/'
+path2log = '/home/cobs/ANALYSIS/Logs/graph.log'
+
+#qdlist = False
+uploadminlist,uploadseclist = [],[]
+
+
+def active_pid(name):
+    try:
+        pids = map(int,check_output(["pidof",name]).split())
+    except:
+        return False
+    return True
+
+def convertGeoCoordinate(lon,lat,pro1,pro2):
+    try:
+        from pyproj import Proj, transform
+        p1 = Proj(init=pro1)
+        x1 = lon
+        y1 = lat
+        # projection 2: WGS 84
+        p2 = Proj(init=pro2)
+        # transform this point to projection 2 coordinates.
+        x2, y2 = transform(p1,p2,x1,y1)
+        return x2, y2
+    except:
+        return lon, lat
+
+part1 = True
+if part1:
+    """
+    Create second filtered records of Lemi and GSM
+    """
+    print ("Starting part 1:")
+    p1start = datetime.utcnow()
+    for inst in highreslst:
+        print ("Dealing with instrument {}".format(inst))
+        try:
+            lasthour = dbgetlines(db,inst,36000)
+            filtstream = lasthour.filter(missingdata='conservative')
+            newtab = inst[:-5]+'_0002'
+            print newtab, filtstream.header.get('DataSamplingFilter','')
+            writeDB(db,filtstream,tablename=newtab)
+
+            # Create specific output of singular data set
+            createvoutput = False
+            if createvoutput and inst == 'LEMI025_22_0002_0001':
+                data = readDB(db,newtab,starttime=yesterd2)
+                data.write(vpathsec,filenamebegins="WIC_LEMI025",dateformat="%Y%m%d",filenameends="vsec.sec",format_type='IAGA')
+        except:
+            pass
+    p1end = datetime.utcnow()
+    print "-----------------------------------"
+    print "Part1 needs", p1end-p1start
+    print "-----------------------------------"
+
