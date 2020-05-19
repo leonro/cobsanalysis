@@ -1,4 +1,4 @@
-Tue May 19 09:01:01 UTC 2020
+Tue May 19 09:21:01 UTC 2020
 1. Get earthquake information
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -47,7 +47,7 @@ NEIC data has been added
 Logfile /var/log/magpy/mm-fd-earthquake.log loaded
 Existing: SAGITTARIUS-FileDownload-quakes-AT
 Existing: SAGITTARIUS-FileDownload-quakes-NEIC
-Tue May 19 09:01:07 UTC 2020
+Tue May 19 09:21:07 UTC 2020
 2. Send Telegram Quake Info
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -62,4 +62,4 @@ Earthquakes in Austria (are taken from the Austrian Seismological Service
 Earthquakes outside this region and magnetitude above 5.0 are taken from NEIC
 Now get last record from temporary folder
 No new quakes found - thats good
-Tue May 19 09:01:09 UTC 2020
+Tue May 19 09:21:09 UTC 2020

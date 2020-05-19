@@ -1,8 +1,9 @@
 time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type,horizontalError,depthError,magError,magNst,status,locationSource,magSource
+2020-05-19T08:39:01.466Z,-20.9035,-178.4207,594.24,4.5,mb,,115,4.578,0.88,us,us70009kl0,2020-05-19T09:00:48.040Z,"40km SE of Ndoi Island, Fiji",earthquake,13.4,7.2,0.051,113,reviewed,us,us
 2020-05-19T07:55:10.819Z,36.2362,137.7309,10,4.6,mb,,99,0.491,0.84,us,us70009kjx,2020-05-19T08:16:42.040Z,"16km WSW of Toyoshina, Japan",earthquake,2.4,1.9,0.117,22,reviewed,us,us
 2020-05-19T07:19:00.516Z,5.8942,-77.4613,10,5,mb,,104,3.295,1.18,us,us70009kin,2020-05-19T07:36:57.040Z,"29km NW of Nuqui, Colombia",earthquake,4.2,1.8,0.026,452,reviewed,us,us
-2020-05-19T04:13:00.140Z,36.2467,137.6936,10,5.3,mww,,96,0.508,0.98,us,us70009kd9,2020-05-19T08:22:52.049Z,"19km WSW of Hotaka, Japan",earthquake,3,1.8,0.098,10,reviewed,us,us
-2020-05-19T03:17:13.112Z,37.6374,141.3135,44.37,5.1,mww,,133,2.712,0.64,us,us70009kc6,2020-05-19T08:32:28.126Z,"32km ENE of Namie, Japan",earthquake,8.2,3,0.098,10,reviewed,us,us
+2020-05-19T04:13:00.140Z,36.2467,137.6936,10,5.3,mww,,96,0.508,0.98,us,us70009kd9,2020-05-19T09:07:47.850Z,"19km WSW of Hotaka, Japan",earthquake,3,1.8,0.098,10,reviewed,us,us
+2020-05-19T03:17:13.112Z,37.6374,141.3135,44.37,5.1,mww,,133,2.712,0.64,us,us70009kc6,2020-05-19T09:14:25.432Z,"32km ENE of Namie, Japan",earthquake,8.2,3,0.098,10,reviewed,us,us
 2020-05-19T00:02:41.721Z,34.1771,25.568,10,4.6,mb,,64,1.241,0.8,us,us70009k8l,2020-05-19T00:28:22.040Z,"93km S of Ierapetra, Greece",earthquake,7.4,1.9,0.047,132,reviewed,us,us
 2020-05-18T23:22:35.293Z,34.2184,25.5175,10,5.8,mww,,17,1.185,0.6,us,us70009k7k,2020-05-19T04:02:20.434Z,"89km S of Gra Liyia, Greece",earthquake,4.3,1.7,0.055,32,reviewed,us,us
 2020-05-18T20:35:57.762Z,27.5205,103.3287,10,4.5,mb,,148,6.062,0.42,us,us70009k48,2020-05-18T21:44:20.040Z,"21km SSE of Tiandiba, China",earthquake,11.2,2,0.099,30,reviewed,us,us
