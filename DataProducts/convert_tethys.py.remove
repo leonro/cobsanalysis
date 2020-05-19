@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+
+import sys
+sys.path.append('/home/leon/Software/magpy/trunk/src')
+
+from stream import *
+import mpplot as mp
+
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+
+
+# ###################################
+# Testing the new filter function: 
+# Gaussian fit - comparison between new, old and lemi calculated filters 
+# ###################################
+basepath = "/home/leon/Dropbox/Projects/Radonvar/Bachelorarbeit_Maximilian/data/Box/tethys/"
+
+dirlist = [x[1] for x in os.walk(basepath)][0]
+
+for directory in dirlist:
+    directory = "BMP085_10085001_0001"
+    data = read(os.path.join(basepath,directory,"*.bin"))
+    mp.plot(data)
+    data = data.nfilter(filter_width=timedelta(minutes=1))
+    data.write(basepath,filenamebegins=directory,format_type='PYASCII',coverage='all')
+
+
+
+
+

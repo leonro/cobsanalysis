@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+
+"""
+Magnetism - primary instruments
+"""
+
+from magpy.stream import *   
+from magpy.database import *   
+import magpy.opt.cred as mpcred
+from pickle import dump
+
+dbpasswd = mpcred.lc('cobsdb','passwd')
+try:
+    # Test MARCOS 1
+    print "Connecting to primary MARCOS..."
+    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
+    print db
+except:
+    print "... failed"
+    try:
+        # Test MARCOS 2
+        print "Connecting to secondary MARCOS..."
+        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
+        print db
+    except:
+        print "... failed -- aborting"
+        sys.exit()
+
+endtime = datetime.utcnow()
+daystodeal = 1
+starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
+dbdateformat = "%Y-%m-%d %H:%M:%S.%f"
+
+
+#Instrument Lists
+variolist = ['LEMI036_1_0002_0002','LEMI025_22_0003_0002','FGE_S0252_0001_0001']
+scalalist = ['GSM90_14245_0002_0002','GSM90_6107631_0001_0001','GP20S3NSS2_012201_0001_0001','POS1_N432_0001_0001']
+
+priminst = '/home/cobs/ANALYSIS/Logs/primaryinst.pkl'
+varioinst = ''
+scalainst = ''
+
+
+def getstringdate(input):
+    dbdateformat1 = "%Y-%m-%d %H:%M:%S.%f"
+    dbdateformat2 = "%Y-%m-%d %H:%M:%S"
+    try:
+        value = datetime.strptime(input,dbdateformat1)
+    except:
+        try:
+            value = datetime.strptime(input,dbdateformat2)
+        except:
+            print ("Geetprimary: error when converting database date to datetime")
+            return datetime.utcnow()
+    return value
+
+part2 = True
+if part2:
+    """
+    Identify currently active variometer and f-instrument, which are recording now and have at least one day of data
+    """
+    for inst in variolist:
+        last = dbselect(db,'time',inst,expert="ORDER BY time DESC LIMIT 86400")
+        print (len(last), last[0], last[-1])
+        if len(last) > 0:
+            # convert last to datetime
+            lastval = getstringdate(last[0]) #datetime.strptime(last[0],dbdateformat)
+            firstval = getstringdate(last[-1]) #datetime.strptime(last[-1],dbdateformat)
+            if lastval > endtime-timedelta(minutes=60) and firstval > endtime-timedelta(minutes=1500):
+                varioinst = inst
+                break
+
+    for inst in scalalist:
+        CNT = 86400
+        if inst.startswith('POS'):
+            CNT = 17280
+        last = dbselect(db,'time',inst,expert="ORDER BY time DESC LIMIT "+str(CNT))
+        #if inst.startswith('GP20S3'):
+        #    lval = dbselect(db,'y',inst,expert="ORDER BY time DESC LIMIT 1")
+        #else:
+        lval = dbselect(db,'f',inst,expert="ORDER BY time DESC LIMIT 1")
+        print (len(last), getstringdate(last[0]))
+        if len(last) > 0 and lval and not lval[0] in [0,np.nan]:
+            # convert last to datetime
+            lastval = getstringdate(last[0]) # datetime.strptime(last[0],dbdateformat)
+            firstval = getstringdate(last[-1]) # datetime.strptime(last[-1],dbdateformat)
+            if lastval > endtime-timedelta(minutes=60) and firstval > endtime-timedelta(minutes=1500):
+                scalainst = inst
+                break
+
+    if varioinst == '':
+        print "Did not find variometer instrument"
+        varioinst == variolist[0]
+    if scalainst == '':
+        print "Did not find scalar instrument"
+        scalainst = scalalist[0]
+
+    print "Part2 - Using:", varioinst, scalainst
+    lst = [varioinst, scalainst]
+    dump(lst,open(priminst,'wb'))

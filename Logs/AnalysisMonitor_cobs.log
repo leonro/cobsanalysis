@@ -1,0 +1,67 @@
+KEY       :    CONDITION  :  TIME (condition change)  :  STATUS
+script_periodic_magactivity_graph : success = success : 2017-10-24T15:50:29 : success
+data_threshold_t1_GP20S3EW_111201_0001 : 39.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_t2_GP20S3EW_111201_0001 : 40.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_t3_GP20S3EW_111201_0001 : 39.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_l1_GP20S3EW_111201_0001 : 2.8 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_l2_GP20S3EW_111201_0001 : 3.0 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_l3_GP20S3EW_111201_0001 : 3.0 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_t1_GP20S3NS_012201_0001 : 39.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_t2_GP20S3NS_012201_0001 : 39.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_t3_GP20S3NS_012201_0001 : 41.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_l1_GP20S3NS_012201_0001 : 3.0 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_l2_GP20S3NS_012201_0001 : 2.9 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_l3_GP20S3NS_012201_0001 : 3.0 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_t1_GP20S3V_911005_0001 : 40.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_t2_GP20S3V_911005_0001 : 40.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_t3_GP20S3V_911005_0001 : 40.0 > 30 : 2017-10-24T15:52:09 : success
+data_threshold_l1_GP20S3V_911005_0001 : 3.0 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_l2_GP20S3V_911005_0001 : 2.9 > 2.3 : 2017-10-24T15:52:09 : success
+data_threshold_l3_GP20S3V_911005_0001 : 2.9 > 2.3 : 2017-10-24T15:52:09 : success
+script_solarwind_to_gic : success = success : 2017-12-14T09:59:46 : success
+upload_GIN_seconddata : success = success : 2018-01-09T14:54:25 : success
+upload_GIN_minutedata : success = success : 2018-01-09T14:56:06 : success
+data_threshold_base_BLV_LEMI036_1_0002_GSM90_6107631_0001_A2 : 0.637903049714 < 5 : 2018-04-17T14:40:41 : success
+data_threshold_amount_BLV_LEMI036_1_0002_GSM90_6107631_0001_A2 : 12 > 10 : 2018-05-10T18:10:45 : success
+data_threshold_base_BLV_LEMI036_1_0002_GSM90_14245_0002_A2 : 0.28166186424 < 5 : 2018-10-17T05:40:37 : success
+script_periodic_gravity_graph : success = success : 2018-11-20T18:35:44 : success
+data_threshold_neck2_GWRSGC025A_25_0002 : 78.2906394397 < 78 : 2018-11-28T17:34:57 : failure
+data_threshold_f1_GP20S3V_911005_0001 : 48643781.414 > 30000000 : 2018-12-07T21:32:43 : success
+data_threshold_f2_GP20S3V_911005_0001 : 48643119.154 > 30000000 : 2018-12-07T21:32:43 : success
+data_threshold_f3_GP20S3V_911005_0001 : 48650326.214 > 30000000 : 2018-12-07T21:32:43 : success
+data_threshold_neck1_GWRSGC025A_25_0002 : 13.0690146124 < 13 : 2018-12-24T04:33:18 : failure
+data_threshold_f1_GP20S3NS_012201_0001 : nan > 30000000 : 2018-12-29T01:31:55 : failure
+data_threshold_f2_GP20S3NS_012201_0001 : nan > 30000000 : 2018-12-29T01:31:55 : failure
+data_threshold_f3_GP20S3NS_012201_0001 : nan > 30000000 : 2018-12-29T01:31:55 : failure
+data_actuality_time_BLV_LEMI036_1_0002_GSM90_6107631_0001_A2 : 2019-01-03 10:16:00+00:00 > 2018-12-25 00:20:05.830298 : 2019-01-08T00:20:19 : success
+upload_homepage_meteo0_graph : success = success : 2019-01-16T15:43:22 : success
+upload_homepage_meteo1_graph : success = success : 2019-01-16T15:43:42 : success
+upload_homepage_currentmeteo_data : success = success : 2019-01-16T16:00:32 : success
+data_threshold_amount_BLV_LEMI036_1_0002_GSM90_14245_0002_A2 : 29 > 10 : 2019-01-26T15:45:31 : success
+upload_homepage_magnetism_graph : success = success : 2019-02-06T03:02:01 : success
+upload_homepage_current_data : success = success : 2019-02-08T11:19:08 : success
+data_threshold_amount_BLV_LEMI025_22_0003_GSM90_6107631_0001_A2 : 31 > 10 : 2019-03-06T00:20:44 : success
+data_actuality_time_BLV_LEMI025_22_0003_GSM90_6107631_0001_A2 : 2019-02-28 15:32:30+00:00 > 2019-02-20 00:20:28.900252 : 2019-03-06T00:20:44 : success
+data_threshold_base_BLV_LEMI025_22_0003_GSM90_6107631_0001_A2 : 0.605620319097 < 5 : 2019-03-06T00:20:44 : success
+data_threshold_amount_BLV_LEMI025_22_0003_GSM90_14245_0002_A2 : 30 > 10 : 2019-03-06T10:43:53 : success
+data_actuality_time_BLV_LEMI025_22_0003_GSM90_14245_0002_A2 : 2019-02-28 15:32:30+00:00 > 2019-02-20 10:43:22.990407 : 2019-03-06T10:43:53 : success
+data_threshold_base_BLV_LEMI025_22_0003_GSM90_14245_0002_A2 : 0.611906286642 < 5 : 2019-03-06T10:43:53 : success
+data_threshold_amount_BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_A2 : 27 > 10 : 2019-03-06T18:00:38 : success
+data_threshold_base_BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_A2 : 0.611027767342 < 5 : 2019-03-06T18:00:38 : success
+data_threshold_amount_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 : 27 > 10 : 2019-03-07T14:20:33 : success
+data_threshold_base_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 : 0.579796412116 < 5 : 2019-03-07T14:20:33 : success
+script_periodic_spaceweather_graph : success = success : 2019-04-18T02:32:05 : success
+script_title_gravity_graph : failure = success : 2019-05-27T09:39:44 : failure
+script_periodic_supergrad_graph : success = success : 2019-09-30T09:28:44 : success
+data_threshold_f1_GP20S3EW_111201_0001 : 48690404.584 > 30000000 : 2019-10-06T00:31:29 : success
+data_threshold_f2_GP20S3EW_111201_0001 : 48692852.219 > 30000000 : 2019-10-06T00:31:29 : success
+data_threshold_f3_GP20S3EW_111201_0001 : 48696854.864 > 30000000 : 2019-10-06T00:31:29 : success
+data_actuality_time_BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_A2 : 2019-10-30 08:41:00+00:00 > 2019-11-01 12:50:46.869202 : 2019-11-15T12:51:20 : failure
+script_periodic_tilt_graph : failure = success : 2020-03-01T00:28:55 : failure
+data_actuality_time_BLV_LEMI036_1_0002_GSM90_14245_0002_A2 : 2020-03-06 07:35:00+00:00 > 2020-02-26 15:21:04.181978 : 2020-03-11T15:21:38 : success
+data_actuality_time_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 : 2020-04-15 06:41:00+00:00 > 2020-04-02 03:40:52.554596 : 2020-04-16T03:41:20 : success
+upload_homepage_supergradEWplot : success = success : 2020-05-17T16:30:16 : success
+script_periodic_gamma_graph : success = success : 2020-05-18T18:29:52 : success
+script_title_mag_graph : success = success : 2020-05-19T02:28:48 : success
+script_title_weather_graph : success = success : 2020-05-19T06:28:56 : success
+SUMMARY: 1 key(s) changed its/their status since 2020-05-19 06:18:56:  [u'script_title_weather_graph']

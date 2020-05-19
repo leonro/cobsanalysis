@@ -1,0 +1,22 @@
+Tue May 19 02:15:01 UTC 2020
+1. Gamma
+/home/cobs/anaconda2/lib/python2.7/site-packages/matplotlib/__init__.py:1357: UserWarning:  This call to matplotlib.use() has no effect
+because the backend has already been chosen;
+matplotlib.use() must be called *before* pylab, matplotlib.pyplot,
+or matplotlib.backends is imported for the first time.
+
+  warnings.warn(_use_error_msg)
+write: Stream is empty!
+('SELECTED for plotting:', [417760])
+('E:', [662, 1120, 1460, 1764, 609])
+('Isotops:', ["'^{137}Cs'", "'^{214}Bi'", "'^{40}Ka'", "'^{214}Bi'", "'^{214}Bi'"])
+('Colors:', ['blue', 'orange', 'green', 'orange', 'brown'])
+('Intervals:', [0, 1, 2, 3, 7, 15, 49, 77, 90, 109, 156, 204, 280, 362, 420, 449, 518, 548, 628, 666, 730])
+('Rois:', [183, 305, 393, 473, [305, 598]])
+limit filerange by starttime and endtime
+Did not find any spectrum files within the given time range
+[0]
+writing data
+Logfile /var/log/magpy/mm-pro-gamma.log loaded
+Existing: SAGITTARIUS-Projects-gamma
+Tue May 19 02:15:03 UTC 2020

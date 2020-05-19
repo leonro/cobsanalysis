@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+"""
+Skeleton for graphs
+"""
+
+from magpy.stream import *   
+from magpy.database import *   
+from magpy.transfer import *
+import magpy.mpplot as mp
+import magpy.opt.emd as emd
+import magpy.opt.cred as mpcred
+
+
+import itertools
+from threading import Thread
+from subprocess import check_output   # used for checking whether send process already 
+
+dbpasswd = mpcred.lc('cobsdb','passwd')
+try:
+    # Test MARCOS 1
+    print "Connecting to primary MARCOS..."
+    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
+    print db
+except:
+    print "... failed"
+    try:
+        # Test MARCOS 2
+        print "Connecting to secondary MARCOS..."
+        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
+        print db
+    except:
+        print "... failed -- aborting"
+        sys.exit()
+
+endtime = datetime.utcnow()
+daystodeal = 2
+starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
+
+datelist = [datetime.strftime(endtime-timedelta(days=daydiff),"%Y%m%d") for daydiff in range(daystodeal)]
+
+print ("DATES to DEAL with: {}".format(datelist))
+date = datetime.strftime(endtime,"%Y-%m-%d")
+
+vpath = '/srv/products/data/magnetism/variation/'
+qpath = '/srv/products/data/magnetism/quasidefinitive/'
+
+submit2gin = True
+gincred = 'gin'
+ginaddress=mpcred.lc(gincred,'address')
+ginuser=mpcred.lc(gincred,'user')
+ginpasswd=mpcred.lc(gincred,'passwd')
+
+
+def active_pid(name):
+    try:
+        pids = map(int,check_output(["pidof",name]).split())
+        print ("Found active job {} at pids {}".format(name,pids))
+    except:
+        return False
+    return True
+
+if submit2gin:
+    if not active_pid('curl'):
+        print ("Currently there is no Curl job running")
+        for da in datelist:
+            print ("Uploading second data to GIN: {}".format(os.path.join(vpath,'wic_'+da+'_000000_PT1S_2.cdf')))
+            #ginupload(os.path.join(vpath,'wic_'+da+'_000000_PT1S_2.cdf'), ginuser, ginpasswd, ginaddress,faillog=True,stdout=True)
+            ginupload(os.path.join(vpath,'wic'+da+'psec.sec'), ginuser, ginpasswd, ginaddress,faillog=True,stdout=True)
+            #print ("Uploading minute data to GIN: {}".format(os.path.join(vpath,'wic'+da+'pmin.min')))
+            #ginupload(os.path.join(vpath,'wic'+da+'pmin.min'), ginuser, ginpasswd, ginaddress,faillog=True,stdout=True)
+    else:
+        print ("Curl job still running - aborting")
+
