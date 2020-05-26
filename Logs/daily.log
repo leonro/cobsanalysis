@@ -1,4 +1,4 @@
-Tue May 19 02:15:01 UTC 2020
+Tue May 26 02:15:01 UTC 2020
 1. Gamma
 /home/cobs/anaconda2/lib/python2.7/site-packages/matplotlib/__init__.py:1357: UserWarning:  This call to matplotlib.use() has no effect
 because the backend has already been chosen;
@@ -19,4 +19,4 @@ Did not find any spectrum files within the given time range
 writing data
 Logfile /var/log/magpy/mm-pro-gamma.log loaded
 Existing: SAGITTARIUS-Projects-gamma
-Tue May 19 02:15:03 UTC 2020
+Tue May 26 02:15:02 UTC 2020

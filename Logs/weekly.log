@@ -1,4 +1,4 @@
-Tue May 12 12:15:01 UTC 2020
+Tue May 26 12:15:01 UTC 2020
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
 Accessing credential file: /home/cobs/.magpycred
@@ -7,6 +7,15 @@ success
 PRIMARY INSTRUMENTS: ['LEMI036_1_0002_0002', 'GP20S3NSS2_012201_0001_0001']
 BASEVALUE SOURCE: /srv/archive/WIC/DI/data/BLVcomp_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2.txt
 6
-FAILED ANALYSES: []
-
+FAILED ANALYSES: [u'20200514_A16_WIC.txt', u'20200519_A16_WIC.txt', u'20200520_A16_WIC.txt', u'20200521_A16_WIC.txt', u'20200522_A16_WIC.txt', u'20200523_A16_WIC.txt', u'20200524_A16_WIC.txt', u'20200525_A16_WIC.txt']
+*Failed analyses:*
+20200514A16WIC.txt
+20200519A16WIC.txt
+20200520A16WIC.txt
+20200521A16WIC.txt
+20200522A16WIC.txt
+20200523A16WIC.txt
+20200524A16WIC.txt
+20200525A16WIC.txt
+at *2020-05-26 12:15*
 tg_base successfully finished

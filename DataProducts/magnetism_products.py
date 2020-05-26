@@ -970,22 +970,28 @@ if part5 and part1:
     #print (prelimmin.length()[0])
     name5 = "{}-step5".format(name)
     name5b = "{}-step5b".format(name)
+    name5a = "{}-step5a".format(name)
 
     # Create realtime diagram and upload to webpage  WDC
-    #ok = True
+    ok = True
     try:
       #if ok:
       if prelimmin.length()[0] > 0:
         # Filter prelim and upload minute data
-
-        print ("Part5 - Creating plot:", varioinst, scalainst)
-        pnd = prelimmin._select_timerange(starttime=yesterd2)
-        pst = DataStream([LineStruct()],prelimmin.header,pnd)
-        pst = pst.xyz2hdz()
-        mp.plotStreams([pst],[['x','y','z','f']], gridcolor='#316931',fill=['x','z','f'],confinex=True, fullday=True, opacity=0.7, plottitle='Geomagnetic variation (until %s)' % (datetime.utcnow().date()),noshow=True)
-        pltsavepath = "/srv/products/graphs/magnetism/magvar_%s.png" % date
-        plt.savefig(pltsavepath)
+        try:
+            print ("Part5 - Creating plot:", varioinst, scalainst)
+            pnd = prelimmin._select_timerange(starttime=yesterd2)
+            pst = DataStream([LineStruct()],prelimmin.header,pnd)
+            pst = pst.xyz2hdz()
+            mp.plotStreams([pst],[['x','y','z','f']], gridcolor='#316931',fill=['x','z','f'],confinex=True, fullday=True, opacity=0.7, plottitle='Geomagnetic variation (until %s)' % (datetime.utcnow().date()),noshow=True)
+            print (" - Saving diagram to products folder")
+            pltsavepath = "/srv/products/graphs/magnetism/magvar_%s.png" % date
+            plt.savefig(pltsavepath)
+            statusmsg[name5a] = 'creating and saving graph successful'
+        except:
+            statusmsg[name5a] = 'failed to save data - remount necessary?'
         ## What about k values ??
+        print (" - kvalues")
         try:
             #ok = True
             #if ok:
