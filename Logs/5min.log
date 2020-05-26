@@ -1,28 +1,28 @@
-Tue May 19 09:20:01 UTC 2020
+Tue May 26 16:00:01 UTC 2020
 1. Identify primary instrument
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
 Accessing credential file: /home/cobs/.magpycred
 Connecting to primary MARCOS...
 ('Checking ', 'LEMI036_1_0002_0002')
-(86400, '2020-05-19 09:15:13.000000', '2020-05-18 09:15:14.000000')
-(datetime.datetime(2020, 5, 19, 9, 15, 13), datetime.datetime(2020, 5, 18, 9, 15, 14))
+(86400, '2020-05-26 15:55:13.000000', '2020-05-25 15:55:14.000000')
+(datetime.datetime(2020, 5, 26, 15, 55, 13), datetime.datetime(2020, 5, 25, 15, 55, 14))
 Coverage OK - using LEMI036_1_0002_0002
 ('Checking ', 'GP20S3NSS2_012201_0001_0001')
-(86400, datetime.datetime(2020, 5, 19, 9, 15, 35, 16684))
+(86400, datetime.datetime(2020, 5, 26, 15, 55, 34, 637877))
 Test 1 OK: data  available and last value not null
-(datetime.datetime(2020, 5, 19, 9, 15, 35, 16684), datetime.datetime(2020, 5, 18, 9, 15, 24, 22819))
+(datetime.datetime(2020, 5, 26, 15, 55, 34, 637877), datetime.datetime(2020, 5, 25, 15, 55, 21, 660025))
 Test 2 OK: correct amount of data covering the last day
 Get primary -> Using Variometer LEMI036_1_0002_0002 and Scalar GP20S3NSS2_012201_0001_0001
 Dumping instruments as usual in the old way...
 ... done
-('Got', {u'magnetism': {u'QD enddate': [u'2020-05-06', u''], u'k-warning': [0, u''], u'k': [1, u''], u'primary scalar': [u'GP20S3NSS2_012201_0001_0001', u''], u'k-time': [u'2020-05-19 07:30', u''], u'k-valid': [u'', u''], u'primary vario': [u'LEMI036_1_0002_0002', u''], u'QD analysis date': [u'2020-05-16', u'']}, u'meteo': {u'N': [0.0, u'mm/h'], u'Schnee': [u'-', u''], u'P': [901.6681042380255, u'hPA'], u'S': [-0.786393, u'cm'], u'Niederschlag': [None, u'SYNOP'], u'T': [18.8, u'degC'], u'date': [u'2020-05-19 08:30:00', u''], u'rh': [51.374, u'%'], u'Wind': [2.199054250395629, u'km/h']}, u'logging': {u'failedupload2homepage': 0, u'magnetismplots': [u'2020-05-19 09:13', u''], u'seismoNEICdata': [u'2020-05-19 09:01', u''], u'seismoATdata': [u'2020-05-19 09:01', u'']}})
+('Got', {u'magnetism': {u'primary vario': [u'LEMI036_1_0002_0002', u''], u'k-warning': [0, u''], u'QD enddate': [u'2020-05-06', u''], u'k-valid': [u'', u''], u'primary scalar': [u'GP20S3NSS2_012201_0001_0001', u'']}, u'logging': {u'seismoATdata': [u'2020-05-26 15:41', u''], u'seismoNEICdata': [u'2020-05-26 15:41', u''], u'failedupload2homepage': 316}})
 Logfile /var/log/magpy/mm-dp-getprimary.log loaded
 Existing: SAGITTARIUS-DataProducts-getprimary-vario
 Existing: SAGITTARIUS-DataProducts-getprimary-process
 Existing: SAGITTARIUS-DataProducts-getprimary-scalar
 Existing: SAGITTARIUS-DataProducts-getprimary-write
-Tue May 19 09:20:04 UTC 2020
+Tue May 26 16:00:04 UTC 2020
 2. Automatic flags
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -53,7 +53,9 @@ Dealing with key: f
 RESULT: found [] new flags
    - got 2400 datapoints
    - getting existing flags for GSM90_6107632_0001
-   - found 0 existing flags
+   - found 1 existing flags
+  - removing existing flags
+    ...success
   - determining new outliers
 False
 -------------------------
@@ -95,13 +97,311 @@ Sensor: GSM90_14245_0002_0003 -> Samplingrate: 0.5
  d) Flagging data
    - got 7200 datapoints
    - getting existing flags for GSM90_14245_0002
-   - found 0 existing flags
+   - found 3 existing flags
+  - removing existing flags
+    ...success
   - determining new outliers
 False
 -------------------------
 Dealing with key: f
-  - new flags: 0
-RESULT: found [] new flags
+  - new flags: 3
+RESULT: found [[datetime.datetime(2020, 5, 26, 15, 45, 38), datetime.datetime(2020, 5, 26, 15, 45, 38), 'f', 1, u'aof - threshold: 5, window: 600.0 sec', 'GSM90_14245_0002', datetime.datetime(2020, 5, 26, 16, 0, 9, 699675)], [datetime.datetime(2020, 5, 26, 15, 45, 39), datetime.datetime(2020, 5, 26, 15, 45, 39), 'f', 1, u'aof - threshold: 5, window: 600.0 sec', 'GSM90_14245_0002', datetime.datetime(2020, 5, 26, 16, 0, 9, 699675)], [datetime.datetime(2020, 5, 26, 15, 45, 40), datetime.datetime(2020, 5, 26, 15, 45, 40), 'f', 1, u'aof - threshold: 5, window: 600.0 sec', 'GSM90_14245_0002', datetime.datetime(2020, 5, 26, 16, 0, 9, 699675)]] new flags
+  -- Writing flags for sensors GSM90_14245_0002_0002 to DB
+  -- New flags: 3
+##########################################
+           Flaglist statistics            
+##########################################
+
+A) Total contents: 14895
+
+B) Content for each ID:
+Dataset: GSM90_14245_0002 	 Amount: 14895
+   disturbances : 1
+   sensor at other pier : 1
+   diturbances from people BL : 1
+   datagap BL : 1
+   distrurbed RL : 1
+   visitors disturbances BL : 1
+   change of lamp : 1
+   aof - threshold: 3.0, window: 30.0 sec : 1
+   outside of range 48683.3292679 to 48679.1615759 : 1
+   peter making a movie : 1
+   disturbances bl : 1
+   working Roman bl : 1
+   seems to be disturbed : 1
+   sensor on different pier : 1
+   changing lamp : 1
+   offset -2nT : 1
+   absolute measurments BL : 1
+   RL offset due to disturbance near sensor : 1
+   unknown disturbance : 1
+   test measurements bl : 1
+   offset due to firebrigade training : 1
+   electroinstallation work : 1
+   disturbance in absolute tunnel : 1
+   dF experiment : 1
+   gyro measurement on A5 : 1
+   pier A9 : 1
+   pier A2 : 1
+   restart of system : 1
+   repair of AutoDIF : 1
+   Ok BL : 1
+   Data gap BL : 2
+   tool case close to sensor : 2
+   Feuertwehr-Uebung : 2
+   disturbances woodwork  BL : 2
+   car passing : 2
+   disturbance near sensor : 2
+   outlier RL : 2
+   aof - threshold 3.0 window 600.0 sec : 2
+   identified outliers : 2
+   Feuerwehr_bung : 2
+   disturbances from people BL : 2
+   tests in absolute tunnel : 2
+   outlierbl : 2
+   no measurement : 2
+   person passing : 2
+   tests in asbolute tunnel : 2
+   spikebl : 3
+   human disurbances : 3
+   mike passing for supergrad repair : 3
+   car passing RL : 3
+   magnetic cart in absolute tunnel : 3
+   xxx : 3
+   unknown reason BL : 3
+   offset bl : 3
+   deltaF experiments : 3
+   magnetic disturbance in tunnel : 3
+   aof - threshold: 6.0, window: 120.0 sec : 3
+   GSM disturbance test : 4
+   absolut Measurments BL : 4
+   car above sensor : 4
+   magnetic disturbance : 4
+   Feuerwehrbung : 5
+   disturbance maintenance BL : 5
+   visitors : 5
+   no data and passing by : 6
+   disturbances BL : 6
+   working close to sensor : 6
+   start woodworks BL : 6
+   known disturbance film : 7
+   person passing outside : 7
+   disturbances woodworke BL : 7
+   spikeoffset bl : 7
+   offset BL : 7
+   spike Bl : 7
+   disturbed RL : 7
+   works close to sensor : 8
+   unkown disturbance BL : 8
+   OK BL : 9
+   offset RL : 9
+   GSM holder changed : 9
+   lightnings BL : 9
+   aof - threshold 3.0 window 60.0 sec : 9
+   spikes and car : 11
+   caused by public relation : 12
+   Offset BL : 12
+   disturbances by people BL : 12
+   known disturbance film BL : 14
+   disturbance RL : 14
+   works close to sensor bl : 14
+   work on lamps : 15
+   disturbances in absolute tunnel : 15
+   disturbances maintenance BL : 15
+   aof - threshold: 4.0, window: 300.0 sec : 15
+   AutoDIF repair : 19
+   work close to sensor bl : 20
+   unknown disturbance BL : 21
+   repair work at the north door BL : 21
+   no data RL : 21
+   repair work at the north door : 23
+   spikes and reinstall : 23
+   thunderstorm : 24
+   iwf : 34
+   aof - threshold 4.0 window 600.0 sec : 34
+   lightning RL : 35
+   offset : 55
+   repair of lamp : 57
+   IWF measurements : 59
+   spikes BL : 75
+   aof - threshold 6.0 window 600.0 sec : 77
+   aof - threshold: 5.0, window: 120.0 sec : 77
+   disturbance : 80
+   aof - threshold: 3.0, window: 120.0 sec : 87
+   aof - threshold 3.0 window 30.0 sec : 92
+   aof - threshold: 3.0, window: 300.0 sec : 92
+   no data : 98
+   lightning : 100
+   aof - threshold: 5.0, window: 600.0 sec : 109
+   aof - threshold: 5.0, window: 100.0 sec : 122
+   spikes and wood work : 139
+   lightning BL : 164
+   spike thunderstorm and installation : 177
+   iwf installation : 256
+   spike RL : 289
+   spikes : 295
+   spike bl : 367
+   aof - threshold: 4.0, window: 600.0 sec : 368
+   aof - threshold: 5.0, window: 60.0 sec : 372
+   disturbed : 428
+   aof - threshold: 3.0, window: 600.0 sec : 431
+   aof - threshold: 2.0, window: 600.0 sec : 526
+   aof - threshold: 5, window: 36000.0 sec : 607
+   spike : 751
+   aof - threshold: 3.0, window: 60.0 sec : 803
+   aof - threshold 5 window 600.0 sec : 823
+   Unkown reason : 861
+   aof - threshold: 5, window: 600.0 sec : 1573
+   aof - threshold: 6.0, window: 600.0 sec : 1751
+   spike BL : 2050
+
+##########################################
+           Flaglist statistics            
+##########################################
+
+A) Total contents: 14898
+
+B) Content for each ID:
+Dataset: GSM90_14245_0002 	 Amount: 14898
+   disturbances : 1
+   sensor at other pier : 1
+   diturbances from people BL : 1
+   datagap BL : 1
+   distrurbed RL : 1
+   visitors disturbances BL : 1
+   change of lamp : 1
+   aof - threshold: 3.0, window: 30.0 sec : 1
+   outside of range 48683.3292679 to 48679.1615759 : 1
+   peter making a movie : 1
+   disturbances bl : 1
+   working Roman bl : 1
+   seems to be disturbed : 1
+   sensor on different pier : 1
+   changing lamp : 1
+   offset -2nT : 1
+   absolute measurments BL : 1
+   RL offset due to disturbance near sensor : 1
+   unknown disturbance : 1
+   test measurements bl : 1
+   offset due to firebrigade training : 1
+   electroinstallation work : 1
+   disturbance in absolute tunnel : 1
+   dF experiment : 1
+   gyro measurement on A5 : 1
+   pier A9 : 1
+   pier A2 : 1
+   restart of system : 1
+   repair of AutoDIF : 1
+   Ok BL : 1
+   Data gap BL : 2
+   tool case close to sensor : 2
+   Feuertwehr-Uebung : 2
+   disturbances woodwork  BL : 2
+   car passing : 2
+   disturbance near sensor : 2
+   outlier RL : 2
+   aof - threshold 3.0 window 600.0 sec : 2
+   identified outliers : 2
+   Feuerwehr_bung : 2
+   disturbances from people BL : 2
+   tests in absolute tunnel : 2
+   outlierbl : 2
+   no measurement : 2
+   person passing : 2
+   tests in asbolute tunnel : 2
+   spikebl : 3
+   human disurbances : 3
+   mike passing for supergrad repair : 3
+   car passing RL : 3
+   magnetic cart in absolute tunnel : 3
+   xxx : 3
+   unknown reason BL : 3
+   offset bl : 3
+   deltaF experiments : 3
+   magnetic disturbance in tunnel : 3
+   aof - threshold: 6.0, window: 120.0 sec : 3
+   GSM disturbance test : 4
+   absolut Measurments BL : 4
+   car above sensor : 4
+   magnetic disturbance : 4
+   Feuerwehrbung : 5
+   disturbance maintenance BL : 5
+   visitors : 5
+   no data and passing by : 6
+   disturbances BL : 6
+   working close to sensor : 6
+   start woodworks BL : 6
+   known disturbance film : 7
+   person passing outside : 7
+   disturbances woodworke BL : 7
+   spikeoffset bl : 7
+   offset BL : 7
+   spike Bl : 7
+   disturbed RL : 7
+   works close to sensor : 8
+   unkown disturbance BL : 8
+   OK BL : 9
+   offset RL : 9
+   GSM holder changed : 9
+   lightnings BL : 9
+   aof - threshold 3.0 window 60.0 sec : 9
+   spikes and car : 11
+   caused by public relation : 12
+   Offset BL : 12
+   disturbances by people BL : 12
+   known disturbance film BL : 14
+   disturbance RL : 14
+   works close to sensor bl : 14
+   work on lamps : 15
+   disturbances in absolute tunnel : 15
+   disturbances maintenance BL : 15
+   aof - threshold: 4.0, window: 300.0 sec : 15
+   AutoDIF repair : 19
+   work close to sensor bl : 20
+   unknown disturbance BL : 21
+   repair work at the north door BL : 21
+   no data RL : 21
+   repair work at the north door : 23
+   spikes and reinstall : 23
+   thunderstorm : 24
+   iwf : 34
+   aof - threshold 4.0 window 600.0 sec : 34
+   lightning RL : 35
+   offset : 55
+   repair of lamp : 57
+   IWF measurements : 59
+   spikes BL : 75
+   aof - threshold 6.0 window 600.0 sec : 77
+   aof - threshold: 5.0, window: 120.0 sec : 77
+   disturbance : 80
+   aof - threshold: 3.0, window: 120.0 sec : 87
+   aof - threshold 3.0 window 30.0 sec : 92
+   aof - threshold: 3.0, window: 300.0 sec : 92
+   no data : 98
+   lightning : 100
+   aof - threshold: 5.0, window: 600.0 sec : 109
+   aof - threshold: 5.0, window: 100.0 sec : 122
+   spikes and wood work : 139
+   lightning BL : 164
+   spike thunderstorm and installation : 177
+   iwf installation : 256
+   spike RL : 289
+   spikes : 295
+   spike bl : 367
+   aof - threshold: 4.0, window: 600.0 sec : 368
+   aof - threshold: 5.0, window: 60.0 sec : 372
+   disturbed : 428
+   aof - threshold: 3.0, window: 600.0 sec : 431
+   aof - threshold: 2.0, window: 600.0 sec : 526
+   aof - threshold: 5, window: 36000.0 sec : 607
+   spike : 751
+   aof - threshold: 3.0, window: 60.0 sec : 803
+   aof - threshold 5 window 600.0 sec : 823
+   Unkown reason : 861
+   aof - threshold: 5, window: 600.0 sec : 1576
+   aof - threshold: 6.0, window: 600.0 sec : 1751
+   spike BL : 2050
+
  -------------------------------------------
  Dealing with sensorgroup FGE
  -------------------------------------------
@@ -224,73 +524,3 @@ RESULT: found [] new flags
 0:05:00
    -> Found ['GSM90_31968_0002_0001']
  a) select 1 second or highest resolution data
-Sensor: GSM90_31968_0002_0001 -> Samplingrate: 4.007
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for GSM90_31968_0002_0001
- d) Flagging data
-   - got 1796 datapoints
-   - getting existing flags for GSM90_31968_0002
-   - found 0 existing flags
-  - determining new outliers
-False
--------------------------
-Dealing with key: f
-  - new flags: 0
-RESULT: found [] new flags
-------------------------------------------
- Step1 flagging finished
-------------------------------------------
-Cleaning up all records
-##########################################
-           Flaglist statistics            
-##########################################
-
-A) Total contents: 321543
-
-B) Content for each ID:
-Dataset: GSM90_14245_0002-LEMI025_22_0003 	 Amount: 2
-Dataset: GP20S3EWS2_111201_0001 	 Amount: 5
-Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A7 	 Amount: 6
-Dataset: BLV_LEMI025_22_0003_GSM90_6107631_0001_A2 	 Amount: 6
-Dataset: BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 	 Amount: 6
-Dataset: BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_H1 	 Amount: 6
-Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A7 	 Amount: 6
-Dataset: BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_H1 	 Amount: 6
-Dataset: POS1_N432_0001-GSM90_14245_0002 	 Amount: 9
-Dataset: LEMI036_1_0002-LEMI025_22_0002 	 Amount: 9
-Dataset: BLV_LEMI025_22_0003_GSM90_14245_0002_A2 	 Amount: 12
-Dataset: BLV_FGE_S0252_0001_POS1_N432_0001_A16 	 Amount: 14
-Dataset: BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_A2 	 Amount: 18
-Dataset: BM35_033_0001 	 Amount: 21
-Dataset: BM35_029_0001 	 Amount: 23
-Dataset: BLV_LEMI036_1_0002_POS1_N432_0001_A2 	 Amount: 24
-Dataset: BLV_FGE_S0252_0001_POS1_N432_0001_A2 	 Amount: 27
-Dataset: BLV_FGE_S0252_0001_GSM90_14245_0002_A2 	 Amount: 30
-Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A16 	 Amount: 30
-Dataset: BLV_LEMI025_22_0002_POS1_N432_0001_A2 	 Amount: 36
-Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A2 	 Amount: 42
-Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A2 	 Amount: 48
-Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A16 	 Amount: 66
-Dataset: GSM-19W_3101329_0001 	 Amount: 256
-Dataset: GP20S3V_911005_0001 	 Amount: 399
-Dataset: GSM90_6107631_0001 	 Amount: 1205
-Dataset: FGE_S0252_0001 	 Amount: 1445
-Dataset: POS1_N432_0001 	 Amount: 2949
-Dataset: GSM90_31968_0002 	 Amount: 3214
-Dataset: LEMI025_22_0002 	 Amount: 4682
-Dataset: GP20S3NSS2_012201_0001 	 Amount: 4771
-Dataset: POS1_N456_0001 	 Amount: 11983
-Dataset: GSM90_6107632_0001 	 Amount: 12303
-Dataset: GSM90_14245_0002 	 Amount: 14643
-Dataset: GP20S3NS_012201_0001 	 Amount: 18806
-Dataset: LEMI025_28_0002 	 Amount: 20446
-Dataset: LEMI036_1_0002 	 Amount: 23526
-Dataset: LEMI025_22_0003 	 Amount: 24147
-Dataset: LEMI036_3_0001 	 Amount: 77109
-Dataset: RCST7_20160114_0001 	 Amount: 99207
-
-Logfile /var/log/magpy/mm-dp-flagging.log loaded
-Existing: SAGITTARIUS-DataProducts-flagging-step1
-Tue May 19 09:20:53 UTC 2020
-3. Running magnetic analysis
