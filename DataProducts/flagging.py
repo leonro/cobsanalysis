@@ -336,6 +336,10 @@ if step1:
                        flagls = lastdata.flag_outlier(keys=keys,threshold=threshold,timerange=window,returnflaglist=True,markall=markall)
                        # now check flaglist---- if more than 10 consecutive flags... then drop it
                        flaglist = consecutive_check(flagls, remove=True)
+                       if len(flagls) > len(flaglist)+1:   #+1 to add some room
+                           statusmsg[name2] = 'Step1: consecutive flags (unlikely related to spikes) were removed: Found {}, Clean: {}'.format(len(flagls), len(flaglist))
+                    except:
+                        pass
                        #flaglist = flagls
                        print ("  - new flags: {}".format(len(flagls)))
                     if lowlimit:
@@ -354,11 +358,11 @@ if step1:
                            flaglist.extend(flaghigh)
 
                     print ("RESULT: found {} new flags".format(flaglist))
-                    try:
-                        if sensor.startswith('LEMI036_1') and len(flaglist) > 20:
-                            statusmsg[name2] = 'Step1: flagging LEMI036 test: data range: {}, length 7200, first flag: {}, last flag: {}'.format(lastdata._find_t_limits(),flaglist[0],flaglist[-1])
-                    except:
-                        pass
+                    #try:
+                    #    if sensor.startswith('LEMI036_1') and len(flaglist) > 20:
+                    #        statusmsg[name2] = 'Step1: flagging LEMI036 test: data range: {}, length 7200, first flag: {}, last flag: {}'.format(lastdata._find_t_limits(),flaglist[0],flaglist[-1])
+                    #except:
+                    #    pass
                     if submit and len(flaglist) > 0:
                         print ("  -- Writing flags for sensors {} to DB".format(sensor))
                         print ("  -- New flags: {}".format(len(flaglist)))
