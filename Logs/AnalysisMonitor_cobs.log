@@ -60,8 +60,8 @@ script_periodic_tilt_graph : failure = success : 2020-03-01T00:28:55 : failure
 data_actuality_time_BLV_LEMI036_1_0002_GSM90_14245_0002_A2 : 2020-03-06 07:35:00+00:00 > 2020-02-26 15:21:04.181978 : 2020-03-11T15:21:38 : success
 data_actuality_time_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 : 2020-04-15 06:41:00+00:00 > 2020-04-02 03:40:52.554596 : 2020-04-16T03:41:20 : success
 upload_homepage_supergradEWplot : success = success : 2020-05-19T21:30:19 : success
-script_periodic_supergrad_graph : failure = success : 2020-05-20T02:28:14 : failure
-script_periodic_gamma_graph : failure = success : 2020-05-20T02:28:17 : failure
 script_title_mag_graph : success = success : 2020-05-22T02:29:05 : success
-script_title_weather_graph : success = success : 2020-05-25T06:28:54 : success
-SUMMARY: 1 key(s) changed its/their status since 2020-05-25 06:18:54:  [u'script_title_weather_graph']
+script_periodic_supergrad_graph : success = success : 2020-05-26T16:29:43 : success
+script_periodic_gamma_graph : success = success : 2020-05-26T16:29:50 : success
+script_title_weather_graph : success = success : 2020-05-28T12:28:58 : success
+SUMMARY: 1 key(s) changed its/their status since 2020-05-28 12:18:58:  [u'script_title_weather_graph']

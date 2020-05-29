@@ -513,7 +513,7 @@ aI30000000
 asS'script_periodic_gamma_graph'
 p236
 (lp237
-S'failure'
+S'success'
 p238
 aS'='
 p239
@@ -549,7 +549,7 @@ aI30000000
 asS'script_periodic_supergrad_graph'
 p252
 (lp253
-S'failure'
+S'success'
 p254
 ag167
 ag168
