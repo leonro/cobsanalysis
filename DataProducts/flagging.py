@@ -338,8 +338,8 @@ if step1:
                        flaglist = consecutive_check(flagls, remove=True)
                        if len(flagls) > len(flaglist)+1:   #+1 to add some room
                            statusmsg[name2] = 'Step1: consecutive flags (unlikely related to spikes) were removed: Found {}, Clean: {}'.format(len(flagls), len(flaglist))
-                    except:
-                        pass
+                       #except:
+                       #pass
                        #flaglist = flagls
                        print ("  - new flags: {}".format(len(flagls)))
                     if lowlimit:

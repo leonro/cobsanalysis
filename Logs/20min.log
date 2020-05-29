@@ -1,5 +1,9 @@
-Tue May 26 15:41:01 UTC 2020
+Fri May 29 14:41:01 UTC 2020
 1. Get earthquake information
+read: File /home/cobs/ANALYSIS/Seismo/neic_quakes.d could not be read. Skipping ...
+read: Cannot open file/files: /home/cobs/ANALYSIS/Seismo/neic_quakes.d
+read: File /home/cobs/ANALYSIS/Seismo/neic_quakes.d could not be read. Skipping ...
+read: Cannot open file/files: /home/cobs/ANALYSIS/Seismo/neic_quakes.d
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
 Accessing credential file: /home/cobs/.magpycred
@@ -8,7 +12,7 @@ Connecting to server 138.22.188.195...
 Getting Austrian data
  - getting Austrian data from geoweb
 Found NEIC data
-UPDATE DATAINFO SET DataSamplingRate="2089.1" WHERE DataID="QUAKES"
+UPDATE DATAINFO SET DataSamplingRate="2065.0" WHERE DataID="QUAKES"
 UPDATE DATAINFO SET DataReferences="http://geoweb.zamg.ac.at/static/event/lastmonth.csv" WHERE DataID="QUAKES"
 UPDATE DATAINFO SET StationID="SGO" WHERE DataID="QUAKES"
 UPDATE DATAINFO SET DataFormat="NEICCSV" WHERE DataID="QUAKES"
@@ -18,17 +22,10 @@ Austrian data has been added
 Downloading NEIC data
  - getting NEIC data from usgs
 Found NEIC data
-UPDATE DATAINFO SET DataSamplingRate="2089.1" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET DataReferences="http://geoweb.zamg.ac.at/static/event/lastmonth.csv" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET StationID="SGO" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET DataFormat="NEICCSV" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET DataSource="Austrian Seismological Service" WHERE DataID="QUAKES"
-NEIC data has been added
-----------------------------
 Connecting to server 138.22.188.191...
 138.22.188.191 ... connected
 Getting Austrian data
-UPDATE DATAINFO SET DataSamplingRate="2089.1" WHERE DataID="QUAKES"
+UPDATE DATAINFO SET DataSamplingRate="2065.0" WHERE DataID="QUAKES"
 UPDATE DATAINFO SET DataReferences="http://geoweb.zamg.ac.at/static/event/lastmonth.csv" WHERE DataID="QUAKES"
 UPDATE DATAINFO SET StationID="SGO" WHERE DataID="QUAKES"
 UPDATE DATAINFO SET DataFormat="NEICCSV" WHERE DataID="QUAKES"
@@ -36,18 +33,13 @@ UPDATE DATAINFO SET DataSource="Austrian Seismological Service" WHERE DataID="QU
 Austrian data has been added
 ----------------------------
 Downloading NEIC data
-UPDATE DATAINFO SET DataSamplingRate="2089.1" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET DataReferences="http://geoweb.zamg.ac.at/static/event/lastmonth.csv" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET StationID="SGO" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET DataFormat="NEICCSV" WHERE DataID="QUAKES"
-UPDATE DATAINFO SET DataSource="Austrian Seismological Service" WHERE DataID="QUAKES"
-NEIC data has been added
-----------------------------
-{'SAGITTARIUS-FileDownload-quakes-AT': 'Austrian data added', 'SAGITTARIUS-FileDownload-quakes-NEIC': 'NEIC data added'}
+ - getting NEIC data from usgs
+Found NEIC data
+{'SAGITTARIUS-FileDownload-quakes-AT': 'Austrian data added', 'SAGITTARIUS-FileDownload-quakes-NEIC': 'NEIC data failed'}
 Logfile /var/log/magpy/mm-fd-earthquake.log loaded
 Existing: SAGITTARIUS-FileDownload-quakes-AT
 Existing: SAGITTARIUS-FileDownload-quakes-NEIC
-Tue May 26 15:41:20 UTC 2020
+Fri May 29 14:41:08 UTC 2020
 2. Send Telegram Quake Info
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -61,4 +53,4 @@ Please note:
 Earthquakes in Austria (are taken from the Austrian Seismological Service
 Earthquakes outside this region and magnetitude above 5.0 are taken from NEIC
 No new quakes found - thats good
-Tue May 26 15:41:21 UTC 2020
+Fri May 29 14:41:09 UTC 2020
