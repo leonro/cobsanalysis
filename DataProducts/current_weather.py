@@ -862,6 +862,9 @@ if product1:
         if secdb:
             writeDB(secdb,result)
         print ("METEO_adjusted written to DB")
+    print ("Part 1 - successfully finished")
+    print ("-------------------------------------------------")
+
 
 if product2 and product1:
     print ("Part 2 - table contents - started at {}".format(fd))
@@ -884,6 +887,7 @@ if product2 and product1:
         vallst = [0 for key in KEYLIST]
         for idx,key in enumerate(result._get_key_headers()):
             if key in NUMKEYLIST:
+                print ("Dealing with key {}".format(key))
                 # alternative
                 col = shortstream._get_column(key)
                 if len(col)> 0 and not np.isnan(col).all():
@@ -908,6 +912,8 @@ if product2 and product1:
             valdict = {}
             fulldict = {}
             #fulldict['meteo'] = valdict
+        if not valdict:
+            valdict = {}
         print ("Got old", valdict) 
 
         ### Snow or not snow, this is the question
@@ -1034,6 +1040,8 @@ if product3 and product1:
     name3 = name+'-3'
 
     try:
+        print ("Please note - plotting will only work from cron or root")
+        print (" ------------------------------")
         import pylab
         # ############################
         # # Create plots ???? -> move to plot
@@ -1092,7 +1100,9 @@ if product3 and product1:
         axarr[2].plot_date(t,y7,'-',color='gray')
         axarr[2].fill_between(t,0,y7,where=longextract[7]>=0,facecolor='gray',alpha=0.5)
         savepath = os.path.join(imagepath,'Meteo_0_'+filedate+'.png')
+        print ("Saving graph locally to {}".format(savepath))
         pylab.savefig(savepath)
+        print (" -> Done, now submitting ...")
         if showplots:
             plt.show()
         if submit:
