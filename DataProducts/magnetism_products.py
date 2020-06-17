@@ -101,6 +101,9 @@ daystodeal = 2
 primpier = 'A2'
 
 submit2gin = True
+submit2app = True
+
+submitlist = ['submitGINasIAGA', 'submitGINasIMCDF', 'submitZAMGFTPasIAGA', 'submitZAMGFTPasIMCDF', 'submitAPPasIAGA']
 
 currentvaluepath = '/srv/products/data/current.data'
 
@@ -170,6 +173,17 @@ zamgaddress=mpcred.lc(zamgcred,'address')
 zamguser=mpcred.lc(zamgcred,'user')
 zamgpasswd=mpcred.lc(zamgcred,'passwd')
 zamgport=mpcred.lc(zamgcred,'port')
+
+artcred = 'art'
+artaddress=mpcred.lc(artcred,'address')
+artuser=mpcred.lc(artcred,'user')
+artpasswd=mpcred.lc(artcred,'passwd')
+artport=mpcred.lc(artcred,'port')
+
+#Host: ftp.warrenarmstrong.net
+#Port: 21
+#Username: imouser@warrenarmstrong.net
+
 
 cred = 'cobshomepage'
 address=mpcred.lc(cred,'address')
@@ -583,12 +597,19 @@ if part2:
             #if ok:
             print ("Uploading data for {}".format(da))
             print ("  -- THREAD for IAGA data to FTP: {}".format(da))
-            # Send second data in background mode
-            Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathsec,'wic'+da+'psec.sec'),'ftppath':'/data/magnetism/wic/variation/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/psec-transfer.log'}).start()
-            # Send minute data in background mode
-            Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathmin,'wic'+da+'pmin.min'),'ftppath':'/data/magnetism/wic/variation/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/pmin-transfer.log'}).start()
+            if 'submitZAMGFTPasIAGA' in submitlist:
+                # Send second data in background mode
+                Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathsec,'wic'+da+'psec.sec'),'ftppath':'/data/magnetism/wic/variation/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/psec-transfer.log'}).start()
+            if 'submitZAMGFTPasIAGA' in submitlist:
+                # Send minute data in background mode
+                Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathmin,'wic'+da+'pmin.min'),'ftppath':'/data/magnetism/wic/variation/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/pmin-transfer.log'}).start()
 
-            if submit2gin:
+            if 'submitAPPasIAGA' in submitlist and submit2app:
+                # Send second data in background mode
+                print ("Uploading data to art project") 
+                Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathsec,'wic'+da+'psec.sec'),'ftppath':'/all-obs/','myproxy':artaddress,'port':artport,'login':artuser,'passwd':artpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/psec2app-transfer.log'}).start()
+
+            if 'submitGINasIAGA' in submitlist and submit2gin:
                 print ("Submitting to gin if no other curl job detected: active_pid = ", active_pid('curl'))
                 print ("#################################")
                 if not active_pid('curl'):
