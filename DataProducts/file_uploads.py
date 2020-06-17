@@ -116,7 +116,7 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
             if os.path.isfile(fullpath):
                 filelist.append(fullpath)
     except:
-        print ("Directory now found")
+        print ("Directory not found")
         return {}, {}
 
     retrievedSet={}
@@ -129,7 +129,12 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
         if datetime.utcfromtimestamp(mtime) > startdate and datetime.utcfromtimestamp(mtime) <= enddate:
             retrievedSet[name] = mtime
 
-    newdict = dict(retrievedSet.items() - memory.items())
+    if sys.version_info >= (3,):
+        newdict = dict(retrievedSet.items() - memory.items())
+    else:
+        newdict = dict(filter(lambda x: x not in memory.items(), retrievedSet.items()))
+
+
     return newdict, retrievedSet
 
 
@@ -152,7 +157,7 @@ workdictionary = {'wicqdmin': { 'path' : '/media/leon/6439-3834/products/data/ma
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicqdmin.log', 
                                 'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=10),
+                                'starttime'  : datetime.utcnow()-timedelta(days=2000),
                               },
                   'wicadjmin': {'path' : '/srv/products/data/magnetism/quasidefinitive',
                                 'destinations'  : {'gin' : {'type' : 'curl', 'path' : '/data/magnetism/wic/variation/'}, 
