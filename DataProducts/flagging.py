@@ -336,7 +336,7 @@ if step1:
                        flagls = lastdata.flag_outlier(keys=keys,threshold=threshold,timerange=window,returnflaglist=True,markall=markall)
                        # now check flaglist---- if more than 10 consecutive flags... then drop it
                        flaglist = consecutive_check(flagls, remove=True)
-                       if len(flagls) > len(flaglist)+1:   #+1 to add some room
+                       if len(flagls) > len(flaglist)+1 and sensor.startswith("LEMI036_1"):   #+1 to add some room
                            statusmsg[name2] = 'Step1: removed consecutive flags for {}: Found {}, Clean: {}'.format(sensor, len(flagls), len(flaglist))
                        #except:
                        #pass
