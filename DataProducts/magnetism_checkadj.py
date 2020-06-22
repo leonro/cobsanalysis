@@ -22,10 +22,10 @@ from subprocess import check_output   # used for checking whether send process a
 
 ## New Logging features 
 from martas import martaslog as ml
-logpath = '/var/log/magpy/mm-dp-magnetism.log'
+logpath = '/var/log/magpy/mm-dp-magdatacheck.log'
 sn = 'SAGITTARIUS' # servername ### Get that automatically??
 statusmsg = {}
-name = "{}-DataProducts-magnetism".format(sn)
+name = "{}-DataProducts-magdatacheck".format(sn)
 
 
 # Status checks:
@@ -96,6 +96,7 @@ scalalist = ['GP20S3NSS2_012201_0001_0001','GSM90_14245_0002_0002','GSM90_610763
 #             Paths and derived time ranges
 # ################################################
 
+dipath = '/srv/archive/WIC/DI/data/'
 starttimedt = endtime-timedelta(days=daystodeal)
 starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
 date = datetime.strftime(endtime,"%Y-%m-%d")
@@ -153,7 +154,6 @@ if part0:
     print ("----------------------------------------------------------------")
     print ("Part 0: get primary instruments")
     print ("----------------------------------------------------------------")
-    name1a = "{}-step1a".format(name)
     varioinst = ''
     scalainst = ''
     variosens = ''
@@ -179,9 +179,9 @@ if part0:
                 lastdec = ''
                 lastinc = ''
                 lastf = ''
-         print ("Selected primary variometer: {}".format(primvariosens))
-         print ("Selected primary scalar: {}".format(primscalasens))
-         print ("Current Values: Declination={}, Inclination={}, Intensity={}".format(lastdec, lastinc, lastf))
+        print ("Selected primary variometer: {}".format(primvariosens))
+        print ("Selected primary scalar: {}".format(primscalasens))
+        print ("Current Values: Declination={}, Inclination={}, Intensity={}".format(lastdec, lastinc, lastf))
     except:
         statusmsg[checkname0] = 'primary instrument assignment failed'
         print (" !!!!!! primary data read failed")
@@ -201,8 +201,8 @@ if part1:
     print ("Part 1a: Create adjusted one minute data from all instruments")
     print ("----------------------------------------------------------------")
     streamlist = []
-    #try:
-    for varioinst in variolist:
+    try:
+      for varioinst in variolist:
         variosens = "_".join(varioinst.split('_')[:-1])
         print ("Variosens", variosens)
         if not varioinst == '':
@@ -252,7 +252,7 @@ if part1:
             vario.header['DataAcquisitionLongitude'],vario.header['DataAcquisitionLatitude'] = convertGeoCoordinate(vario.header['DataAcquisitionLongitude'],vario.header['DataAcquisitionLatitude'],'epsg:31253','epsg:4326')
             #print vario.header['DataAcquisitionLongitude'],vario.header['DataAcquisitionLatitude']
             vario.header['DataLocationReference'] = 'WGS84, EPSG:4326'
-            statusmsg[name1b] = 'variometer data loaded'
+            #statusmsg[name1b] = 'variometer data loaded'
 
             # Doing baseline correction
 
@@ -267,7 +267,7 @@ if part1:
             if len(blvflaglist) > 0:
                 absr = absr.flag(blvflaglist)
                 absr = absr.remove_flagged()
-
+            if absr.length()[0] > 0:
                 baselst = getBaseline(db,variosens,date=date)
                 try:
                     print (baselst)  # valid for old dummy
@@ -288,41 +288,44 @@ if part1:
                     except:
                         fitknot = 0.3
                 print (startabs)
-                startabsdatetime = absst._testtime(startabs)
+                startabsdatetime = absr._testtime(startabs)
                 if startabsdatetime < datetime.utcnow()-timedelta(days=365):
                     startabs = datetime.strftime(datetime.utcnow()-timedelta(days=365),"%Y-%m-%d")
                 print (startabs)
                 print ("  - using function {} with knots at {} intervals beginning at {}".format(func,fitknot,startabs))
-                absst = absst._drop_nans('dx')
-                absst = absst._drop_nans('dy')
-                absst = absst._drop_nans('dz')
-                baselinefunc = vario.baseline(absst,startabs=startabs,fitfunc=func,fitdegree=fitdeg,knotstep=fitknot)
+                absr = absr._drop_nans('dx')
+                absr = absr._drop_nans('dy')
+                absr = absr._drop_nans('dz')
+                baselinefunc = vario.baseline(absr,startabs=startabs,fitfunc=func,fitdegree=fitdeg,knotstep=fitknot)
                 vario = vario.bc()
                 variomin = vario.filter()
                 print (" -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
                 streamlist.append(variomin)
                 if variosens == primvariosens:
                     # Calculate dif
-                    
+                    print ("HERE")            
         else:
             print ("No variometer data for {}".format(variosens))
 
-    print ("----------------------------------------------------------------")
-    print ("Part 1b: Compare adjusted one minute data")
-    print ("----------------------------------------------------------------")
-    if len(streamlist) > 0:
+      print ("----------------------------------------------------------------")
+      print ("Part 1b: Compare adjusted one minute data")
+      print ("----------------------------------------------------------------")
+      if len(streamlist) > 0:
         # Get the means
         meanstream = stackStreams(streamlist,get='mean',uncert='True')
         mediandx = meanstream.mean('dx',meanfunction='median')
         mediandy = meanstream.mean('dy',meanfunction='median')
         mediandz = meanstream.mean('dz',meanfunction='median')
         print ("Medians", mediandx,mediandy,mediandz)
-    else:
+        maxmedian = max([mediandx,mediandy,mediandz])
+        if maxmedian > 0.1:
+            statusmsg[namecheck1] = "variometer check - significant differences between instruments - please check"
+      else:
         print ("No variometer data found")
         statusmsg[namecheck1] = "variometer check failed - no data found for any variometer"
 
-    #except:
-    #statusmsg[namecheck0] = "variometer check generally failed"
+    except:
+      statusmsg[namecheck0] = "variometer check generally failed"
 
 # ################################################
 #             Part 2
@@ -343,7 +346,7 @@ if part2:
         scalasens = "_".join(scalainst.split('_')[:-1])
         print ("- getting scaladata, flags and offsets: {}".format(scalainst))
         if not scalainst == '':
-        scalar = readDB(db,scalainst,starttime=yesterd2)
+            scalar = readDB(db,scalainst,starttime=yesterd2)
         if (scalar.length()[0]) > 0:
             print ("     -- obtained data - last F = {}".format(scalar.ndarray[4][-1]))
             scalarflag = db2flaglist(db,scalasens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
@@ -370,12 +373,14 @@ if part2:
         meanstream = stackStreams(streamlist,get='mean',uncert='True')
         mediandf = meanstream.mean('df',meanfunction='median')
         print ("Medians", mediandf)
+        if mediandf > 0.3:
+            statusmsg[namecheck2] = "scalar check - large differences between instruments - please check"
     else:
         print ("No scalar data found")
         statusmsg[namecheck2] = "scalar check failed - no data found for any variometer"
 
 
-     """
+    """
      # eventually update average D, I and F values in currentvalue
      if os.path.isfile(currentvaluepath):
                 with open(currentvaluepath, 'r') as file:
@@ -388,10 +393,9 @@ if part2:
                 with open(currentvaluepath, 'w',encoding="utf-8") as file:
                     file.write(unicode(json.dumps(fulldict)))
                     print ("last QD analysis date has been updated from {} to {}".format(lastQDdate,date))
-     """
+    """
 
 print (statusmsg)
-#martaslog = ml(logfile=logpath,receiver='telegram')
-#martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-#martaslog.msg(statusmsg)
-
+martaslog = ml(logfile=logpath,receiver='telegram')
+martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
+martaslog.msg(statusmsg)

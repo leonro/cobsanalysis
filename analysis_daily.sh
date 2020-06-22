@@ -28,3 +28,4 @@ $PYTHONPATH /home/cobs/ANALYSIS/Projects/gamma/gamma.py -p /srv/projects/gamma/ 
 
 $DATE >> $TLOG
 
+$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/magnetism_checkadj.py
