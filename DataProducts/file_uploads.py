@@ -73,14 +73,14 @@ def active_pid(name):
 def uploaddata(localpath, destinationpath, typus='ftp', address='', user='', pwd='', port=None, logfile='stdout'):
     success = True
     print ("Running upload to {} (as {}) via {}: {} -> {}, logging to {}".format(address, user, typus, localpath, destinationpath, logfile)) 
-    typus = "TEST"
+    #typus = "TEST"
     if typus == 'ftpback':
            Thread(target=ftpdatatransfer, kwargs={'localfile':localpath,'ftppath':destinationpath,'myproxy':address,'port':port,'login':user,'passwd':pwd,'logfile':logfile}).start()
     elif typus == 'ftp':
            ftpdatatransfer(localfile=localpath,ftppath=destinationpath,myproxy=address,port=port,login=user,passwd=pwd,logfile=logfile)
     elif typus == 'gin':
         if not active_pid('curl'):
-            print ("  -- Uploading second data to GIN - active now")
+            print ("  -- Uploading minute data to GIN - active now")
             stdout = False
             if logfile == 'stdout':
                 stdout = True
@@ -146,27 +146,19 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
 part1 = True # check for availability of paths
 
 uploadpath = '/srv/products/data/lastupload.json'
-uploadpath = '/home/leon/Tmp/lastupload.json'
+#uploadpath = '/home/leon/Tmp/lastupload.json'
 
 #Basic path lists
 pathlist = ['/srv/products/data/magnetism/quasidefinitive']
 
-workdictionary = {'wicqdmin': { 'path' : '/media/leon/6439-3834/products/data/magnetism/quasidefinitive/min',
-                                'destinations'  : {'gin' : {'type' : 'curl', 'path' : '/data/magnetism/wic/variation/', }, 
+workdictionary = {'wicqdmin': { 'path' : '/srv/products/data/magnetism/quasidefinitive/min',
+                                'destinations'  : {'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', }, 
                                                    'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicqdmin.log'}
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicqdmin.log', 
                                 'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=2000),
-                              },
-                  'wicadjmin': {'path' : '/srv/products/data/magnetism/quasidefinitive',
-                                'destinations'  : {'gin' : {'type' : 'curl', 'path' : '/data/magnetism/wic/variation/'}, 
-                                                   'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicadjmin.log'}
-                                                  },
-                                'log'  : '/home/cobs/ANALYSIS/Logs/wicadjmin.log',
-                                'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=2),
-                               }
+                                'starttime'  : datetime.utcnow()-timedelta(days=10),
+                              }
                  }
 
 vpathsec = '/srv/products/data/magnetism/variation/sec/'
