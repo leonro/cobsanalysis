@@ -1,7 +1,6 @@
-Tue Jun  2 12:15:01 UTC 2020
+Tue Jun 23 12:15:01 UTC 2020
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
-Accessing credential file: /home/cobs/.magpycred
 Connecting to primary MARCOS...
 success
 PRIMARY INSTRUMENTS: ['LEMI036_1_0002_0002', 'GP20S3NSS2_012201_0001_0001']

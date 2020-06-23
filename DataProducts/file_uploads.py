@@ -129,11 +129,13 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
         if datetime.utcfromtimestamp(mtime) > startdate and datetime.utcfromtimestamp(mtime) <= enddate:
             retrievedSet[name] = mtime
 
-    if sys.version_info >= (3,):
-        newdict = dict(retrievedSet.items() - memory.items())
+    if memory:
+        if sys.version_info >= (3,):
+            newdict = dict(retrievedSet.items() - memory.items())
+        else:
+            newdict = dict(filter(lambda x: x not in memory.items(), retrievedSet.items()))
     else:
-        newdict = dict(filter(lambda x: x not in memory.items(), retrievedSet.items()))
-
+        newdict = retrievedSet.copy()
 
     return newdict, retrievedSet
 
@@ -153,24 +155,21 @@ pathlist = ['/srv/products/data/magnetism/quasidefinitive']
 
 workdictionary = {'wicqdmin': { 'path' : '/srv/products/data/magnetism/quasidefinitive/min',
                                 'destinations'  : {'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', }, 
-                                                   'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicqdmin.log'}
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicqdmin.log', 
                                 'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=10),
-                              }
-                 }
-
-"""
+                                'starttime'  : datetime.utcnow()-timedelta(days=60),
+                              },
                   'wicqdsec': { 'path' : '/srv/products/data/magnetism/quasidefinitive/sec',
-                                'destinations'  : {'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', }, 
-                                                   'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicqdsec.log'}
+                                'destinations'  : {'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', } 
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
-                                'log'  : '/home/cobs/ANALYSIS/Logs/wicqdmin.log', 
+                                'log'  : '/home/cobs/ANALYSIS/Logs/wicqdsec.log', 
                                 'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=10),
+                                'starttime'  : datetime.utcnow()-timedelta(days=200),
                               }
-"""
+                  }
+
+#                                                   'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicqdsec.log'}
 
 
 vpathsec = '/srv/products/data/magnetism/variation/sec/'
