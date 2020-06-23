@@ -143,7 +143,6 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
 
         for unid in uniqueids:
             idlist = [el for el in testlist if el[3] == unid]
-            print (unid, len(idlist))
             for comp in uniquecomponents:
                 complist = [el for el in idlist if comp == el[2]]
                 if debug:
@@ -151,7 +150,7 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
                 extendedcomplist = []
                 for line in complist:
                     tdiff = (line[1]-line[0]).total_seconds()
-                    if tdiff > sr:
+                    if tdiff > sr-(0.05*sr):
                         # add steps
                         firstt = line[0]
                         lastt = line[1]
@@ -194,7 +193,7 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
                         t0 = line[0]
                         t1 = extendedcomplist[idx+1][0]
                         tdiff = (t1-t0).total_seconds()
-                        if tdiff <= sr:
+                        if tdiff <= sr+(0.05*sr):
                             if not tmem:
                                 tmem = t0
                             endt = None
