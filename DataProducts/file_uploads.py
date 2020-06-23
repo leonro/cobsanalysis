@@ -161,6 +161,18 @@ workdictionary = {'wicqdmin': { 'path' : '/srv/products/data/magnetism/quasidefi
                               }
                  }
 
+"""
+                  'wicqdsec': { 'path' : '/srv/products/data/magnetism/quasidefinitive/sec',
+                                'destinations'  : {'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', }, 
+                                                   'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicqdsec.log'}
+                                                  },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
+                                'log'  : '/home/cobs/ANALYSIS/Logs/wicqdmin.log', 
+                                'endtime'  : datetime.utcnow(),
+                                'starttime'  : datetime.utcnow()-timedelta(days=10),
+                              }
+"""
+
+
 vpathsec = '/srv/products/data/magnetism/variation/sec/'
 vpathmin = '/srv/products/data/magnetism/variation/min/'
 vpathcdf = '/srv/products/data/magnetism/variation/cdf/'
@@ -197,6 +209,8 @@ if part1:
         endtime = workdictionary.get(key).get('endtime')
         newfiledict, alldic = getchangedfiles(sourcepath, lastfiles, starttime, endtime)
 
+        print ("Found new: {} and all {}".format(newfiledict, alldic))
+
         for dest in workdictionary.get(key).get('destinations'):
             print ("  -> Destination: {}".format(dest))
             address=mpcred.lc(dest,'address')
@@ -209,6 +223,7 @@ if part1:
                 for nfile in newfiledict:
                     print ("    -> Uploading {} to dest {}".format(nfile, dest))
                     success = uploaddata(nfile, destdict.get('path'), destdict.get('type'), address, user, passwd, port, logfile=destdict.get('logfile','stdout'))
+                    print ("    -> Success", success)
                     if not success:
                         #remove nfile from alldic 
                         # thus it will be retried again next time
