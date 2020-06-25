@@ -5,6 +5,9 @@
 *.md~
 *.txt~
 *.png
+Logs
+TitleGraphs/*.jpg
+TitleGraphs/*.png
 build
 dist
 dist/*.egg

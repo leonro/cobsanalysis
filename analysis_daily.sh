@@ -32,4 +32,4 @@ $PYTHONPATH /home/cobs/ANALYSIS/DataProducts/magnetism_checkadj.py
 
 $DATE >> $TLOG
 
-$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/file_uploads.py
+$PYTHONPATH /home/cobs/ANALYSIS/FileUploads/file_upload_qd.py >> $TLOG
