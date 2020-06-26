@@ -1,4 +1,4 @@
-Tue Jun 23 16:01:01 UTC 2020
+Fri Jun 26 09:21:01 UTC 2020
 1. Get earthquake information
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -46,7 +46,7 @@ NEIC data has been added
 Logfile /var/log/magpy/mm-fd-earthquake.log loaded
 Existing: SAGITTARIUS-FileDownload-quakes-AT
 Existing: SAGITTARIUS-FileDownload-quakes-NEIC
-Tue Jun 23 16:01:12 UTC 2020
+Fri Jun 26 09:21:07 UTC 2020
 2. Send Telegram Quake Info
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -59,18 +59,5 @@ Please note:
 Earthquakes in Austria (are taken from the Austrian Seismological Service
 Earthquakes outside this region and magnetitude above 5.0 are taken from NEIC
 Now get last record from temporary folder
-Found new earthquakes
-Creating message:
-2020-06-23 at *15:29:05.769000* UTC
-earthquake with magnitude *7.4*
-12 km SSW of Santa María Zapotitlán, Mexico
-Latitude: 16.0291°
-Longitude: -95.901°
-Depth: 26.25km
-[Show map](https://maps.google.com/maps/?q=16.0291,-95.901&ll=16.0291,-95.901&z=9)
-
-----------------------------
-
-Sending message to Telegram
-Error occured when writing current data
-Tue Jun 23 16:01:17 UTC 2020
+No new quakes found - thats good
+Fri Jun 26 09:21:09 UTC 2020
