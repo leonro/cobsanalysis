@@ -70,7 +70,7 @@ def active_pid(name):
     return True
 
 
-def uploaddata(localpath, destinationpath, typus='ftp', address='', user='', pwd='', port=None, logfile='stdout'):
+def uploaddata(localpath, destinationpath, typus='ftp', address='', user='', pwd='', port=None, proxy=None, logfile='stdout'):
     """
     DEFINITION:
         upload data method.
@@ -89,7 +89,7 @@ def uploaddata(localpath, destinationpath, typus='ftp', address='', user='', pwd
     elif typus == 'ftp':
            ftpdatatransfer(localfile=localpath,ftppath=destinationpath,myproxy=address,port=port,login=user,passwd=pwd,logfile=logfile)
     elif typus == 'sftp':
-           sftptransfer(source=localpath,destination=destinationpath,host=address,user=user,password=pwd,logfile=logfile)
+           sftptransfer(source=localpath,destination=destinationpath,host=address,user=user,password=pwd,proxy=proxy,logfile=logfile)
     elif typus == 'scp':
            timeout = 300
            destina = "{}:{}".format(address,destinationpath)
@@ -156,7 +156,7 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
     return newdict, retrievedSet
 
 
-def sftptransfer(source, destination, host="yourserverdomainorip.com", user="root", password="12345", port=22, logfile='stdout'):
+def sftptransfer(source, destination, host="yourserverdomainorip.com", user="root", password="12345", port=22, proxy=None, logfile='stdout'):
     """
     DEFINITION:
         Tranfering data to an sftp server
@@ -169,6 +169,7 @@ def sftptransfer(source, destination, host="yourserverdomainorip.com", user="roo
         - host:         (str) address of reciever
         - user:
         - password:
+        - proxy         (str) lik 123.123.123.123:8080
         - logfile:      (str) not used so far
 
 
@@ -182,19 +183,38 @@ def sftptransfer(source, destination, host="yourserverdomainorip.com", user="roo
 
     import os
     try:
-        import pysftp
+        import paramiko
     except:
-        print ("PYSFTP not installed ... aborting")
+        print ("paramiko or pysocks not installed ... aborting")
         return False
 
     if not os.path.isfile(source):
         print ("source does not exist ... aborting")
         return False
 
-    with pysftp.Connection(host=host, username=user, password=password) as sftp:
-        print ("Connection succesfully stablished ... ")
+    #if not logfile == 'stdout':
+    #    paramiko.util.log_to_file(logfile)
 
-        sftp.put(source, destination)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    if not proxy:
+        client.connect(hostname=host,port=port, username=user, password=password)
+    else:
+        print ("Using proxy: {}".format(proxy))
+        
+        proxy = ("138.22.188.129",3128)
+        timeout = 30
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect(proxy)  
+        client.connect(hostname=host,port=port, username=user, password=password,sock=sock, banner_timeout=30)
+
+    #with paramiko.SFTPClient.from_transport(transport) as sftp:
+    #    print ("Connection succesfully stablished ... ")
+
+    client.put(source, destination)
+    client.close()
  
     return True
 
@@ -207,10 +227,10 @@ def sftptransfer(source, destination, host="yourserverdomainorip.com", user="roo
 part1 = True # check for availability of paths
 
 # make fileupload an independent method importing workingdictionary (add to MARTAS?)
-uploadpath = '/srv/products/data/lastupload.json'
+uploadpath = '/srv/products/data/lastuploadtest.json'
 #uploadpath = '/home/leon/Tmp/lastupload.json'
-workdictionary = {'wicadjmin': { 'path' : '/srv/products/data/magnetism/quasidefinitive/sec',
-                                'destinations'  : {'gleave' : {'type' : 'sftp', 'path' : '/uploads/all-obs'}
+workdictionary = {'wicadjmin': { 'path' : '/srv/products/data/magnetism/variation/sec',
+                                'destinations'  : {'gleave' : {'type' : 'scp', 'path' : '/uploads/all-obs'}#,'proxy':("138.22.188.129",3128)}
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicadjart.log', 
                                 'endtime'  : datetime.utcnow(),
@@ -269,11 +289,12 @@ if part1:
             passwd=mpcred.lc(dest,'passwd')
             port=mpcred.lc(dest,'port')
             destdict = workdictionary.get(key).get('destinations')[dest]
+            proxy = destdict.get('proxy',None)
             #print (destdict)
             if address and user and newfiledict:
                 for nfile in newfiledict:
                     print ("    -> Uploading {} to dest {}".format(nfile, dest))
-                    success = uploaddata(nfile, destdict.get('path'), destdict.get('type'), address, user, passwd, port, logfile=destdict.get('logfile','stdout'))
+                    success = uploaddata(nfile, destdict.get('path'), destdict.get('type'), address, user, passwd, port, proxy=proxy, logfile=destdict.get('logfile','stdout'))
                     print ("    -> Success", success)
                     if not success:
                         #remove nfile from alldic 
