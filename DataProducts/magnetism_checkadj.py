@@ -303,7 +303,8 @@ if part1:
                 streamlist.append(variomin)
                 if variosens == primvariosens:
                     # Calculate dif
-                    print ("HERE")            
+                    print ("HERE")
+                    # assign declination, inclination and intensity
         else:
             print ("No variometer data for {}".format(variosens))
 
