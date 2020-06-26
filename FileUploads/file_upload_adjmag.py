@@ -76,6 +76,7 @@ def uploaddata(localpath, destinationpath, typus='ftp', address='', user='', pwd
         upload data method.
         Supports file upload to servers using the following schemes:
         ftp
+        sftp     (requires sftp)
         ftpback (background process)
         scp  (please consider using rsync)  scp transfer requires a established key, therefor connect to the server once using ssh to create it
         gin   (curl based ftp upload to data gins)    
@@ -87,6 +88,8 @@ def uploaddata(localpath, destinationpath, typus='ftp', address='', user='', pwd
            Thread(target=ftpdatatransfer, kwargs={'localfile':localpath,'ftppath':destinationpath,'myproxy':address,'port':port,'login':user,'passwd':pwd,'logfile':logfile}).start()
     elif typus == 'ftp':
            ftpdatatransfer(localfile=localpath,ftppath=destinationpath,myproxy=address,port=port,login=user,passwd=pwd,logfile=logfile)
+    elif typus == 'sftp':
+           sftptransfer(source=localpath,destination=destinationpath,host=address,user=user,password=pwd,logfile=logfile)
     elif typus == 'scp':
            timeout = 300
            destina = "{}:{}".format(address,destinationpath)
@@ -153,6 +156,49 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
     return newdict, retrievedSet
 
 
+def sftptransfer(source, destination, host="yourserverdomainorip.com", user="root", password="12345", port=22, logfile='stdout'):
+    """
+    DEFINITION:
+        Tranfering data to an sftp server
+        (does not support proxies - please additionally use corkscrew for tranfer through a proxy)
+
+    PARAMETERS:
+    Variables:
+        - source:       (str) Path within ftp to send file to.
+        - destination:  (str) full file path to send to.
+        - host:         (str) address of reciever
+        - user:
+        - password:
+        - logfile:      (str) not used so far
+
+
+    RETURNS:
+        - success (BOOL) True if succesful.
+
+    EXAMPLE:
+        >>> sftptransfer(source='/home/me/file.txt', destination='/data/magnetism/file.txt', host='www.example.com', user='mylogin', password='mypassword', logfile='/home/me/Logs/magpy-transfer.log'
+                            )
+    """
+
+    import os
+    try:
+        import pysftp
+    except:
+        print ("PYSFTP not installed ... aborting")
+        return False
+
+    if not os.path.isfile(source):
+        print ("source does not exist ... aborting")
+        return False
+
+    with pysftp.Connection(host=host, username=user, password=password) as sftp:
+        print ("Connection succesfully stablished ... ")
+
+        sftp.put(source, destination)
+ 
+    return True
+
+
 # ################################################
 #             Configuration
 # ################################################
@@ -160,14 +206,11 @@ def getchangedfiles(basepath,memory,startdate=datetime(1840,4,4),enddate=datetim
 
 part1 = True # check for availability of paths
 
+# make fileupload an independent method importing workingdictionary (add to MARTAS?)
 uploadpath = '/srv/products/data/lastupload.json'
 #uploadpath = '/home/leon/Tmp/lastupload.json'
-
-#Basic path lists
-pathlist = ['/srv/products/data/magnetism/quasidefinitive']
-
 workdictionary = {'wicadjmin': { 'path' : '/srv/products/data/magnetism/quasidefinitive/sec',
-                                'destinations'  : {'gleave' : {'type' : 'scp', 'path' : '/uploads/all-obs'}
+                                'destinations'  : {'gleave' : {'type' : 'sftp', 'path' : '/uploads/all-obs'}
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicadjart.log', 
                                 'endtime'  : datetime.utcnow(),
@@ -179,6 +222,8 @@ workdictionary = {'wicadjmin': { 'path' : '/srv/products/data/magnetism/quasidef
 #'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', }, 
 #'zamg' : {'type' : 'ftpback', 'path' : '/data/magnetism/wic/variation/','logfile': '/home/cobs/ANALYSIS/Logs/wicadj.log'},
 
+#Basic path lists
+pathlist = ['/srv/products/data/magnetism/quasidefinitive']
 vpathsec = '/srv/products/data/magnetism/variation/sec/'
 vpathmin = '/srv/products/data/magnetism/variation/min/'
 vpathcdf = '/srv/products/data/magnetism/variation/cdf/'
