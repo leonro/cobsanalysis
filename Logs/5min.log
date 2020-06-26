@@ -1,27 +1,27 @@
-Tue Jun 23 16:00:01 UTC 2020
+Fri Jun 26 09:30:01 UTC 2020
 1. Identify primary instrument
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
 Connecting to primary MARCOS...
 ('Checking ', 'LEMI036_1_0002_0002')
-(86400, '2020-06-23 15:55:14.000000', '2020-06-22 15:55:15.000000')
-(datetime.datetime(2020, 6, 23, 15, 55, 14), datetime.datetime(2020, 6, 22, 15, 55, 15))
+(86400, '2020-06-26 09:25:06.000000', '2020-06-25 09:25:07.000000')
+(datetime.datetime(2020, 6, 26, 9, 25, 6), datetime.datetime(2020, 6, 25, 9, 25, 7))
 Coverage OK - using LEMI036_1_0002_0002
 ('Checking ', 'GP20S3NSS2_012201_0001_0001')
-(86400, datetime.datetime(2020, 6, 23, 15, 55, 37, 387973))
+(86400, datetime.datetime(2020, 6, 26, 9, 25, 33, 612049))
 Test 1 OK: data  available and last value not null
-(datetime.datetime(2020, 6, 23, 15, 55, 37, 387973), datetime.datetime(2020, 6, 22, 15, 55, 22, 390649))
+(datetime.datetime(2020, 6, 26, 9, 25, 33, 612049), datetime.datetime(2020, 6, 25, 9, 25, 21, 649290))
 Test 2 OK: correct amount of data covering the last day
 Get primary -> Using Variometer LEMI036_1_0002_0002 and Scalar GP20S3NSS2_012201_0001_0001
 Dumping instruments as usual in the old way...
 ... done
-('Got', {u'magnetism': {u'QD enddate': [u'2020-06-01', u''], u'k-warning': [0, u''], u'k': [0, u''], u'primary scalar': [u'GP20S3NSS2_012201_0001_0001', u''], u'k-time': [u'2020-06-23 16:30', u''], u'k-valid': [u'', u''], u'primary vario': [u'LEMI036_1_0002_0002', u''], u'QD analysis date': [u'2020-06-13', u'']}, u'meteo': {u'N': [0.0, u'mm/h'], u'Schnee': [u'-', u''], u'P': [903.2220283449016, u'hPA'], u'S': [-0.425899, u'cm'], u'Niederschlag': [None, u'SYNOP'], u'T': [18.897073126535478, u'degC'], u'date': [u'2020-06-23 15:29:00', u''], u'rh': [49.548, u'%'], u'Wind': [5.610990489112673, u'km/h']}, u'logging': {u'magnetismplots': [u'2020-06-23 15:53', u''], u'seismoNEICdata': [u'2020-06-23 15:41', u''], u'seismoATdata': [u'2020-06-23 15:41', u''], u'failedupload2homepage': 0}})
+('Got', {u'magnetism': {u'QD enddate': [u'2020-06-01', u''], u'k-warning': [0, u''], u'k': [1, u''], u'primary scalar': [u'GP20S3NSS2_012201_0001_0001', u''], u'k-time': [u'2020-06-26 07:30', u''], u'k-valid': [u'', u''], u'primary vario': [u'LEMI036_1_0002_0002', u''], u'QD analysis date': [u'2020-06-13', u'']}, u'meteo': {u'N': [0.009999999999990905, u'mm/h'], u'Schnee': [u'-', u''], u'P': [899.0462226880439, u'hPA'], u'S': [1.136, u'cm'], u'Niederschlag': [None, u'SYNOP'], u'T': [18.375617834574264, u'degC'], u'date': [u'2020-06-26 08:30:00', u''], u'rh': [67.015, u'%'], u'Wind': [2.521537548136351, u'km/h']}, u'logging': {u'magnetismplots': [u'2020-06-26 09:23', u''], u'seismoNEICdata': [u'2020-06-26 09:21', u''], u'seismoATdata': [u'2020-06-26 09:21', u''], u'failedupload2homepage': 0}})
 Logfile /var/log/magpy/mm-dp-getprimary.log loaded
 Existing: SAGITTARIUS-DataProducts-getprimary-vario
 Existing: SAGITTARIUS-DataProducts-getprimary-process
 Existing: SAGITTARIUS-DataProducts-getprimary-scalar
 Existing: SAGITTARIUS-DataProducts-getprimary-write
-Tue Jun 23 16:00:04 UTC 2020
+Fri Jun 26 09:30:05 UTC 2020
 2. Automatic flags
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -157,23 +157,9 @@ Sensor: LEMI036_3_0001_0002 -> Samplingrate: 1.0
  b) checking sampling rate of failed sensors
  c) Check for recent data
    Valid data for LEMI036_1_0002_0002
-   Valid data for LEMI036_3_0001_0002
  d) Flagging data
    - got 7200 datapoints
    - getting existing flags for LEMI036_1_0002
-   - found 0 existing flags
-  - determining new outliers
-True
--------------------------
-Dealing with key: x
--------------------------
-Dealing with key: y
--------------------------
-Dealing with key: z
-  - new flags: 0
-RESULT: found [] new flags
-   - got 7200 datapoints
-   - getting existing flags for LEMI036_3_0001
    - found 0 existing flags
   - determining new outliers
 True
@@ -244,7 +230,7 @@ Cleaning up all records
            Flaglist statistics            
 ##########################################
 
-A) Total contents: 332332
+A) Total contents: 332417
 
 B) Content for each ID:
 Dataset: GSM90_14245_0002-LEMI025_22_0003 	 Amount: 2
@@ -272,25 +258,25 @@ Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A2 	 Amount: 48
 Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A16 	 Amount: 66
 Dataset: GSM-19W_3101329_0001 	 Amount: 256
 Dataset: GP20S3V_911005_0001 	 Amount: 399
-Dataset: GSM90_6107631_0001 	 Amount: 1232
+Dataset: GSM90_6107631_0001 	 Amount: 1233
 Dataset: FGE_S0252_0001 	 Amount: 1445
 Dataset: POS1_N432_0001 	 Amount: 2949
-Dataset: GSM90_31968_0002 	 Amount: 3268
+Dataset: GSM90_31968_0002 	 Amount: 3271
 Dataset: LEMI025_22_0002 	 Amount: 4682
 Dataset: GP20S3NSS2_012201_0001 	 Amount: 4842
 Dataset: POS1_N456_0001 	 Amount: 11983
-Dataset: GSM90_6107632_0001 	 Amount: 13663
-Dataset: GSM90_14245_0002 	 Amount: 15101
+Dataset: GSM90_6107632_0001 	 Amount: 13734
+Dataset: GSM90_14245_0002 	 Amount: 15103
 Dataset: GP20S3NS_012201_0001 	 Amount: 18806
 Dataset: LEMI025_28_0002 	 Amount: 20446
 Dataset: LEMI025_22_0003 	 Amount: 24786
 Dataset: LEMI036_1_0002 	 Amount: 25394
-Dataset: LEMI036_3_0001 	 Amount: 82197
-Dataset: RCST7_20160114_0001 	 Amount: 100431
+Dataset: LEMI036_3_0001 	 Amount: 82200
+Dataset: RCST7_20160114_0001 	 Amount: 100436
 
 Logfile /var/log/magpy/mm-dp-flagging.log loaded
 Existing: SAGITTARIUS-DataProducts-flagging-step1
-Tue Jun 23 16:00:58 UTC 2020
+Fri Jun 26 09:31:15 UTC 2020
 3. Running magnetic analysis
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -346,11 +332,7 @@ Part 1: Create adjusted one second data from primary instruments
  a) get primary instruments
 Found LEMI036_1_0002_0002 as primary variometer and GP20S3NSS2_012201_0001_0001 as scalar instrument
  b) getting variometer data, applying flags, offsets, WGS coordinates LEMI036_1_0002_0002
-     -- getting flags from DB: 543
-Flag: 20 percent done
-Flag: 40 percent done
-Flag: 60 percent done
-Flag: 80 percent done
+     -- getting flags from DB: 0
    -- applying deltas
 applyDeltas: No delta values found - returning unmodified stream
    -- offsets
@@ -361,12 +343,12 @@ Found rotation angle of -0.582
  c) getting scaladata, flags and offsets: GP20S3NSS2_012201_0001_0001
 readDB: could not identify time! Column sectime contains None, which cannot be interpreted as time by the testtime method
 readDB: Found identical values only:sectime
-('Test', array([ array([ 737597.00000066,  737597.00001236,  737597.00002416, ...,
-        737599.66708761,  737599.66709928,  737599.66711111]),
+('Test', array([ array([ 737600.00000042,  737600.00001216,  737600.00002358, ...,
+        737602.396211  ,  737602.39622242,  737602.39623399]),
        array([], dtype=float64), array([], dtype=float64),
        array([], dtype=float64),
-       array([ 48733.63577 ,  48733.632477,  48733.628839, ...,  48734.897326,
-        48734.900873,  48734.90108 ]),
+       array([ 48734.206918,  48734.208631,  48734.212035, ...,  48732.316307,
+        48732.318761,  48732.327574]),
        array([], dtype=float64), array([], dtype=float64),
        array([], dtype=float64), array([], dtype=float64),
        array([], dtype=float64), array([], dtype=float64),
@@ -377,18 +359,18 @@ readDB: Found identical values only:sectime
        array([], dtype=float64), array([], dtype=float64),
        array([], dtype=float64), array([], dtype=float64),
        array([], dtype=float64)], dtype=object))
-     -- obtained data - last F = 48734.90108
+     -- obtained data - last F = 48732.327574
      -- getting flags from DB: 0
      -- applying deltasB:
-     -- corrections performed -last F = 48733.33008
+     -- corrections performed -last F = 48730.756574
  d) performing simple baseline correction based on pier A2
     LEMI036_1_0002_0002 and GP20S3NSS2_012201_0001_0001
     using BLV data
   - Found 6 flags for baseline values
   - Basevalues for last 100 days:
-  - Delta H = 24.7926904398 +/- 0.264211834188
-  - Delta D = 4.25270129528 +/- 0.000802860389566
-  - Delta Z = -20.146296103 +/- 0.161223516784
+  - Delta H = 24.7926904398 +/- 0.25164915307
+  - Delta D = 4.25270129528 +/- 0.000585726907889
+  - Delta Z = -20.2357468769 +/- 0.149170335074
   - Running Analysis jobs ... 
 Key data_threshold_amount_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
 -> Status remaining unchanged
@@ -399,7 +381,7 @@ Key data_threshold_base_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already con
   - Performing constant basevalue correction
  e) combining data sets, adding header, writing sec and min data
 mergeStreams: Found identical timesteps - using simple merge
-('  - preliminary data file after MERGE:', [230416, 230416, 230416, 230416, 230416, 230416, 230416, 0, 230416, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+('  - preliminary data file after MERGE:', [207008, 207008, 207008, 207008, 207008, 207008, 207008, 0, 207008, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
   - Saving one second data - IAGA
   - Saving one second data - CDF
 writeIMAGCDF: current Publication level 2 does not allow to set StandardName
@@ -414,38 +396,38 @@ writeIMAGCDF: current Publication level 2 does not allow to set StandardName
 writeIMAGCDF: Found F column
 writeIMAGCDF: given components are XYZF. Checking F column...
 writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
-230416
+207008
   - Saving one minute data - IAGA
   - Saving one minute adjusted data to database
 Writing adjusted data to primary DB
 Writing adjusted data to secondary DB
 -----------------------------------
-Part1 needs 0:01:22.964684
+Part1 needs 0:01:13.886899
 -----------------------------------
 ----------------------------------------------------------------
 Part 2: Publish adjusted data
 ----------------------------------------------------------------
   uploading one second data to ZAMG Server and eventually to GIN
-Uploading data for 20200623
-  -- THREAD for IAGA data to FTP: 20200623
+Uploading data for 20200626
+  -- THREAD for IAGA data to FTP: 20200626
 Uploading data to art project
-*cmd* 'USER trmsoe@www.zamg.ac.at'
-*resp* '331 Password required for trmsoe.'
-*cmd* u'PASS *********'
-*cmd* 'USER trmsoe@www.zamg.ac.at'
-*resp* '331 Password required for trmsoe.'
-*cmd* u'PASS *********'
 ('Submitting to gin if no other curl job detected: active_pid = ', False)
 #################################
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*cmd* 'USER trmsoe@www.zamg.ac.at'
+*resp* '331 Password required for trmsoe.'
+*cmd* u'PASS *********'
+*resp* '331 Password required for trmsoe.'
+*cmd* u'PASS *********'
   -- Uploading second data to GIN - active now
 *resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
 *cmd* 'CWD /data/magnetism/wic/variation/'
 *resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
 *cmd* 'CWD /data/magnetism/wic/variation/'
 *resp* '250 CWD command successful'
-*cmd* 'DELE wic20200623pmin.min'
+*cmd* 'DELE wic20200626psec.sec'
 *resp* '250 CWD command successful'
-*cmd* 'DELE wic20200623psec.sec'
+*cmd* 'DELE wic20200626pmin.min'
 *resp* '250 DELE command successful'
 *resp* '250 DELE command successful'
 *cmd* 'TYPE I'
@@ -454,161 +436,35 @@ Uploading data to art project
 *cmd* 'PASV'
 *resp* '200 Type set to I'
 *cmd* 'PASV'
-*resp* '227 Entering Passive Mode (138,22,188,129,144,228).'
-*cmd* u'STOR wic20200623psec.sec'
-*resp* '150 Opening BINARY mode data connection for wic20200623psec.sec'
-*resp* '227 Entering Passive Mode (138,22,188,129,163,44).'
-*cmd* u'STOR wic20200623pmin.min'
-*resp* '150 Opening BINARY mode data connection for wic20200623pmin.min'
+*resp* '227 Entering Passive Mode (138,22,188,129,152,240).'
+*cmd* u'STOR wic20200626pmin.min'
+*resp* '227 Entering Passive Mode (138,22,188,129,150,243).'
+*cmd* u'STOR wic20200626psec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200626pmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200626psec.sec'
 *resp* '226 Transfer complete'
 *cmd* 'QUIT'
 *resp* '221 Goodbye.'
-Exception
-Unable to access database
-
-Exception details:
-Exception: uk.ac.bgs.GINFileUpload.Model.MetadataBackingStoreException
-  Message: Unable to access database
-  Stack trace:
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLDatabaseController.AddRecord(SQLDatabaseController.java:311)
-    uk.ac.bgs.GINFileUpload.Model.Cache.addFileItem(Cache.java:213)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processUpload(CacheServlet.java:394)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processRequest(CacheServlet.java:243)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.doPost(CacheServlet.java:675)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:648)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:729)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:291)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:239)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:217)
-    org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:106)
-    org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:614)
-    org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:142)
-    org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:79)
-    org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:616)
-    org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:88)
-    org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:518)
-    org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1091)
-    org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:673)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1500)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.run(NioEndpoint.java:1456)
-    java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-    java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-    org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-    java.lang.Thread.run(Thread.java:745)
-
-Root cause
-Exception: org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException
-  Message: The statement was aborted because it would have caused a duplicate key value in a unique or primary key constraint or unique index identified by 'SQL180321141534320' defined on 'GINFILEUPLOAD'.
-  Stack trace:
-    org.apache.derby.impl.jdbc.SQLExceptionFactory.getSQLException(Unknown Source)
-    org.apache.derby.impl.jdbc.Util.generateCsSQLException(Unknown Source)
-    org.apache.derby.impl.jdbc.TransactionResourceImpl.wrapInSQLException(Unknown Source)
-    org.apache.derby.impl.jdbc.TransactionResourceImpl.handleException(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedConnection.handleException(Unknown Source)
-    org.apache.derby.impl.jdbc.ConnectionChild.handleException(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeLargeUpdate(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeUpdate(Unknown Source)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLLoggingPreparedStatement.executeUpdate(SQLLoggingPreparedStatement.java:147)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLDatabaseController.AddRecord(SQLDatabaseController.java:300)
-    uk.ac.bgs.GINFileUpload.Model.Cache.addFileItem(Cache.java:213)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processUpload(CacheServlet.java:394)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processRequest(CacheServlet.java:243)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.doPost(CacheServlet.java:675)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:648)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:729)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:291)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:239)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:217)
-    org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:106)
-    org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:614)
-    org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:142)
-    org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:79)
-    org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:616)
-    org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:88)
-    org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:518)
-    org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1091)
-    org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:673)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1500)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.run(NioEndpoint.java:1456)
-    java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-    java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-    org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-    java.lang.Thread.run(Thread.java:745)
-
-Root cause
-Exception: org.apache.derby.iapi.error.StandardException
-  Message: The statement was aborted because it would have caused a duplicate key value in a unique or primary key constraint or unique index identified by 'SQL180321141534320' defined on 'GINFILEUPLOAD'.
-  Stack trace:
-    org.apache.derby.iapi.error.StandardException.newException(Unknown Source)
-    org.apache.derby.iapi.error.StandardException.newException(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexChanger.insertAndCheckDups(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexChanger.doInsert(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexChanger.insert(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexSetChanger.insert(Unknown Source)
-    org.apache.derby.impl.sql.execute.RowChangerImpl.insertRow(Unknown Source)
-    org.apache.derby.impl.sql.execute.InsertResultSet.normalInsertCore(Unknown Source)
-    org.apache.derby.impl.sql.execute.InsertResultSet.open(Unknown Source)
-    org.apache.derby.impl.sql.GenericPreparedStatement.executeStmt(Unknown Source)
-    org.apache.derby.impl.sql.GenericPreparedStatement.execute(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeLargeUpdate(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeUpdate(Unknown Source)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLLoggingPreparedStatement.executeUpdate(SQLLoggingPreparedStatement.java:147)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLDatabaseController.AddRecord(SQLDatabaseController.java:300)
-    uk.ac.bgs.GINFileUpload.Model.Cache.addFileItem(Cache.java:213)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processUpload(CacheServlet.java:394)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processRequest(CacheServlet.java:243)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.doPost(CacheServlet.java:675)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:648)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:729)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:291)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:239)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:217)
-    org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:106)
-    org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:614)
-    org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:142)
-    org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:79)
-    org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:616)
-    org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:88)
-    org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:518)
-    org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1091)
-    org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:673)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1500)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.run(NioEndpoint.java:1456)
-    java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-    java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-    org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-    java.lang.Thread.run(Thread.java:745)
-   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   994    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   8420      0 --:--:-- --:--:-- --:--:--  8423
- 56 4052k    0     0   56 2304k      0  2053k  0:00:01  0:00:01 --:--:-- 2053k 59 4052k    0     0   59 2416k      0   892k  0:00:04  0:00:02  0:00:02 72404 61 4052k    0     0   61 2512k      0   763k  0:00:05  0:00:03  0:00:02 98198 64 4052k    0     0   64 2624k      0   598k  0:00:06  0:00:04  0:00:02   98k 68 4052k    0     0   68 2768k      0   495k  0:00:08  0:00:05  0:00:03  104k 69 4052k    0     0   69 2816k      0   452k  0:00:08  0:00:06  0:00:02  100k 71 4052k    0     0   71 2912k      0   367k  0:00:11  0:00:07  0:00:04 97505 71 4052k    0     0   71 2912k      0   326k  0:00:12  0:00:08  0:00:04 72791 72 4052k    0     0   72 2928k      0   323k  0:00:12  0:00:09  0:00:03 66859 80 4052k    0     0   80 3280k      0   305k  0:00:13  0:00:10  0:00:03   99k 82 4052k    0     0   82 3344k      0   283k  0:00:14  0:00:11  0:00:03 97313 82 4052k    0     0   82 3360k      0   271k  0:00:14  0:00:12  0:00:02  100k 86 4052k    0     0   86 3520k      0   265k  0:00:15  0:00:13  0:00:02  140k 90 4052k    0     0   90 3664k      0   257k  0:00:15  0:00:14  0:00:01  141k 91 4052k    0     0   91 3728k      0   243k  0:00:16  0:00:15  0:00:01   98k 93 4052k    0     0   93 3776k      0   234k  0:00:17  0:00:16  0:00:01   99k 97 4052k    0     0   97 3968k      0   231k  0:00:17  0:00:17 --:--:--  127k100 4052k    0     0  100 4052k      0   219k  0:00:18  0:00:18 --:--:--  101k100 4052k    0     0  100 4052k      0   207k  0:00:19  0:00:19 --:--:-- 75844100 4052k    0     0  100 4052k      0   197k  0:00:20  0:00:20 --:--:-- 63869100 4052k    0     0  100 4052k      0   188k  0:00:21  0:00:21 --:--:-- 52728100 4052k    0     0  100 4052k      0   180k  0:00:22  0:00:22 --:--:-- 16342100 4052k    0     0  100 4052k      0   172k  0:00:23  0:00:23 --:--:--     0100 4052k    0     0  100 4052k      0   165k  0:00:24  0:00:24 --:--:--     0100 4052k    0     0  100 4052k      0   158k  0:00:25  0:00:25 --:--:--     0100 4052k    0     0  100 4052k      0   152k  0:00:26  0:00:26 --:--:--     0100 4052k    0     0  100 4052k      0   147k  0:00:27  0:00:27 --:--:--     0100 4052k    0     0  100 4052k      0   142k  0:00:28  0:00:28 --:--:--     0100 4052k    0     0  100 4052k      0   137k  0:00:29  0:00:29 --:--:--     0100 4052k    0     0  100 4052k      0   132k  0:00:30  0:00:30 --:--:--     0100 4052k    0     0  100 4052k      0   128k  0:00:31  0:00:31 --:--:--     0100 4052k    0     0  100 4052k      0   124k  0:00:32  0:00:32 --:--:--     0100 4052k    0     0  100 4052k      0   120k  0:00:33  0:00:33 --:--:--     0100 4052k    0     0  100 4052k      0   117k  0:00:34  0:00:34 --:--:--     0100 4052k    0     0  100 4052k      0   114k  0:00:35  0:00:35 --:--:--     0100 4052k    0     0  100 4052k      0   111k  0:00:36  0:00:36 --:--:--     0100 4062k    0 10276  100 4052k    279   110k  0:00:36  0:00:36 --:--:--     0
-
-False
-  -- Uploading minute data to GIN: 20200623
-No faillog existing
 Success
-Data loaded OK, data file id = 37978149
+Data loaded OK, data file id = 38402301
    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   994    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   1044      0 --:--:-- --:--:-- --:--:--  1044
-  0 71031    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100 71031    0     0  100 71031      0  23937  0:00:02  0:00:02 --:--:-- 70258100 71079    0     0  100 71031      0  18508  0:00:03  0:00:03 --:--:-- 37742100 71079  100    48  100 71031     12  18502  0:00:04  0:00:03  0:00:01 37702
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   8337      0 --:--:-- --:--:-- --:--:--  8352
+ 47 2407k    0     0   47 1136k      0  3275k --:--:-- --:--:-- --:--:-- 3275k100 2407k    0     0  100 2407k      0  1133k  0:00:02  0:00:02 --:--:--  715k100 2407k    0     0  100 2407k      0   770k  0:00:03  0:00:03 --:--:--  457k100 2407k    0     0  100 2407k      0   583k  0:00:04  0:00:04 --:--:--  336k100 2407k    0     0  100 2407k      0   469k  0:00:05  0:00:05 --:--:--  265k100 2407k    0     0  100 2407k      0   392k  0:00:06  0:00:06 --:--:--  219k100 2407k    0     0  100 2407k      0   337k  0:00:07  0:00:07 --:--:--     0100 2407k    0     0  100 2407k      0   295k  0:00:08  0:00:08 --:--:--     0100 2407k    0     0  100 2407k      0   263k  0:00:09  0:00:09 --:--:--     0100 2407k    0     0  100 2407k      0   237k  0:00:10  0:00:10 --:--:--     0100 2407k    0     0  100 2407k      0   216k  0:00:11  0:00:11 --:--:--     0100 2407k    0     0  100 2407k      0   198k  0:00:12  0:00:12 --:--:--     0100 2407k    0     0  100 2407k      0   183k  0:00:13  0:00:13 --:--:--     0100 2407k    0     0  100 2407k      0   170k  0:00:14  0:00:14 --:--:--     0100 2407k    0     0  100 2407k      0   158k  0:00:15  0:00:15 --:--:--     0100 2407k    0     0  100 2407k      0   149k  0:00:16  0:00:16 --:--:--     0100 2407k    0     0  100 2407k      0   140k  0:00:17  0:00:17 --:--:--     0100 2407k    0     0  100 2407k      0   132k  0:00:18  0:00:18 --:--:--     0100 2407k    0     0  100 2407k      0   125k  0:00:19  0:00:19 --:--:--     0100 2407k    0     0  100 2407k      0   120k  0:00:19  0:00:19 --:--:--     0100 2407k  100    48  100 2407k      2   120k  0:00:24  0:00:19  0:00:05     0
 
 True
-Uploading data for 20200621
-  -- THREAD for IAGA data to FTP: 20200621
+  -- Uploading minute data to GIN: 20200626
+No faillog existing
+Success
+Data loaded OK, data file id = 38402334
+   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100   994  100   994    0     0    795      0  0:00:01  0:00:01 --:--:--   795
+  0 42951    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0100 42951    0     0  100 42951      0  15669  0:00:02  0:00:02 --:--:-- 88558100 42951    0     0  100 42951      0  11473  0:00:03  0:00:03 --:--:-- 28884100 42951    0     0  100 42951      0   9050  0:00:04  0:00:04 --:--:-- 17256100 42951    0     0  100 42951      0   7472  0:00:05  0:00:05 --:--:-- 12299100 42951    0     0  100 42951      0   6363  0:00:06  0:00:06 --:--:--  9557100 42951    0     0  100 42951      0   5541  0:00:07  0:00:07 --:--:--     0100 42999  100    48  100 42951      5   5098  0:00:09  0:00:08  0:00:01     0100 42999  100    48  100 42951      5   5098  0:00:09  0:00:08  0:00:01     0
+
+True
+Uploading data for 20200624
+  -- THREAD for IAGA data to FTP: 20200624
 Uploading data to art project
 *cmd* 'USER trmsoe@www.zamg.ac.at'
 *resp* '331 Password required for trmsoe.'
@@ -619,187 +475,61 @@ Uploading data to art project
 ('Submitting to gin if no other curl job detected: active_pid = ', False)
 #################################
   -- Uploading second data to GIN - active now
+*resp* '226 Transfer complete'
+*cmd* 'QUIT'
 *resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
 *cmd* 'CWD /data/magnetism/wic/variation/'
 *resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
 *cmd* 'CWD /data/magnetism/wic/variation/'
+*resp* '221 Goodbye.'
 *resp* '250 CWD command successful'
-*cmd* 'DELE wic20200621pmin.min'
+*cmd* 'DELE wic20200624psec.sec'
 *resp* '250 CWD command successful'
-*cmd* 'DELE wic20200621psec.sec'
-*resp* '250 DELE command successful'
+*cmd* 'DELE wic20200624pmin.min'
 *resp* '250 DELE command successful'
 *cmd* 'TYPE I'
+*resp* '250 DELE command successful'
 *cmd* 'TYPE I'
 *resp* '200 Type set to I'
 *cmd* 'PASV'
 *resp* '200 Type set to I'
 *cmd* 'PASV'
+*resp* '227 Entering Passive Mode (138,22,188,129,131,254).'
+*cmd* u'STOR wic20200624psec.sec'
+*resp* '227 Entering Passive Mode (138,22,188,129,145,116).'
+*cmd* u'STOR wic20200624pmin.min'
+*resp* '150 Opening BINARY mode data connection for wic20200624psec.sec'
+*resp* '150 Opening BINARY mode data connection for wic20200624pmin.min'
 *resp* '226 Transfer complete'
 *cmd* 'QUIT'
 *resp* '221 Goodbye.'
-*resp* '227 Entering Passive Mode (138,22,188,129,143,130).'
-*cmd* u'STOR wic20200621pmin.min'
-*resp* '227 Entering Passive Mode (138,22,188,129,145,14).'
-*cmd* u'STOR wic20200621psec.sec'
-*resp* '150 Opening BINARY mode data connection for wic20200621pmin.min'
-*resp* '150 Opening BINARY mode data connection for wic20200621psec.sec'
-*resp* '226 Transfer complete'
-*cmd* 'QUIT'
-*resp* '221 Goodbye.'
-Exception
-Unable to access database
-
-Exception details:
-Exception: uk.ac.bgs.GINFileUpload.Model.MetadataBackingStoreException
-  Message: Unable to access database
-  Stack trace:
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLDatabaseController.AddRecord(SQLDatabaseController.java:311)
-    uk.ac.bgs.GINFileUpload.Model.Cache.addFileItem(Cache.java:213)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processUpload(CacheServlet.java:394)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processRequest(CacheServlet.java:243)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.doPost(CacheServlet.java:675)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:648)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:729)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:291)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:239)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:217)
-    org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:106)
-    org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:614)
-    org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:142)
-    org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:79)
-    org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:616)
-    org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:88)
-    org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:518)
-    org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1091)
-    org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:673)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1500)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.run(NioEndpoint.java:1456)
-    java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-    java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-    org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-    java.lang.Thread.run(Thread.java:745)
-
-Root cause
-Exception: org.apache.derby.shared.common.error.DerbySQLIntegrityConstraintViolationException
-  Message: The statement was aborted because it would have caused a duplicate key value in a unique or primary key constraint or unique index identified by 'SQL180321141534320' defined on 'GINFILEUPLOAD'.
-  Stack trace:
-    org.apache.derby.impl.jdbc.SQLExceptionFactory.getSQLException(Unknown Source)
-    org.apache.derby.impl.jdbc.Util.generateCsSQLException(Unknown Source)
-    org.apache.derby.impl.jdbc.TransactionResourceImpl.wrapInSQLException(Unknown Source)
-    org.apache.derby.impl.jdbc.TransactionResourceImpl.handleException(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedConnection.handleException(Unknown Source)
-    org.apache.derby.impl.jdbc.ConnectionChild.handleException(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeLargeUpdate(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeUpdate(Unknown Source)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLLoggingPreparedStatement.executeUpdate(SQLLoggingPreparedStatement.java:147)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLDatabaseController.AddRecord(SQLDatabaseController.java:300)
-    uk.ac.bgs.GINFileUpload.Model.Cache.addFileItem(Cache.java:213)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processUpload(CacheServlet.java:394)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processRequest(CacheServlet.java:243)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.doPost(CacheServlet.java:675)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:648)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:729)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:291)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:239)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:217)
-    org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:106)
-    org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:614)
-    org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:142)
-    org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:79)
-    org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:616)
-    org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:88)
-    org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:518)
-    org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1091)
-    org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:673)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1500)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.run(NioEndpoint.java:1456)
-    java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-    java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-    org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-    java.lang.Thread.run(Thread.java:745)
-
-Root cause
-Exception: org.apache.derby.iapi.error.StandardException
-  Message: The statement was aborted because it would have caused a duplicate key value in a unique or primary key constraint or unique index identified by 'SQL180321141534320' defined on 'GINFILEUPLOAD'.
-  Stack trace:
-    org.apache.derby.iapi.error.StandardException.newException(Unknown Source)
-    org.apache.derby.iapi.error.StandardException.newException(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexChanger.insertAndCheckDups(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexChanger.doInsert(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexChanger.insert(Unknown Source)
-    org.apache.derby.impl.sql.execute.IndexSetChanger.insert(Unknown Source)
-    org.apache.derby.impl.sql.execute.RowChangerImpl.insertRow(Unknown Source)
-    org.apache.derby.impl.sql.execute.InsertResultSet.normalInsertCore(Unknown Source)
-    org.apache.derby.impl.sql.execute.InsertResultSet.open(Unknown Source)
-    org.apache.derby.impl.sql.GenericPreparedStatement.executeStmt(Unknown Source)
-    org.apache.derby.impl.sql.GenericPreparedStatement.execute(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeStatement(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeLargeUpdate(Unknown Source)
-    org.apache.derby.impl.jdbc.EmbedPreparedStatement.executeUpdate(Unknown Source)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLLoggingPreparedStatement.executeUpdate(SQLLoggingPreparedStatement.java:147)
-    uk.ac.bgs.GINFileUpload.Model.SQLDatabase.SQLDatabaseController.AddRecord(SQLDatabaseController.java:300)
-    uk.ac.bgs.GINFileUpload.Model.Cache.addFileItem(Cache.java:213)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processUpload(CacheServlet.java:394)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.processRequest(CacheServlet.java:243)
-    uk.ac.bgs.GINFileUpload.Controllers.CacheServlet.doPost(CacheServlet.java:675)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:648)
-    javax.servlet.http.HttpServlet.service(HttpServlet.java:729)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:291)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
-    org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:239)
-    org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:206)
-    org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:217)
-    org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:106)
-    org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:614)
-    org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:142)
-    org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:79)
-    org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:616)
-    org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:88)
-    org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:518)
-    org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1091)
-    org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:673)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1500)
-    org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.run(NioEndpoint.java:1456)
-    java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-    java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-    org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-    java.lang.Thread.run(Thread.java:745)
+Success
+Data loaded OK, data file id = 38402461
    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   994    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100   994  100   994    0     0    904      0  0:00:01  0:00:01 --:--:--   905
-  0 6076k    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0 27 6076k    0     0   27 1680k      0   711k  0:00:08  0:00:02  0:00:06 6487k 37 6076k    0     0   37 2288k      0   623k  0:00:09  0:00:03  0:00:06 1460k 38 6076k    0     0   38 2368k      0   460k  0:00:13  0:00:05  0:00:08  780k 39 6076k    0     0   39 2384k      0   434k  0:00:13  0:00:05  0:00:08  704k 42 6076k    0     0   42 2608k      0   406k  0:00:14  0:00:06  0:00:08  605k 45 6076k    0     0   45 2784k      0   344k  0:00:17  0:00:08  0:00:09  193k 46 6076k    0     0   46 2848k      0   319k  0:00:19  0:00:08  0:00:11  106k 47 6076k    0     0   47 2912k      0   293k  0:00:20  0:00:09  0:00:11  113k 48 6076k    0     0   48 2928k      0   277k  0:00:21  0:00:10  0:00:11  107k 51 6076k    0     0   51 3152k      0   272k  0:00:22  0:00:11  0:00:11  105k 54 6076k    0     0   54 3328k      0   257k  0:00:23  0:00:12  0:00:11  111k 55 6076k    0     0   55 3392k      0   238k  0:00:25  0:00:14  0:00:11  102k 56 6076k    0     0   56 3408k      0   228k  0:00:26  0:00:14  0:00:12   99k 59 6076k    0     0   59 3632k      0   234k  0:00:25  0:00:15  0:00:10  142k 61 6076k    0     0   61 3728k      0   227k  0:00:26  0:00:16  0:00:10  119k 63 6076k    0     0   63 3856k      0   216k  0:00:28  0:00:17  0:00:11  108k 66 6076k    0     0   66 4016k      0   212k  0:00:28  0:00:18  0:00:10  133k 67 6076k    0     0   67 4080k      0   205k  0:00:29  0:00:19  0:00:10  134k 67 6076k    0     0   67 4128k      0   199k  0:00:30  0:00:20  0:00:10 97542 70 6076k    0     0   70 4272k      0   199k  0:00:30  0:00:21  0:00:09  107k 72 6076k    0     0   72 4400k      0   192k  0:00:31  0:00:22  0:00:09  107k 73 6076k    0     0   73 4448k      0   188k  0:00:32  0:00:23  0:00:09 93801 75 6076k    0     0   75 4576k      0   185k  0:00:32  0:00:24  0:00:08  103k 76 6076k    0     0   76 4672k      0   183k  0:00:33  0:00:25  0:00:08  114k 77 6076k    0     0   77 4736k      0   178k  0:00:34  0:00:26  0:00:08 93789 81 6076k    0     0   81 4928k      0   178k  0:00:33  0:00:27  0:00:06  113k 81 6076k    0     0   81 4944k      0   173k  0:00:35  0:00:28  0:00:07  100k 82 6076k    0     0   82 5040k      0   168k  0:00:35  0:00:29  0:00:06 91548 86 6076k    0     0   86 5248k      0   170k  0:00:35  0:00:30  0:00:05  107k 86 6076k    0     0   86 5280k      0   167k  0:00:36  0:00:31  0:00:05  106k 87 6076k    0     0   87 5312k      0   162k  0:00:37  0:00:32  0:00:05 77618 89 6076k    0     0   89 5424k      0   162k  0:00:37  0:00:33  0:00:04   99k 92 6076k    0     0   92 5600k      0   161k  0:00:37  0:00:34  0:00:03  118k 94 6076k    0     0   94 5728k      0   160k  0:00:37  0:00:35  0:00:02   99k 95 6076k    0     0   95 5808k      0   159k  0:00:38  0:00:36  0:00:02  110k 97 6076k    0     0   97 5936k      0   158k  0:00:38  0:00:37  0:00:01  129k 99 6076k    0     0   99 6048k      0   155k  0:00:39  0:00:38  0:00:01  111k100 6076k    0     0  100 6076k      0   151k  0:00:39  0:00:39 --:--:-- 90120100 6076k    0     0  100 6076k      0   148k  0:00:40  0:00:40 --:--:-- 66496100 6076k    0     0  100 6076k      0   144k  0:00:41  0:00:41 --:--:-- 48897100 6076k    0     0  100 6076k      0   141k  0:00:42  0:00:42 --:--:-- 25797100 6076k    0     0  100 6076k      0   138k  0:00:44  0:00:44 --:--:--  5857100 6076k    0     0  100 6076k      0   135k  0:00:45  0:00:45 --:--:--     0100 6076k    0     0  100 6076k      0   132k  0:00:46  0:00:46 --:--:--     0100 6076k    0     0  100 6076k      0   129k  0:00:47  0:00:47 --:--:--     0100 6076k    0     0  100 6076k      0   126k  0:00:48  0:00:48 --:--:--     0100 6076k    0     0  100 6076k      0   123k  0:00:49  0:00:49 --:--:--     0100 6076k    0     0  100 6076k      0   121k  0:00:50  0:00:50 --:--:--     0100 6076k    0     0  100 6076k      0   119k  0:00:51  0:00:51 --:--:--     0100 6076k    0     0  100 6076k      0   116k  0:00:52  0:00:52 --:--:--     0100 6076k    0     0  100 6076k      0   114k  0:00:53  0:00:53 --:--:--     0100 6076k    0     0  100 6076k      0   112k  0:00:54  0:00:54 --:--:--     0100 6076k    0     0  100 6076k      0   110k  0:00:55  0:00:55 --:--:--     0100 6076k    0     0  100 6076k      0   108k  0:00:56  0:00:56 --:--:--     0100 6076k    0     0  100 6076k      0   106k  0:00:57  0:00:57 --:--:--     0100 6076k    0     0  100 6076k      0   104k  0:00:58  0:00:58 --:--:--     0100 6076k    0     0  100 6076k      0   102k  0:00:59  0:00:59 --:--:--     0100 6076k    0     0  100 6076k      0   101k  0:01:00  0:01:00 --:--:--     0100 6086k    0 10276  100 6076k    170   100k  0:01:00  0:01:00 --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100   994  100   994    0     0    633      0  0:00:01  0:00:01 --:--:--   633
+  0 6076k    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0 36 6076k    0     0   36 2208k      0   680k  0:00:08  0:00:03  0:00:05 3285k 38 6076k    0     0   38 2336k      0   527k  0:00:11  0:00:04  0:00:07 1256k 40 6076k    0     0   40 2480k      0   458k  0:00:13  0:00:05  0:00:08  873k 41 6076k    0     0   41 2528k      0   417k  0:00:14  0:00:06  0:00:08  726k 43 6076k    0     0   43 2640k      0   341k  0:00:17  0:00:07  0:00:10  512k 44 6076k    0     0   44 2688k      0   308k  0:00:19  0:00:08  0:00:11 89824 45 6076k    0     0   45 2752k      0   302k  0:00:20  0:00:09  0:00:11 91197 46 6076k    0     0   46 2848k      0   280k  0:00:21  0:00:10  0:00:11 79584 46 6076k    0     0   46 2848k      0   255k  0:00:23  0:00:11  0:00:12 64314 50 6076k    0     0   50 3088k      0   251k  0:00:24  0:00:12  0:00:12   98k 52 6076k    0     0   52 3168k      0   244k  0:00:24  0:00:12  0:00:12  113k 52 6076k    0     0   52 3200k      0   229k  0:00:26  0:00:13  0:00:13 94842 56 6076k    0     0   56 3440k      0   227k  0:00:26  0:00:15  0:00:11  118k 58 6076k    0     0   58 3568k      0   220k  0:00:27  0:00:16  0:00:11  142k 59 6076k    0     0   59 3616k      0   213k  0:00:28  0:00:16  0:00:12  113k 61 6076k    0     0   61 3760k      0   207k  0:00:29  0:00:18  0:00:11  114k 62 6076k    0     0   62 3776k      0   197k  0:00:30  0:00:19  0:00:11  111k 64 6076k    0     0   64 3936k      0   194k  0:00:31  0:00:20  0:00:11 99628 66 6076k    0     0   66 4016k      0   191k  0:00:31  0:00:20  0:00:11 96599 67 6076k    0     0   67 4080k      0   179k  0:00:33  0:00:22  0:00:11 80956 67 6076k    0     0   67 4096k      0   174k  0:00:34  0:00:23  0:00:11 64479 70 6076k    0     0   70 4304k      0   177k  0:00:34  0:00:24  0:00:10  101k 72 6076k    0     0   72 4400k      0   175k  0:00:34  0:00:25  0:00:09 99484 73 6076k    0     0   73 4496k      0   169k  0:00:35  0:00:26  0:00:09 87334 75 6076k    0     0   75 4560k      0   168k  0:00:36  0:00:27  0:00:09  113k 77 6076k    0     0   77 4704k      0   165k  0:00:36  0:00:28  0:00:08  121k 78 6076k    0     0   78 4752k      0   162k  0:00:37  0:00:29  0:00:08 92996 79 6076k    0     0   79 4816k      0   160k  0:00:37  0:00:29  0:00:08 86231 80 6076k    0     0   80 4896k      0   158k  0:00:38  0:00:30  0:00:08 93880 82 6076k    0     0   82 5040k      0   157k  0:00:38  0:00:32  0:00:06 97485 84 6076k    0     0   84 5152k      0   153k  0:00:39  0:00:33  0:00:06 90412 85 6076k    0     0   85 5184k      0   150k  0:00:40  0:00:34  0:00:06 83434 85 6076k    0     0   85 5200k      0   147k  0:00:41  0:00:35  0:00:06 74303 89 6076k    0     0   89 5424k      0   150k  0:00:40  0:00:36  0:00:04  101k 91 6076k    0     0   91 5536k      0   146k  0:00:41  0:00:37  0:00:04 90358 91 6076k    0     0   91 5584k      0   145k  0:00:41  0:00:38  0:00:03 89133 93 6076k    0     0   93 5664k      0   144k  0:00:42  0:00:39  0:00:03  103k 93 6076k    0     0   93 5696k      0   141k  0:00:42  0:00:40  0:00:02  100k 95 6076k    0     0   95 5824k      0   139k  0:00:43  0:00:41  0:00:02 71784 96 6076k    0     0   96 5840k      0   137k  0:00:44  0:00:42  0:00:02 64184 98 6076k    0     0   98 5968k      0   136k  0:00:44  0:00:43  0:00:01 76175 99 6076k    0     0   99 6048k      0   135k  0:00:44  0:00:44 --:--:-- 72123 99 6076k    0     0   99 6076k      0   133k  0:00:45  0:00:45 --:--:-- 71435100 6076k    0     0  100 6076k      0   131k  0:00:46  0:00:46 --:--:-- 59148100 6076k    0     0  100 6076k      0   128k  0:00:47  0:00:47 --:--:-- 51768100 6076k    0     0  100 6076k      0   126k  0:00:48  0:00:48 --:--:-- 24318100 6076k    0     0  100 6076k      0   123k  0:00:49  0:00:49 --:--:--  6365100 6076k    0     0  100 6076k      0   120k  0:00:50  0:00:50 --:--:--    54100 6076k    0     0  100 6076k      0   118k  0:00:51  0:00:51 --:--:--     0100 6076k    0     0  100 6076k      0   116k  0:00:52  0:00:52 --:--:--     0100 6076k    0     0  100 6076k      0   114k  0:00:53  0:00:53 --:--:--     0100 6076k    0     0  100 6076k      0   112k  0:00:54  0:00:54 --:--:--     0100 6076k    0     0  100 6076k      0   110k  0:00:55  0:00:55 --:--:--     0100 6076k    0     0  100 6076k      0   108k  0:00:56  0:00:56 --:--:--     0100 6076k    0     0  100 6076k      0   106k  0:00:57  0:00:57 --:--:--     0100 6076k    0     0  100 6076k      0   104k  0:00:58  0:00:58 --:--:--     0100 6076k    0     0  100 6076k      0   102k  0:00:59  0:00:59 --:--:--     0100 6076k    0     0  100 6076k      0   100k  0:01:00  0:01:00 --:--:--     0100 6076k    0     0  100 6076k      0    99k  0:01:01  0:01:01 --:--:--     0100 6076k    0     0  100 6076k      0  99979  0:01:02  0:01:02 --:--:--     0100 6076k    0     0  100 6076k      0  98397  0:01:03  0:01:03 --:--:--     0100 6076k    0     0  100 6076k      0  96865  0:01:04  0:01:04 --:--:--     0100 6076k    0     0  100 6076k      0  95379  0:01:05  0:01:05 --:--:--     0100 6076k    0     0  100 6076k      0  93939  0:01:06  0:01:06 --:--:--     0100 6076k    0     0  100 6076k      0  92541  0:01:07  0:01:07 --:--:--     0100 6076k    0     0  100 6076k      0  91184  0:01:08  0:01:08 --:--:--     0100 6076k    0     0  100 6076k      0  89867  0:01:09  0:01:09 --:--:--     0100 6076k    0     0  100 6076k      0  88587  0:01:10  0:01:10 --:--:--     0100 6076k    0     0  100 6076k      0  87343  0:01:11  0:01:11 --:--:--     0100 6076k    0     0  100 6076k      0  86133  0:01:12  0:01:12 --:--:--     0100 6076k    0     0  100 6076k      0  84957  0:01:13  0:01:13 --:--:--     0100 6076k    0     0  100 6076k      0  83812  0:01:14  0:01:14 --:--:--     0100 6076k    0    48  100 6076k      0  82843  0:01:15  0:01:15 --:--:--     0100 6076k    0    48  100 6076k      0  82842  0:01:15  0:01:15 --:--:--     0
 
-False
-  -- Uploading minute data to GIN: 20200621
+True
+  -- Uploading minute data to GIN: 20200624
 No faillog existing
 Success
-Data loaded OK, data file id = 37978289
+Data loaded OK, data file id = 38402478
    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   994    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100   994  100   994    0     0    896      0  0:00:01  0:00:01 --:--:--   896
-  0  103k    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0100  103k    0     0  100  103k      0  33232  0:00:03  0:00:03 --:--:-- 99546100  103k    0     0  100  103k      0  25259  0:00:04  0:00:04 --:--:-- 51148100  103k  100    48  100  103k      9  21614  0:00:05  0:00:04  0:00:01 38134
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100   994  100   994    0     0    738      0  0:00:01  0:00:01 --:--:--   738
+  0  103k    0     0    0     0      0      0 --:--:--  0:00:02 --:--:--     0100  103k    0     0  100  103k      0  34879  0:00:03  0:00:03 --:--:--  153k100  103k    0     0  100  103k      0  26199  0:00:04  0:00:04 --:--:-- 62996100  103k    0     0  100  103k      0  20979  0:00:05  0:00:05 --:--:-- 39402100  103k    0     0  100  103k      0  17494  0:00:06  0:00:06 --:--:-- 28673100  103k    0     0  100  103k      0  15002  0:00:07  0:00:07 --:--:-- 22541100  103k    0     0  100  103k      0  13131  0:00:08  0:00:08 --:--:--     0100  103k    0     0  100  103k      0  11675  0:00:09  0:00:09 --:--:--     0100  103k  100    48  100  103k      4  10580  0:00:12  0:00:09  0:00:03     0100  103k  100    48  100  103k      4  10579  0:00:12  0:00:09  0:00:03     0
 
 True
 ----------------------------------------------------------------
 Part 3: determine quasidefinite data
 ----------------------------------------------------------------
-  - Current weekday: 1
+  - Current weekday: 4
  a) Checking whether current time is suitable for QD
     - QD calculation will be performed on day 5 between 3:00 and 4:00
   - Not time for Quasidefinitve data determinations - waiting for 2:00 am
 -----------------------------------
-Part3 needs 0:00:00.000086
+Part3 needs 0:00:00.000068
 -----------------------------------
 ----------------------------------------------------------------
 Part 5: create plots and upload them to webpage
@@ -813,104 +543,103 @@ Dealing with key: x
 Dealing with key: y
 -------------------------
 Dealing with key: z
-ndtype - Timeseries ending at: 2020-06-23 16:00:00+00:00
-Coverage in days: 2.66666666663
-Last effective time series ending at day 2020-06-23 00:00:00
+ndtype - Timeseries ending at: 2020-06-26 09:30:00+00:00
+Coverage in days: 2.39583333337
+Last effective time series ending at day 2020-06-26 00:00:00
  -----------------------------------------------------
  ------------- Starting backward analysis ------------
  --------------- beginning at last time --------------
 Step0 needed: 0:00:00.000138
-Step1 needed: 0:00:00.003386
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7febb633aec0>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7febb633af18>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7febb633af70>}, 737598.66597222222, 737599.66666666663]
+Step1 needed: 0:00:00.003079
+Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5940>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5998>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf59f0>}, 737601.3743055556, 737602.3756944444]
 DEALING:  x
 DEALING:  y
 DEALING:  z
-Step2 needed: 0:00:00.630407
-Step3 needed: 0:00:00.005504
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7febb633afc8>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b8050>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b80a8>}, 737598.66597222222, 737599.66666666663]
+Step2 needed: 0:00:00.565768
+Step3 needed: 0:00:00.005341
+Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5a48>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5aa0>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5af8>}, 737601.3743055556, 737602.3756944444]
 DEALING:  x
 DEALING:  y
 DEALING:  z
-Step4 needed: 0:00:00.639528
-Step5 needed: 0:00:00.005490
+Step4 needed: 0:00:00.569656
+Step5 needed: 0:00:00.005662
  -----------------------------------------------------
  ------------- Starting forward analysis -------------
  -----------------  from first date ------------------
-Running daily chunks forward until  2020-06-22 00:00:00+00:00
+Running daily chunks forward until  2020-06-25 00:00:00+00:00
 ##############################################
  careful - datastream not long enough for correct k determination
 ##############################################
-Hourly means not correctly determinable for day 2020-06-21 02:30:00+00:00
+Hourly means not correctly determinable for day 2020-06-24 02:30:00+00:00
 as the extended time range is not reached
 ----------------------------------------------
 ##############################################
  careful - datastream not long enough for correct k determination
 ##############################################
-Hourly means not correctly determinable for day 2020-06-21 01:30:00+00:00
+Hourly means not correctly determinable for day 2020-06-24 01:30:00+00:00
 as the extended time range is not reached
 ----------------------------------------------
 ##############################################
  careful - datastream not long enough for correct k determination
 ##############################################
-Hourly means not correctly determinable for day 2020-06-21 00:30:00+00:00
+Hourly means not correctly determinable for day 2020-06-24 00:30:00+00:00
 as the extended time range is not reached
 ----------------------------------------------
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b8100>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b8158>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b81b0>}, 737596.91597222222, 737598.08333333337]
+Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5b50>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5ba8>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5c00>}, 737599.90982697543, 737601.08402777778]
 DEALING:  x
 DEALING:  y
 DEALING:  z
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-21 02:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-21 01:30:00+00:00
-as the extended time rang/home/cobs/anaconda2/lib/python2.7/site-packages/magpy/database.py:1974: UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+##################/home/cobs/anaconda2/lib/python2.7/site-packages/magpy/database.py:1974: UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
   if not col[0] or col[0] in ['nan', '-','']: #remove place holders
-e is not reached
+############################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-06-24 02:30:00+00:00
+as the extended time range is not reached
 ----------------------------------------------
 ##############################################
  careful - datastream not long enough for correct k determination
 ##############################################
-Hourly means not correctly determinable for day 2020-06-21 00:30:00+00:00
+Hourly means not correctly determinable for day 2020-06-24 01:30:00+00:00
 as the extended time range is not reached
 ----------------------------------------------
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7febb633af70>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7febb633af18>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7febb633aec0>}, 737596.91597222222, 737598.08333333337]
+##############################################
+ careful - datastream not long enough for correct k determination
+##############################################
+Hourly means not correctly determinable for day 2020-06-24 00:30:00+00:00
+as the extended time range is not reached
+----------------------------------------------
+Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf59f0>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5998>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5940>}, 737599.91597222222, 737601.08402777778]
 DEALING:  x
 DEALING:  y
 DEALING:  z
-Running daily chunks forward until  2020-06-23 00:00:00+00:00
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7febb633afc8>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b80a8>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b8050>}, 737597.91666666663, 737599.08402777778]
+Running daily chunks forward until  2020-06-26 00:00:00+00:00
+Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5af8>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5aa0>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5a48>}, 737600.91597222222, 737602.08402777778]
 DEALING:  x
 DEALING:  y
 DEALING:  z
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b81b0>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b8158>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7febb62b8100>}, 737597.91666666663, 737599.08402777778]
+Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5c00>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5ba8>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f0cdeaf5b50>}, 737600.91597222222, 737602.08402777778]
 DEALING:  x
 DEALING:  y
 DEALING:  z
 Checking kvals
-Index: 0, time: 2020-06-21 22:30:00+00:00, kval: 0
-Index: 1, time: 2020-06-22 01:30:00+00:00, kval: 0
-Index: 2, time: 2020-06-22 04:30:00+00:00, kval: 1
-Index: 3, time: 2020-06-22 07:30:00+00:00, kval: 1
-Index: 4, time: 2020-06-22 10:30:00+00:00, kval: 1
-Index: 5, time: 2020-06-22 13:30:00+00:00, kval: 0
-Index: 6, time: 2020-06-22 16:30:00+00:00, kval: 1
-Index: 7, time: 2020-06-22 19:30:00+00:00, kval: 1
-Index: 8, time: 2020-06-22 22:30:00+00:00, kval: 1
-Index: 9, time: 2020-06-23 01:30:00+00:00, kval: 0
-Index: 10, time: 2020-06-23 04:30:00+00:00, kval: 1
-Index: 11, time: 2020-06-23 07:30:00+00:00, kval: 1
-Index: 12, time: 2020-06-23 10:30:00+00:00, kval: 0
-Index: 13, time: 2020-06-23 13:30:00+00:00, kval: 1
-Index: 14, time: 2020-06-23 16:30:00+00:00, kval: 0
-14
+Index: 0, time: 2020-06-24 19:30:00+00:00, kval: 0
+Index: 1, time: 2020-06-24 22:30:00+00:00, kval: 1
+Index: 2, time: 2020-06-25 01:30:00+00:00, kval: 1
+Index: 3, time: 2020-06-25 04:30:00+00:00, kval: 1
+Index: 4, time: 2020-06-25 07:30:00+00:00, kval: 2
+Index: 5, time: 2020-06-25 10:30:00+00:00, kval: 2
+Index: 6, time: 2020-06-25 13:30:00+00:00, kval: 1
+Index: 7, time: 2020-06-25 16:30:00+00:00, kval: 1
+Index: 8, time: 2020-06-25 19:30:00+00:00, kval: 1
+Index: 9, time: 2020-06-25 22:30:00+00:00, kval: 1
+Index: 10, time: 2020-06-26 01:30:00+00:00, kval: 1
+Index: 11, time: 2020-06-26 04:30:00+00:00, kval: 0
+Index: 12, time: 2020-06-26 07:30:00+00:00, kval: 1
+Index: 13, time: 2020-06-26 10:30:00+00:00, kval: 0
+13
 None
-Expect k of 0 until 2020-06-23 16:30 + 1.5 hours UTC (current time = 2020-06-23 16:04:12.068469)
+Expect k of 0 until 2020-06-26 10:30 + 1.5 hours UTC (current time = 2020-06-26 09:34:27.260936)
 K value has been updated to 0
   -> Now writing kvals to database
   -> Done
@@ -921,12 +650,12 @@ K value has been updated to 0
 *cmd* 'QUIT'
 *resp* '221 Goodbye.'
  
-magvar_2020-06-23.png                           0%    0     0.0KB/s   --:-- ETAmagvar_2020-06-23.png                         100%   63KB  63.4KB/s   00:00    
+magvar_2020-06-26.png                           0%    0     0.0KB/s   --:-- ETAmagvar_2020-06-26.png                         100%   56KB  56.0KB/s   00:00    
 
  -- now removing temporary file...
   - Uploading of plots successful
 -----------------------------------
-All Parts needed: 0:03:19.328819
+All Parts needed: 0:03:22.224293
 -----------------------------------
 {'SAGITTARIUS-DataProducts-magnetism-step5a': 'creating and saving graph successful', 'SAGITTARIUS-DataProducts-magnetism-step5b': 'determinig k successfull', 'SAGITTARIUS-DataProducts-magnetism-step3b': 'last quasidefinitive calculation successful', 'SAGITTARIUS-DataProducts-magnetism-step3c': 'qd coverage ok', 'SAGITTARIUS-DataProducts-magnetism-step3a': 'last suitability test for quasidefinitive finished', 'SAGITTARIUS-DataProducts-magnetism-step4': 'last upload of QD successful', 'SAGITTARIUS-DataProducts-magnetism-step5': 'uploading plots successful', 'SAGITTARIUS-DataProducts-magnetism-step2': 'upload successful', 'SAGITTARIUS-DataProducts-magnetism-obligatory directories': 'all accessible', 'SAGITTARIUS-DataProducts-magnetism-step1d': 'baseline correction successful', 'SAGITTARIUS-DataProducts-magnetism-step1e': 'all data files saved', 'SAGITTARIUS-DataProducts-magnetism-step1a': 'primary instruments selected', 'SAGITTARIUS-DataProducts-magnetism-step1b': 'variometer data loaded', 'SAGITTARIUS-DataProducts-magnetism-step1c': 'scalar data loaded'}
 Logfile /var/log/magpy/mm-dp-magnetism.log loaded
@@ -944,7 +673,7 @@ Existing: SAGITTARIUS-DataProducts-magnetism-step1e
 Existing: SAGITTARIUS-DataProducts-magnetism-step1a
 Existing: SAGITTARIUS-DataProducts-magnetism-step1b
 Existing: SAGITTARIUS-DataProducts-magnetism-step1c
-Tue Jun 23 16:04:19 UTC 2020
+Fri Jun 26 09:34:38 UTC 2020
 4. Activity information 
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
@@ -952,11 +681,11 @@ Connecting to primary MARCOS...
 success
 Reading k values from database
 readDB: Found identical values only:var3
-[array([ 737599.3125,  737599.4375,  737599.5625,  737599.6875])
+[array([ 737602.0625,  737602.1875,  737602.3125,  737602.4375])
  array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
  array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
  array([ 1.,  0.,  1.,  0.])
- array([ 7.48706972,  4.47783768,  6.21998755,  1.84402741])
+ array([ 7.03165032,  3.55235783,  5.0179282 ,  0.04482739])
  array([ 1.,  1.,  1.,  1.]) array([], dtype=float64)
  array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
  array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
@@ -964,8 +693,8 @@ readDB: Found identical values only:var3
  array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
  array([], dtype=float64)]
 Current k-value: 0.0
-Valid until: 2020-06-23 18:00:00
+Valid until: 2020-06-26 12:00:00
 Updating json
 K warning data has been updated
 Successfully finished
-Tue Jun 23 16:04:20 UTC 2020
+Fri Jun 26 09:34:39 UTC 2020
