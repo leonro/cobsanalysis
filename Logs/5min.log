@@ -1,783 +1,0 @@
-Fri Jun 26 13:50:01 UTC 2020
-1. Identify primary instrument
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Connecting to primary MARCOS...
-('Checking ', 'LEMI036_1_0002_0002')
-(86400, '2020-06-26 13:45:06.000000', '2020-06-25 13:45:07.000000')
-(datetime.datetime(2020, 6, 26, 13, 45, 6), datetime.datetime(2020, 6, 25, 13, 45, 7))
-Coverage OK - using LEMI036_1_0002_0002
-('Checking ', 'GP20S3NSS2_012201_0001_0001')
-(86400, datetime.datetime(2020, 6, 26, 13, 45, 33, 438308))
-Test 1 OK: data  available and last value not null
-(datetime.datetime(2020, 6, 26, 13, 45, 33, 438308), datetime.datetime(2020, 6, 25, 13, 45, 21, 469212))
-Test 2 OK: correct amount of data covering the last day
-Get primary -> Using Variometer LEMI036_1_0002_0002 and Scalar GP20S3NSS2_012201_0001_0001
-Dumping instruments as usual in the old way...
-... done
-('Got', {u'magnetism': {u'QD enddate': [u'2020-06-01', u''], u'k-time': [u'2020-06-26 13:30', u''], u'k': [0.0, u''], u'primary scalar': [u'GP20S3NSS2_012201_0001_0001', u''], u'k-warning': [0, u''], u'k-valid': [u'', u''], u'primary vario': [u'LEMI036_1_0002_0002', u''], u'QD analysis date': [u'2020-06-13', u'']}, u'meteo': {u'N': [0.5, u'mm/h'], u'Schnee': [u'-', u''], u'P': [898.0634007632111, u'hPA'], u'S': [0.5103854999999999, u'cm'], u'Niederschlag': [u'Starker Regen', u'SYNOP'], u'T': [21.9, u'degC'], u'date': [u'2020-06-26 13:30:00', u''], u'rh': [50.64, u'%'], u'Wind': [2.16, u'km/h']}, u'logging': {u'failedupload2homepage': 0, u'magnetismplots': [u'2020-06-26 13:43', u''], u'seismoNEICdata': [u'2020-06-26 13:41', u''], u'seismoATdata': [u'2020-06-26 13:41', u'']}})
-Logfile /var/log/magpy/mm-dp-getprimary.log loaded
-Existing: SAGITTARIUS-DataProducts-getprimary-vario
-Existing: SAGITTARIUS-DataProducts-getprimary-process
-Existing: SAGITTARIUS-DataProducts-getprimary-scalar
-Existing: SAGITTARIUS-DataProducts-getprimary-write
-Fri Jun 26 13:50:04 UTC 2020
-2. Automatic flags
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Connecting to primary MARCOS...
-...success
- -------------------------------------------
- Dealing with sensorgroup which starts with GSM90_6
- -------------------------------------------
-Using the following parameter: keys=['f'],threshold=5,window=0:05:00,limits=[None, None]
-   -> Found ['GSM90_6107631_0001_0001', 'GSM90_6107632_0001_0001']
- a) select 1 second or highest resolution data
-Sensor: GSM90_6107631_0001_0001 -> Samplingrate: 3.0
-Sensor: GSM90_6107632_0001_0001 -> Samplingrate: 3.0
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for GSM90_6107631_0001_0001
-   Valid data for GSM90_6107632_0001_0001
- d) Flagging data
-   - got 2400 datapoints
-   - getting existing flags for GSM90_6107631_0001
-   - found 0 existing flags
-  - determining new outliers
-False
--------------------------
-Dealing with key: f
-  - new flags: 0
-RESULT: found [] new flags
-   - got 2400 datapoints
-   - getting existing flags for GSM90_6107632_0001
-   - found 0 existing flags
-  - determining new outliers
-False
--------------------------
-Dealing with key: f
-(0, 0)
-(1, 1)
-(2, 1)
-(3, 1)
-(4, 1)
-  - new flags: 1
-RESULT: found [[datetime.datetime(2020, 6, 26, 13, 42, 38, 999980), datetime.datetime(2020, 6, 26, 13, 42, 38, 999980), 'f', 1, u'aof - threshold: 5, window: 300.0 sec', 'GSM90_6107632_0001', datetime.datetime(2020, 6, 26, 13, 50, 7, 211888)]] new flags
-  -- Writing flags for sensors GSM90_6107632_0001_0001 to DB
-  -- New flags: 1
-##########################################
-           Flaglist statistics            
-##########################################
-
-A) Total contents: 13735
-
-B) Content for each ID:
-Dataset: GSM90_6107632_0001 	 Amount: 13735
-   aof - threshold 4.0 window 1800.0 sec : 3
-   aof - threshold: 3.0, window: 1800.0 sec : 4
-   Unkown reason : 4
-   aof - threshold: 3.0, window: 200.0 sec : 4
-   aof - threshold: 5.0, window: 3000.0 sec : 4
-   aof - threshold: 5.0, window: 1800.0 sec : 5
-   aof - threshold: 4.0, window: 1800.0 sec : 5
-   aof - threshold 5.0 window 1800.0 sec : 6
-   aof - threshold: 4.0, window: 200.0 sec : 13
-   aof - threshold 3.0 window 200.0 sec : 15
-   aof - threshold 5.0 window 700.0 sec : 17
-   aof - threshold 4.0 window 200.0 sec : 19
-   aof - threshold 5.0 window 1000.0 sec : 19
-   aof - threshold: 5.0, window: 600.0 sec : 20
-   aof - threshold 4.0 window 800.0 sec : 20
-   aof - threshold 3.0 window 1800.0 sec : 23
-   aof - threshold 3.0 window 700.0 sec : 31
-   spikes BL : 43
-   aof - threshold 5.0 window 100.0 sec : 56
-   aof - threshold: 5.0, window: 100.0 sec : 57
-   aof - threshold: 3.0, window: 100.0 sec : 90
-   aof - threshold: 3.0, window: 600.0 sec : 109
-   aof - threshold: 5.0, window: 60.0 sec : 139
-   spike BL : 199
-   aof - threshold: 3.0, window: 60.0 sec : 287
-   aof - threshold 3.0 window 800.0 sec : 293
-   aof - threshold 5 window 300.0 sec : 1275
-   aof - threshold: 5, window: 300.0 sec : 10975
-
-Adding data to DB
-##########################################
-           Flaglist statistics            
-##########################################
-
-A) Total contents: 13736
-
-B) Content for each ID:
-Dataset: GSM90_6107632_0001 	 Amount: 13736
-   aof - threshold 4.0 window 1800.0 sec : 3
-   aof - threshold: 3.0, window: 1800.0 sec : 4
-   Unkown reason : 4
-   aof - threshold: 3.0, window: 200.0 sec : 4
-   aof - threshold: 5.0, window: 3000.0 sec : 4
-   aof - threshold: 5.0, window: 1800.0 sec : 5
-   aof - threshold: 4.0, window: 1800.0 sec : 5
-   aof - threshold 5.0 window 1800.0 sec : 6
-   aof - threshold: 4.0, window: 200.0 sec : 13
-   aof - threshold 3.0 window 200.0 sec : 15
-   aof - threshold 5.0 window 700.0 sec : 17
-   aof - threshold 4.0 window 200.0 sec : 19
-   aof - threshold 5.0 window 1000.0 sec : 19
-   aof - threshold: 5.0, window: 600.0 sec : 20
-   aof - threshold 4.0 window 800.0 sec : 20
-   aof - threshold 3.0 window 1800.0 sec : 23
-   aof - threshold 3.0 window 700.0 sec : 31
-   spikes BL : 43
-   aof - threshold 5.0 window 100.0 sec : 56
-   aof - threshold: 5.0, window: 100.0 sec : 57
-   aof - threshold: 3.0, window: 100.0 sec : 90
-   aof - threshold: 3.0, window: 600.0 sec : 109
-   aof - threshold: 5.0, window: 60.0 sec : 139
-   spike BL : 199
-   aof - threshold: 3.0, window: 60.0 sec : 287
-   aof - threshold 3.0 window 800.0 sec : 293
-   aof - threshold 5 window 300.0 sec : 1275
-   aof - threshold: 5, window: 300.0 sec : 10976
-
- -------------------------------------------
- Dealing with sensorgroup which starts with GP20S3NSS2
- -------------------------------------------
-Using the following parameter: keys=['f'],threshold=5,window=None,limits=[None, None]
-   -> Found ['GP20S3NSS2_012201_0001_0001']
- a) select 1 second or highest resolution data
-Sensor: GP20S3NSS2_012201_0001_0001 -> Samplingrate: 1.0
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for GP20S3NSS2_012201_0001_0001
- d) Flagging data
-   - got 7200 datapoints
-   - getting existing flags for GP20S3NSS2_012201_0001
-   - found 0 existing flags
-  - determining new outliers
-False
--------------------------
-Dealing with key: f
-  - new flags: 0
-RESULT: found [] new flags
- -------------------------------------------
- Dealing with sensorgroup which starts with GSM90_14245
- -------------------------------------------
-Using the following parameter: keys=['f'],threshold=5,window=None,limits=[None, None]
-   -> Found ['GSM90_14245_0002_0001', 'GSM90_14245_0002_0002', 'GSM90_14245_0002_0003']
- a) select 1 second or highest resolution data
-Sensor: GSM90_14245_0002_0001 -> Samplingrate: 0.2
-Sensor: GSM90_14245_0002_0002 -> Samplingrate: 1.0
-Sensor: GSM90_14245_0002_0003 -> Samplingrate: 0.5
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for GSM90_14245_0002_0002
- d) Flagging data
-   - got 7200 datapoints
-   - getting existing flags for GSM90_14245_0002
-   - found 0 existing flags
-  - determining new outliers
-False
--------------------------
-Dealing with key: f
-  - new flags: 0
-RESULT: found [] new flags
- -------------------------------------------
- Dealing with sensorgroup which starts with FGE
- -------------------------------------------
-Using the following parameter: keys=['x', 'y', 'z'],threshold=5,window=None,limits=[None, None]
-   -> Found ['FGE_S0252_0001_0001']
- a) select 1 second or highest resolution data
-Sensor: FGE_S0252_0001_0001 -> Samplingrate: 1.0
- b) checking sampling rate of failed sensors
- c) Check for recent data
- d) Flagging data
- -------------------------------------------
- Dealing with sensorgroup which starts with LEMI025
- -------------------------------------------
-Using the following parameter: keys=['x', 'y', 'z'],threshold=6,window=None,limits=[None, None]
-   -> Found ['LEMI025_22_0002_0001', 'LEMI025_22_0002_0002', 'LEMI025_22_0003_0001', 'LEMI025_22_0003_0002', 'LEMI025_1_0001_0001', 'LEMI025_1_0001_0002', 'LEMI025_28_0002_0001', 'LEMI025_28_0002_0002', 'LEMI025_28_0002_0003', 'LEMI025_28_0002_0004', 'LEMI025_28_0002_0005']
- a) select 1 second or highest resolution data
-Sensor: LEMI025_22_0002_0001 -> Samplingrate: 0.1
-Sensor: LEMI025_22_0002_0002 -> Samplingrate: 1.0
-Sensor: LEMI025_22_0003_0001 -> Samplingrate: 0.1
-Sensor: LEMI025_22_0003_0002 -> Samplingrate: 1.0
-Sensor: LEMI025_1_0001_0001 -> Samplingrate: 0.1
-Sensor: LEMI025_1_0001_0002 -> Samplingrate: 1.0
-Sensor: LEMI025_28_0002_0001 -> Samplingrate: 0.1
-Sensor: LEMI025_28_0002_0002 -> Samplingrate: 1.0
-Sensor: LEMI025_28_0002_0003 -> Samplingrate: 0.1
-Sensor: LEMI025_28_0002_0004 -> Samplingrate: 0.1
-Sensor: LEMI025_28_0002_0005 -> Samplingrate: 0.1
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for LEMI025_22_0003_0002
- d) Flagging data
-   - got 7200 datapoints
-   - getting existing flags for LEMI025_22_0003
-   - found 0 existing flags
-  - determining new outliers
-True
--------------------------
-Dealing with key: x
--------------------------
-Dealing with key: y
--------------------------
-Dealing with key: z
-  - new flags: 0
-RESULT: found [] new flags
- -------------------------------------------
- Dealing with sensorgroup which starts with LEMI036
- -------------------------------------------
-Using the following parameter: keys=['x', 'y', 'z'],threshold=6,window=None,limits=[None, None]
-   -> Found ['LEMI036_1_0002_0001', 'LEMI036_1_0002_0002', 'LEMI036_3_0001_0001', 'LEMI036_3_0001_0002']
- a) select 1 second or highest resolution data
-Sensor: LEMI036_1_0002_0001 -> Samplingrate: 0.1
-Sensor: LEMI036_1_0002_0002 -> Samplingrate: 1.0
-Sensor: LEMI036_3_0001_0001 -> Samplingrate: 0.1
-Sensor: LEMI036_3_0001_0002 -> Samplingrate: 1.0
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for LEMI036_1_0002_0002
- d) Flagging data
-   - got 7200 datapoints
-   - getting existing flags for LEMI036_1_0002
-   - found 0 existing flags
-  - determining new outliers
-True
--------------------------
-Dealing with key: x
--------------------------
-Dealing with key: y
--------------------------
-Dealing with key: z
-  - new flags: 0
-RESULT: found [] new flags
- -------------------------------------------
- Dealing with sensorgroup which starts with POS1
- -------------------------------------------
-Using the following parameter: keys=['f'],threshold=4,window=0:01:40,limits=[None, None]
-   -> Found ['POS1_N432_0001_0001', 'POS1_N456_0001_0001']
- a) select 1 second or highest resolution data
-Sensor: POS1_N432_0001_0001 -> Samplingrate: 5.0
-Sensor: POS1_N456_0001_0001 -> Samplingrate: 5.0
- b) checking sampling rate of failed sensors
- c) Check for recent data
- d) Flagging data
- -------------------------------------------
- Dealing with sensorgroup which starts with BM35
- -------------------------------------------
-Using the following parameter: keys=['var3'],threshold=None,window=None,limits=[750, 1000]
-   -> Found ['BM35_033_0001_0001', 'BM35_033_0001_0002', 'BM35_029_0001_0001', 'BM35_029_0001_0002']
- a) select 1 second or highest resolution data
-Sensor: BM35_033_0001_0001 -> Samplingrate: 0.488
-Sensor: BM35_033_0001_0002 -> Samplingrate: 1.0
-Sensor: BM35_029_0001_0001 -> Samplingrate: 0.498
-Sensor: BM35_029_0001_0002 -> Samplingrate: 1.0
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for BM35_029_0001_0002
- d) Flagging data
-   - got 7200 datapoints
-   - getting existing flags for BM35_029_0001
-   - found 0 existing flags
-  - flagging data below lower limit
-  - flagging data above higher limit
-RESULT: found [] new flags
- -------------------------------------------
- Dealing with sensorgroup which starts with GSM90_3
- -------------------------------------------
-Using the following parameter: keys=['f'],threshold=5,window=0:05:00,limits=[None, None]
-   -> Found ['GSM90_31968_0002_0001']
- a) select 1 second or highest resolution data
-Sensor: GSM90_31968_0002_0001 -> Samplingrate: 4.007
- b) checking sampling rate of failed sensors
- c) Check for recent data
-   Valid data for GSM90_31968_0002_0001
- d) Flagging data
-   - got 1796 datapoints
-   - getting existing flags for GSM90_31968_0002
-   - found 0 existing flags
-  - determining new outliers
-False
--------------------------
-Dealing with key: f
-  - new flags: 0
-RESULT: found [] new flags
-------------------------------------------
- Step1 flagging finished
-------------------------------------------
-Cleaning up all records
-##########################################
-           Flaglist statistics            
-##########################################
-
-A) Total contents: 332420
-
-B) Content for each ID:
-Dataset: GSM90_14245_0002-LEMI025_22_0003 	 Amount: 2
-Dataset: GP20S3EWS2_111201_0001 	 Amount: 5
-Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A7 	 Amount: 6
-Dataset: BLV_LEMI025_22_0003_GSM90_6107631_0001_A2 	 Amount: 6
-Dataset: BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 	 Amount: 6
-Dataset: BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_H1 	 Amount: 6
-Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A7 	 Amount: 6
-Dataset: BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_H1 	 Amount: 6
-Dataset: POS1_N432_0001-GSM90_14245_0002 	 Amount: 9
-Dataset: LEMI036_1_0002-LEMI025_22_0002 	 Amount: 9
-Dataset: BLV_LEMI025_22_0003_GSM90_14245_0002_A2 	 Amount: 12
-Dataset: BLV_FGE_S0252_0001_POS1_N432_0001_A16 	 Amount: 14
-Dataset: BLV_LEMI025_22_0003_GP20S3NSS2_012201_0001_A2 	 Amount: 18
-Dataset: BM35_033_0001 	 Amount: 21
-Dataset: BM35_029_0001 	 Amount: 23
-Dataset: BLV_LEMI036_1_0002_POS1_N432_0001_A2 	 Amount: 24
-Dataset: BLV_FGE_S0252_0001_POS1_N432_0001_A2 	 Amount: 27
-Dataset: BLV_FGE_S0252_0001_GSM90_14245_0002_A2 	 Amount: 30
-Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A16 	 Amount: 30
-Dataset: BLV_LEMI025_22_0002_POS1_N432_0001_A2 	 Amount: 36
-Dataset: BLV_LEMI036_1_0002_GSM90_14245_0002_A2 	 Amount: 42
-Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A2 	 Amount: 48
-Dataset: BLV_LEMI025_22_0002_GSM90_14245_0002_A16 	 Amount: 66
-Dataset: GSM-19W_3101329_0001 	 Amount: 256
-Dataset: GP20S3V_911005_0001 	 Amount: 399
-Dataset: GSM90_6107631_0001 	 Amount: 1233
-Dataset: FGE_S0252_0001 	 Amount: 1445
-Dataset: POS1_N432_0001 	 Amount: 2949
-Dataset: GSM90_31968_0002 	 Amount: 3271
-Dataset: LEMI025_22_0002 	 Amount: 4682
-Dataset: GP20S3NSS2_012201_0001 	 Amount: 4842
-Dataset: POS1_N456_0001 	 Amount: 11983
-Dataset: GSM90_6107632_0001 	 Amount: 13736
-Dataset: GSM90_14245_0002 	 Amount: 15103
-Dataset: GP20S3NS_012201_0001 	 Amount: 18806
-Dataset: LEMI025_28_0002 	 Amount: 20446
-Dataset: LEMI025_22_0003 	 Amount: 24786
-Dataset: LEMI036_1_0002 	 Amount: 25394
-Dataset: LEMI036_3_0001 	 Amount: 82200
-Dataset: RCST7_20160114_0001 	 Amount: 100437
-
-Logfile /var/log/magpy/mm-dp-flagging.log loaded
-Existing: SAGITTARIUS-DataProducts-flagging-step1
-Fri Jun 26 13:51:00 UTC 2020
-3. Running magnetic analysis
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Connecting to primary DB at 138.22.188.195 ...
-...success
-Connecting also secondary DB at 138.22.188.191 ...
-...success
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Credentials: value/dict not found
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Credentials: value/dict not found
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Credentials: value/dict not found
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Credentials: value/dict not found
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-----------------------------------------------------------------
-Part 1: Create adjusted one second data from primary instruments
-----------------------------------------------------------------
- a) get primary instruments
-Found LEMI036_1_0002_0002 as primary variometer and GP20S3NSS2_012201_0001_0001 as scalar instrument
- b) getting variometer data, applying flags, offsets, WGS coordinates LEMI036_1_0002_0002
-     -- getting flags from DB: 0
-   -- applying deltas
-applyDeltas: No delta values found - returning unmodified stream
-   -- offsets
-  - applying compensation fields: x=-20.7425, y=0.0, z=-43.865
-  -- rotation
-Found rotation angle of -0.582
-  - applying rotation: alpha=-0.582 determined in 2018
- c) getting scaladata, flags and offsets: GP20S3NSS2_012201_0001_0001
-readDB: could not identify time! Column sectime contains None, which cannot be interpreted as time by the testtime method
-readDB: Found identical values only:sectime
-('Test', array([ array([ 737600.00000042,  737600.00001216,  737600.00002358, ...,
-        737602.57677596,  737602.57678776,  737602.57679905]),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64),
-       array([ 48734.206918,  48734.208631,  48734.212035, ...,  48726.996211,
-        48726.995374,  48726.986483]),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64), array([], dtype=float64),
-       array([], dtype=float64)], dtype=object))
-     -- obtained data - last F = 48726.986483
-     -- getting flags from DB: 0
-     -- applying deltasB:
-     -- corrections performed -last F = 48725.415483
- d) performing simple baseline correction based on pier A2
-    LEMI036_1_0002_0002 and GP20S3NSS2_012201_0001_0001
-    using BLV data
-  - Found 6 flags for baseline values
-  - Basevalues for last 100 days:
-  - Delta H = 24.7926904398 +/- 0.25164915307
-  - Delta D = 4.25270129528 +/- 0.000585726907889
-  - Delta Z = -20.2357468769 +/- 0.149170335074
-  - Running Analysis jobs ... 
-Key data_threshold_amount_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
--> Status remaining unchanged
-Key data_actuality_time_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
--> Status remaining unchanged
-Key data_threshold_base_BLV_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2 already contained in loglist - checking status
--> Status remaining unchanged
-  - Performing constant basevalue correction
- e) combining data sets, adding header, writing sec and min data
-mergeStreams: Found identical timesteps - using simple merge
-('  - preliminary data file after MERGE:', [222608, 222608, 222608, 222608, 222608, 222608, 222608, 0, 222608, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-  - Saving one second data - IAGA
-  - Saving one second data - CDF
-writeIMAGCDF: current Publication level 2 does not allow to set StandardName
-writeIMAGCDF: Found F column
-writeIMAGCDF: given components are XYZF. Checking F column...
-writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
-writeIMAGCDF: current Publication level 2 does not allow to set StandardName
-writeIMAGCDF: Found F column
-writeIMAGCDF: given components are XYZF. Checking F column...
-writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
-writeIMAGCDF: current Publication level 2 does not allow to set StandardName
-writeIMAGCDF: Found F column
-writeIMAGCDF: given components are XYZF. Checking F column...
-writeIMAGCDF: analyzed F column - values are apparently independend from vector components - using column name 'S'
-222608
-  - Saving one minute data - IAGA
-  - Saving one minute adjusted data to database
-Writing adjusted data to primary DB
-Writing adjusted data to secondary DB
------------------------------------
-Part1 needs 0:01:05.875907
------------------------------------
-----------------------------------------------------------------
-Part 2: Publish adjusted data
-----------------------------------------------------------------
-  uploading one second data to ZAMG Server and eventually to GIN
-Uploading data for 20200626
-  -- THREAD for IAGA data to FTP: 20200626
-Uploading data to art project
-*cmd* 'USER trmsoe@www.zamg.ac.at'
-*resp* '331 Password required for trmsoe.'
-*cmd* u'PASS *********'
-*cmd* 'USER trmsoe@www.zamg.ac.at'
-*resp* '331 Password required for trmsoe.'
-*cmd* u'PASS *********'
-('Submitting to gin if no other curl job detected: active_pid = ', False)
-#################################
-  -- Uploading second data to GIN - active now
-*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
-*cmd* 'CWD /data/magnetism/wic/variation/'
-*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
-*cmd* 'CWD /data/magnetism/wic/variation/'
-*resp* '250 CWD command successful'
-*cmd* 'DELE wic20200626psec.sec'
-*resp* '250 CWD command successful'
-*cmd* 'DELE wic20200626pmin.min'
-*resp* '250 DELE command successful'
-*cmd* 'TYPE I'
-*resp* '250 DELE command successful'
-*resp* '200 Type set to I'
-*cmd* 'PASV'
-*cmd* 'TYPE I'
-*resp* '200 Type set to I'
-*cmd* 'PASV'
-*resp* '227 Entering Passive Mode (138,22,188,129,178,252).'
-*cmd* u'STOR wic20200626psec.sec'
-*resp* '227 Entering Passive Mode (138,22,188,129,182,220).'
-*cmd* u'STOR wic20200626pmin.min'
-*resp* '150 Opening BINARY mode data connection for wic20200626psec.sec'
-*resp* '150 Opening BINARY mode data connection for wic20200626pmin.min'
-*resp* '226 Transfer complete'
-*cmd* 'QUIT'
-*resp* '221 Goodbye.'
-Success
-Data loaded OK, data file id = 38430555
-   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   8496      0 --:--:-- --:--:-- --:--:--  8568
-  0 3503k    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 71 3503k    0     0   71 2496k      0  1176k  0:00:02  0:00:02 --:--:-- 1300k 71 3503k    0     0   71 2512k      0  1072k  0:00:03  0:00:02  0:00:01 1173k 74 3503k    0     0   74 2624k      0   774k  0:00:04  0:00:03  0:00:01  823k 78 3503k    0     0   78 2752k      0   578k  0:00:06  0:00:04  0:00:02  604k 82 3503k    0     0   82 2896k      0   524k  0:00:06  0:00:05  0:00:01  544k 83 3503k    0     0   83 2928k      0   472k  0:00:07  0:00:06  0:00:01  105k 84 3503k    0     0   84 2960k      0   411k  0:00:08  0:00:07  0:00:01 94412 84 3503k    0     0   84 2960k      0   360k  0:00:09  0:00:08  0:00:01 71441 89 3503k    0     0   89 3136k      0   336k  0:00:10  0:00:09  0:00:01 86156 96 3503k    0     0   96 3392k      0   321k  0:00:10  0:00:10 --:--:--   98k 97 3503k    0     0   97 3424k      0   296k  0:00:11  0:00:11 --:--:-- 94899100 3503k    0     0  100 3503k      0   285k  0:00:12  0:00:12 --:--:--  107k100 3503k    0     0  100 3503k      0   263k  0:00:13  0:00:13 --:--:--  107k100 3503k    0     0  100 3503k      0   245k  0:00:14  0:00:14 --:--:-- 75820100 3503k    0     0  100 3503k      0   229k  0:00:15  0:00:15 --:--:-- 24157100 3503k    0     0  100 3503k      0   215k  0:00:16  0:00:16 --:--:-- 17248100 3503k    0     0  100 3503k      0   202k  0:00:17  0:00:17 --:--:--     0100 3503k    0     0  100 3503k      0   191k  0:00:18  0:00:18 --:--:--     0100 3503k    0     0  100 3503k      0   181k  0:00:19  0:00:19 --:--:--     0100 3503k    0     0  100 3503k      0   172k  0:00:20  0:00:20 --:--:--     0100 3503k    0     0  100 3503k      0   164k  0:00:21  0:00:21 --:--:--     0100 3503k    0     0  100 3503k      0   157k  0:00:22  0:00:22 --:--:--     0100 3503k    0     0  100 3503k      0   150k  0:00:23  0:00:23 --:--:--     0100 3503k    0     0  100 3503k      0   144k  0:00:24  0:00:24 --:--:--     0100 3503k    0     0  100 3503k      0   138k  0:00:25  0:00:25 --:--:--     0100 3503k    0     0  100 3503k      0   133k  0:00:26  0:00:26 --:--:--     0100 3503k    0     0  100 3503k      0   128k  0:00:27  0:00:27 --:--:--     0100 3503k    0     0  100 3503k      0   123k  0:00:28  0:00:28 --:--:--     0100 3503k    0     0  100 3503k      0   119k  0:00:29  0:00:29 --:--:--     0100 3503k    0     0  100 3503k      0   115k  0:00:30  0:00:30 --:--:--     0100 3503k    0     0  100 3503k      0   111k  0:00:31  0:00:31 --:--:--     0100 3503k    0     0  100 3503k      0   108k  0:00:32  0:00:32 --:--:--     0100 3503k    0     0  100 3503k      0   105k  0:00:33  0:00:33 --:--:--     0100 3503k    0     0  100 3503k      0   102k  0:00:34  0:00:34 --:--:--     0100 3503k    0     0  100 3503k      0    99k  0:00:35  0:00:35 --:--:--     0100 3503k  100    48  100 3503k      1    98k  0:00:48  0:00:35  0:00:13     0
-
-True
-  -- Uploading minute data to GIN: 20200626
-No faillog existing
-Success
-Data loaded OK, data file id = 38430560
-   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   994    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   1080      0 --:--:-- --:--:-- --:--:--  1080
-  0 61671    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100 61671    0     0  100 61671      0  21076  0:00:02  0:00:02 --:--:-- 56423100 61719  100    48  100 61671     13  17836  0:00:03  0:00:03 --:--:-- 37951
-
-True
-Uploading data for 20200624
-  -- THREAD for IAGA data to FTP: 20200624
-Uploading data to art project
-('Submitting to gin if no other curl job detected: active_pid = ', False)
-#################################
-  -- Uploading second data to GIN - active now
-*resp* '226 Transfer complete'
-*cmd* 'QUIT'
-*resp* '221 Goodbye.'
-*cmd* 'USER trmsoe@www.zamg.ac.at'
-*cmd* 'USER trmsoe@www.zamg.ac.at'
-*resp* '331 Password required for trmsoe.'
-*cmd* u'PASS *********'
-*resp* '331 Password required for trmsoe.'
-*cmd* u'PASS *********'
-*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
-*cmd* 'CWD /data/magnetism/wic/variation/'
-*resp* '250 CWD command successful'
-*cmd* 'DELE wic20200624pmin.min'
-*resp* '250 DELE command successful'
-*cmd* 'TYPE I'
-*resp* "230-- PASS for trmsoe@www.zamg.ac.at.\n 220- zagsvl24.zamg.ac.at PROXY-FTP server (DeleGate/9.9.13) ready.\n 220-   @ @\n 220-  ( - ) { DeleGate/9.9.13 (October 31, 2014) }\n 220- AIST-Product-ID: 2000-ETL-198715-01, H14PRO-049, H15PRO-165, H18PRO-443\n 220- Copyright (c) 1994-2000 Yutaka Sato and ETL,AIST,MITI\n 220- Copyright (c) 2001-2014 National Institute of Advanced Industrial Science and Technology (AIST)\n 220- WWW: http://www.delegate.org/delegate/\n 220- --\n 220- You can connect to a SERVER by `user' command:\n 220-    ftp> user username@SERVER\n 220- or by `cd' command (after logged in as an anonymous user):\n 220-    ftp> cd //SERVER\n 220- Cache is enabled by default and can be disabled by `cd .' (toggle)\n 220- This (proxy) service is maintained by 'Nikolaus.horn@zamg.ac.at'\n 220- \n 220-extended FTP [MODE XDC][XDC/BASE64]\n 220  \n 331 Password required for trmsoe.\n230-- PASS for trmsoe@www.zamg.ac.at.\n 220 ProFTPD 1.3.5 Server ready.\n 331 Password required for trmsoe\n230- User trmsoe logged in\n230--  @ @  \n230-  \\( - )/ -- { connected to `www.zamg.ac.at' }\n230--  @ @  \n230  \\( - )/ -- { connected to `www.zamg.ac.at' (via FTP-Proxy) }"
-*cmd* 'CWD /data/magnetism/wic/variation/'
-*resp* '200 Type set to I'
-*cmd* 'PASV'
-*resp* '250 CWD command successful'
-*cmd* 'DELE wic20200624psec.sec'
-*resp* '227 Entering Passive Mode (138,22,188,129,135,90).'
-*cmd* u'STOR wic20200624pmin.min'
-*resp* '250 DELE command successful'
-*cmd* 'TYPE I'
-*resp* '150 Opening BINARY mode data connection for wic20200624pmin.min'
-*resp* '200 Type set to I'
-*cmd* 'PASV'
-*resp* '227 Entering Passive Mode (138,22,188,129,137,3).'
-*cmd* u'STOR wic20200624psec.sec'
-*resp* '150 Opening BINARY mode data connection for wic20200624psec.sec'
-*resp* '226 Transfer complete'
-*cmd* 'QUIT'
-*resp* '221 Goodbye.'
-Success
-Data loaded OK, data file id = 38430638
-   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   6077      0 --:--:-- --:--:-- --:--:--  6098
- 42 6076k    0     0   42 2576k      0  2635k  0:00:02 --:--:--  0:00:02 2635k 46 6076k    0     0   46 2832k      0  1217k  0:00:04  0:00:02  0:00:02  189k 48 6076k    0     0   48 2960k      0   847k  0:00:07  0:00:03  0:00:04  152k 49 6076k    0     0   49 3024k      0   743k  0:00:08  0:00:04  0:00:04  145k 52 6076k    0     0   52 3168k      0   618k  0:00:09  0:00:05  0:00:04  142k 55 6076k    0     0   55 3344k      0   511k  0:00:11  0:00:06  0:00:05  138k 55 6076k    0     0   55 3376k      0   472k  0:00:12  0:00:07  0:00:05  112k 57 6076k    0     0   57 3520k      0   416k  0:00:14  0:00:08  0:00:06  112k 59 6076k    0     0   59 3600k      0   395k  0:00:15  0:00:09  0:00:06  114k 64 6076k    0     0   64 3904k      0   386k  0:00:15  0:00:10  0:00:05  148k 67 6076k    0     0   67 4112k      0   372k  0:00:16  0:00:11  0:00:05  170k 68 6076k    0     0   68 4176k      0   346k  0:00:17  0:00:12  0:00:05  163k 69 6076k    0     0   69 4240k      0   326k  0:00:18  0:00:12  0:00:06  158k 76 6076k    0     0   76 4624k      0   326k  0:00:18  0:00:14  0:00:04  202k 78 6076k    0     0   78 4752k      0   316k  0:00:19  0:00:15  0:00:04  171k 80 6076k    0     0   80 4880k      0   294k  0:00:20  0:00:16  0:00:04  139k 83 6076k    0     0   83 5072k      0   294k  0:00:20  0:00:17  0:00:03  173k 85 6076k    0     0   85 5184k      0   287k  0:00:21  0:00:18  0:00:03  186k 88 6076k    0     0   88 5392k      0   277k  0:00:21  0:00:19  0:00:02  146k 90 6076k    0     0   90 5520k      0   270k  0:00:22  0:00:20  0:00:02  142k 92 6076k    0     0   92 5632k      0   259k  0:00:23  0:00:21  0:00:02  146k 94 6076k    0     0   94 5728k      0   255k  0:00:23  0:00:22  0:00:01  125k 96 6076k    0     0   96 5840k      0   253k  0:00:23  0:00:23 --:--:--  131k 99 6076k    0     0   99 6032k      0   244k  0:00:24  0:00:24 --:--:--  122k 99 6076k    0     0   99 6064k      0   236k  0:00:25  0:00:25 --:--:--  103k 99 6076k    0     0   99 6076k      0   233k  0:00:26  0:00:26 --:--:--  101k100 6076k    0     0  100 6076k      0   224k  0:00:27  0:00:27 --:--:-- 77093100 6076k    0     0  100 6076k      0   216k  0:00:28  0:00:28 --:--:-- 48071100 6076k    0     0  100 6076k      0   209k  0:00:29  0:00:29 --:--:-- 10372100 6076k    0     0  100 6076k      0   202k  0:00:30  0:00:30 --:--:--  2939100 6076k    0     0  100 6076k      0   195k  0:00:31  0:00:31 --:--:--    49100 6076k    0     0  100 6076k      0   189k  0:00:32  0:00:32 --:--:--     0100 6076k    0     0  100 6076k      0   183k  0:00:33  0:00:33 --:--:--     0100 6076k    0     0  100 6076k      0   178k  0:00:34  0:00:34 --:--:--     0100 6076k    0     0  100 6076k      0   173k  0:00:35  0:00:35 --:--:--     0100 6076k    0     0  100 6076k      0   168k  0:00:36  0:00:36 --:--:--     0100 6076k    0     0  100 6076k      0   163k  0:00:37  0:00:37 --:--:--     0100 6076k    0     0  100 6076k      0   159k  0:00:38  0:00:38 --:--:--     0100 6076k    0     0  100 6076k      0   155k  0:00:39  0:00:39 --:--:--     0100 6076k    0     0  100 6076k      0   151k  0:00:40  0:00:40 --:--:--     0100 6076k    0     0  100 6076k      0   147k  0:00:41  0:00:41 --:--:--     0100 6076k    0     0  100 6076k      0   144k  0:00:42  0:00:42 --:--:--     0100 6076k    0     0  100 6076k      0   141k  0:00:43  0:00:43 --:--:--     0100 6076k    0     0  100 6076k      0   137k  0:00:44  0:00:44 --:--:--     0100 6076k    0     0  100 6076k      0   134k  0:00:45  0:00:45 --:--:--     0100 6076k    0     0  100 6076k      0   131k  0:00:46  0:00:46 --:--:--     0100 6076k    0     0  100 6076k      0   129k  0:00:47  0:00:47 --:--:--     0100 6076k  100    48  100 6076k      1   127k  0:00:48  0:00:47  0:00:01     0
-
-True
-  -- Uploading minute data to GIN: 20200624
-No faillog existing
-Success
-Data loaded OK, data file id = 38430643
-   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0   994    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   994  100   994    0     0   1286      0 --:--:-- --:--:-- --:--:--  1285
-  0  103k    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0100  103k    0     0  100  103k      0  37983  0:00:02  0:00:02 --:--:-- 84822100  103k  100    48  100  103k     14  31782  0:00:03  0:00:03 --:--:-- 59081
-
-True
-----------------------------------------------------------------
-Part 3: determine quasidefinite data
-----------------------------------------------------------------
-  - Current weekday: 4
- a) Checking whether current time is suitable for QD
-    - QD calculation will be performed on day 5 between 3:00 and 4:00
-  - Not time for Quasidefinitve data determinations - waiting for 2:00 am
------------------------------------
-Part3 needs 0:00:00.000081
------------------------------------
-----------------------------------------------------------------
-Part 5: create plots and upload them to webpage
-----------------------------------------------------------------
-('Part5 - Creating plot:', u'LEMI036_1_0002_0002', u'GP20S3NSS2_012201_0001_0001')
- - Saving diagram to products folder
- - kvalues
--------------------------
-Dealing with key: x
--------------------------
-Dealing with key: y
--------------------------
-Dealing with key: z
-ndtype - Timeseries ending at: 2020-06-26 13:50:00+00:00
-Coverage in days: 2.57638888888
-Last effective time series ending at day 2020-06-26 00:00:00
- -----------------------------------------------------
- ------------- Starting backward analysis ------------
- --------------- beginning at last time --------------
-Step0 needed: 0:00:00.000168
-Step1 needed: 0:00:00.003289
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324998>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f98843249f0>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324a48>}, 737601.54097222222, 737602.54236111115]
-DEALING:  x
-DEALING:  y
-DEALING:  z
-Step2 needed: 0:00:00.605627
-Step3 needed: 0:00:00.005385
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324aa0>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324af8>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324b50>}, 737601.54166666663, 737602.54166666663]
-DEALING:  x
-DEALING:  y
-DEALING:  z
-Step4 needed: 0:00:00.603339
-Step5 needed: 0:00:00.005549
- -----------------------------------------------------
- ------------- Starting forward analysis -------------
- -----------------  from first date ------------------
-Running daily chunks forward until  2020-06-25 00:00:00+00:00
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-24 02:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-24 01:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-24 00:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324ba8>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324c00>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324c58>}, 737599.90982697543, 737601.08402777778]
-DEALING:  x
-DEALING:  y
-DEALING:  z
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-24 02:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-24 01:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-##############################################
- careful - datastream not long enough for correct k determination
-##############################################
-Hourly means not correctly determinable for day 2020-06-24 00:30:00+00:00
-as the extended time range is not reached
-----------------------------------------------
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324a48>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f98843249f0>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324998>}, 737599.91597222222, 737601.08402777778]
-DEALING:  x
-DEALING:  y
-DEALING:  z
-Running daily chunks forward until  2020-06-26 00:00:00+00:00
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324b50>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324af8>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324aa0>}, 737600.91597222222, 737602.08402777778]
-DEALING:  x
-DEALING:  y
-DEALING:  z
-Testing [{u'fx': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324c58>, u'fy': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324c00>, u'fz': <scipy.interpolate.interpolate.interp1d object at 0x7f9884324ba8>}, 737600.91597222222, 737602.08402777778]
-DEALING:  x
-DEALING:  y
-DEALING:  z
-Checking kvals
-Index: 0, time: 202/home/cobs/anaconda2/lib/python2.7/site-packages/magpy/database.py:1974: UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
-  if not col[0] or col[0] in ['nan', '-','']: #remove place holders
-0-06-24 22:30:00+00:00, kval: 1.0
-Index: 1, time: 2020-06-25 01:30:00+00:00, kval: 1.0
-Index: 2, time: 2020-06-25 04:30:00+00:00, kval: 1.0
-Index: 3, time: 2020-06-25 07:30:00+00:00, kval: 2.0
-Index: 4, time: 2020-06-25 10:30:00+00:00, kval: 2.0
-Index: 5, time: 2020-06-25 13:30:00+00:00, kval: 1.0
-Index: 6, time: 2020-06-25 16:30:00+00:00, kval: 1.0
-Index: 7, time: 2020-06-25 19:30:00+00:00, kval: 1.0
-Index: 8, time: 2020-06-25 22:30:00+00:00, kval: 1.0
-Index: 9, time: 2020-06-26 01:30:00+00:00, kval: 1.0
-Index: 10, time: 2020-06-26 04:30:00+00:00, kval: 0.0
-Index: 11, time: 2020-06-26 07:30:00+00:00, kval: 0.0
-Index: 12, time: 2020-06-26 10:30:00+00:00, kval: 0.0
-Index: 13, time: 2020-06-26 13:30:00+00:00, kval: 0.0
-13
-None
-Expect k of 0.0 until 2020-06-26 13:30 + 1.5 hours UTC (current time = 2020-06-26 13:53:41.080494)
-K value has been updated to 0.0
-  -> Now writing kvals to database
-  -> Done
-  -> Now writing kvals to secondary database
-  -> Done
- -- Starting scptransfer with timeout 300
- 
-magvar_2020-06-26.png                           0%    0     0.0KB/s   --:-- ETAmagvar_2020-06-26.png                         100%   58KB  58.3KB/s   00:00    
-
- -- now removing temporary file...
-  - Uploading of plots successful
------------------------------------
-All Parts needed: 0:02:52.148609
------------------------------------
-{'SAGITTARIUS-DataProducts-magnetism-step5a': 'creating and saving graph successful', 'SAGITTARIUS-DataProducts-magnetism-step5b': 'determinig k successfull', 'SAGITTARIUS-DataProducts-magnetism-step3b': 'last quasidefinitive calculation successful', 'SAGITTARIUS-DataProducts-magnetism-step3c': 'qd coverage ok', 'SAGITTARIUS-DataProducts-magnetism-step3a': 'last suitability test for quasidefinitive finished', 'SAGITTARIUS-DataProducts-magnetism-step4': 'last upload of QD successful', 'SAGITTARIUS-DataProducts-magnetism-step5': 'uploading plots successful', 'SAGITTARIUS-DataProducts-magnetism-step2': 'upload successful', 'SAGITTARIUS-DataProducts-magnetism-obligatory directories': 'all accessible', 'SAGITTARIUS-DataProducts-magnetism-step1d': 'baseline correction successful', 'SAGITTARIUS-DataProducts-magnetism-step1e': 'all data files saved', 'SAGITTARIUS-DataProducts-magnetism-step1a': 'primary instruments selected', 'SAGITTARIUS-DataProducts-magnetism-step1b': 'variometer data loaded', 'SAGITTARIUS-DataProducts-magnetism-step1c': 'scalar data loaded'}
-Logfile /var/log/magpy/mm-dp-magnetism.log loaded
-Existing: SAGITTARIUS-DataProducts-magnetism-step5a
-Existing: SAGITTARIUS-DataProducts-magnetism-step5b
-Existing: SAGITTARIUS-DataProducts-magnetism-step3b
-Existing: SAGITTARIUS-DataProducts-magnetism-step3c
-Existing: SAGITTARIUS-DataProducts-magnetism-step3a
-Existing: SAGITTARIUS-DataProducts-magnetism-step4
-Existing: SAGITTARIUS-DataProducts-magnetism-step5
-Existing: SAGITTARIUS-DataProducts-magnetism-step2
-Existing: SAGITTARIUS-DataProducts-magnetism-obligatory directories
-Existing: SAGITTARIUS-DataProducts-magnetism-step1d
-Existing: SAGITTARIUS-DataProducts-magnetism-step1e
-Existing: SAGITTARIUS-DataProducts-magnetism-step1a
-Existing: SAGITTARIUS-DataProducts-magnetism-step1b
-Existing: SAGITTARIUS-DataProducts-magnetism-step1c
-*resp* '226 Transfer complete'
-*cmd* 'QUIT'
-*resp* '221 Goodbye.'
-Fri Jun 26 13:53:55 UTC 2020
-4. Activity information 
-Getuser: Running from crontab -- trying Logname to identify user
-Getuser: ... succes - using cobs
-Connecting to primary MARCOS...
-success
-Reading k values from database
-readDB: Found identical values only:var1
-readDB: Found identical values only:var3
-[array([ 737602.1875,  737602.3125,  737602.4375,  737602.5625])
- array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
- array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
- array([ 0.,  0.,  0.,  0.])
- array([ 4.18979118,  3.92276092,  4.26946435,  3.33077282])
- array([ 1.,  1.,  1.,  1.]) array([], dtype=float64)
- array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
- array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
- array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
- array([], dtype=float64) array([], dtype=float64) array([], dtype=float64)
- array([], dtype=float64)]
-Current k-value: 0.0
-Valid until: 2020-06-26 15:00:00
-Updating json
-K warning data has been updated
-Successfully finished
-Fri Jun 26 13:53:56 UTC 2020
