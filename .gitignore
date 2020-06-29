@@ -6,6 +6,7 @@
 *.txt~
 *.png
 Logs
+*.log
 TitleGraphs/*.jpg
 TitleGraphs/*.png
 build
