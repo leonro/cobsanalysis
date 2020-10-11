@@ -119,6 +119,8 @@ try:
                 print ("Test 2 OK: correct amount of data covering the last day")
                 scalainst = inst
                 break
+            else:
+                print ("Test 2 failed: {} is smaller than {} or {} is smaller than {}".format(lastval,endtime-timedelta(minutes=60),firstval,endtime-timedelta(minutes=1500)))
 
     statusmsg[name3] = '{}'.format(scalainst.replace('_','-'))
     # Fallback
