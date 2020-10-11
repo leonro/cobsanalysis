@@ -1,4 +1,4 @@
-Tue Jun 23 12:15:01 UTC 2020
+Tue Oct  6 12:15:01 UTC 2020
 Getuser: Running from crontab -- trying Logname to identify user
 Getuser: ... succes - using cobs
 Connecting to primary MARCOS...
@@ -6,6 +6,8 @@ success
 PRIMARY INSTRUMENTS: ['LEMI036_1_0002_0002', 'GP20S3NSS2_012201_0001_0001']
 BASEVALUE SOURCE: /srv/archive/WIC/DI/data/BLVcomp_LEMI036_1_0002_GP20S3NSS2_012201_0001_A2.txt
 6
-FAILED ANALYSES: []
-
+FAILED ANALYSES: [u'2020-09-22_13-34-00_H1_WIC.txt']
+*Failed analyses:*
+2020-09-2213-34-00H1WIC.txt
+at *2020-10-06 12:15*
 tg_base successfully finished

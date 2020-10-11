@@ -319,8 +319,8 @@ if part1:
         mediandz = meanstream.mean('dz',meanfunction='median')
         print ("Medians", mediandx,mediandy,mediandz)
         maxmedian = max([mediandx,mediandy,mediandz])
-        if maxmedian > 0.1:
-            statusmsg[namecheck1] = "variometer check - significant differences between instruments - please check"
+        if maxmedian > 0.2:
+            statusmsg[namecheck1] = "variometer check - significant differences between instruments exceeding 0.2 nT - please check"
       else:
         print ("No variometer data found")
         statusmsg[namecheck1] = "variometer check failed - no data found for any variometer"
