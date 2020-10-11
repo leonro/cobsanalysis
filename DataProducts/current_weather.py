@@ -552,8 +552,10 @@ if product1:
                 if flagcheck:
                     print (" -- Getting again existing flags for {} ...".format(rcst7st.header.get("SensorID")))
                     flaglist = db2flaglist(db,rcst7st.header.get("SensorID"),begin=rcsstart, end=rcsend)
-                    rcst7st.flagliststats(flaglist, intensive=True)
-                    print (" -- Found now {} flags for given time range".format(len(flaglist)))
+                    print (" -- found {} flags".format(len(flaglist)))
+                    if len(flaglist) > 0:
+                        rcst7st.flagliststats(flaglist, intensive=True)
+                        print (" -- Found now {} flags for given time range".format(len(flaglist)))
 
             #mp.plot(rcst7st, annotate=True)
             rcst7st = rcst7st.remove_flagged()

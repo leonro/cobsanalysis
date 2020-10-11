@@ -158,14 +158,14 @@ workdictionary = {'wicqdmin': { 'path' : '/srv/products/data/magnetism/quasidefi
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicqdmin.log', 
                                 'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=60),
+                                'starttime'  : datetime.utcnow()-timedelta(days=90),
                               },
                   'wicqdsec': { 'path' : '/srv/products/data/magnetism/quasidefinitive/sec',
                                 'destinations'  : {'gin' : {'type' : 'gin', 'path' : '/data/magnetism/wic/variation/', } 
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicqdsec.log', 
                                 'endtime'  : datetime.utcnow(),
-                                'starttime'  : datetime.utcnow()-timedelta(days=200),
+                                'starttime'  : datetime.utcnow()-timedelta(days=90),
                               }
                   }
 

@@ -195,26 +195,26 @@ def sftptransfer(source, destination, host="yourserverdomainorip.com", user="roo
     #if not logfile == 'stdout':
     #    paramiko.util.log_to_file(logfile)
 
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     if not proxy:
-        client.connect(hostname=host,port=port, username=user, password=password)
+        transport = paramiko.Transport((host,port))
     else:
-        print ("Using proxy: {}".format(proxy))
-        
         proxy = ("138.22.188.129",3128)
-        timeout = 30
-        import socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-        sock.connect(proxy)  
-        client.connect(hostname=host,port=port, username=user, password=password,sock=sock, banner_timeout=30)
+        print ("Using proxy: {}".format(proxy))
+        import socks
+        s = socks.socksocket()
+        s.set_proxy(
+                proxy_type=socks.HTTP,
+                addr=proxy[0],
+                port=proxy[1])
+        s.connect((host,port))
+        transport = paramiko.Transport(s)
 
-    #with paramiko.SFTPClient.from_transport(transport) as sftp:
-    #    print ("Connection succesfully stablished ... ")
-
-    client.put(source, destination)
-    client.close()
+    transport.connect(username=user,password=password)
+    with paramiko.SFTPClient.from_transport(transport) as client:
+        print ("Connection succesfully stablished ... ")
+        destina = os.path.join(destination, os.path.basename(source))
+        client.put(source, destina)
+        client.close()
  
     return True
 
@@ -230,7 +230,7 @@ part1 = True # check for availability of paths
 uploadpath = '/srv/products/data/lastuploadtest.json'
 #uploadpath = '/home/leon/Tmp/lastupload.json'
 workdictionary = {'wicadjmin': { 'path' : '/srv/products/data/magnetism/variation/sec',
-                                'destinations'  : {'gleave' : {'type' : 'scp', 'path' : '/uploads/all-obs'}#,'proxy':("138.22.188.129",3128)}
+                                'destinations'  : {'gleave' : {'type' : 'sftp', 'path' : '/uploads/all-obs' }, #'proxy':("138.22.188.129",3128)}
                                                   },   #destinations contain the credential as key and type of transfer as value (for scp use rsync)
                                 'log'  : '/home/cobs/ANALYSIS/Logs/wicadjart.log', 
                                 'endtime'  : datetime.utcnow(),
