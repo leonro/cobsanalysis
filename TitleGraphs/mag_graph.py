@@ -56,7 +56,9 @@ path2log = '/home/cobs/ANALYSIS/Logs/magtitle.log'
 endtime = datetime.utcnow()
 starttime=datetime.strftime(endtime-timedelta(days=4),"%Y-%m-%d")
 
-try:
+ok =True
+if ok:
+    #try:
 
     from pickle import load as pload
     priminst = '/home/cobs/ANALYSIS/Logs/primaryinst.pkl'
@@ -90,7 +92,7 @@ try:
     for a in ax:
         a.axis('off')
         #a.set_frame_on(False)
-
+    print (" p1")
     maxk = kvals._get_max('var1')
     if maxk >= 6: 
         img2 = imread("/home/cobs/ANALYSIS/TitleGraphs/polarlichter.v02.jpg")
@@ -103,7 +105,7 @@ try:
         newax2.imshow(img2,origin='upper')
         newax2.axis('off')
 
-
+    print (" p2")
     newax = fig.add_axes([0.0, 0.0, 1.0, 1.0], anchor='SW', zorder=-1)
     newax.imshow(img,origin='upper')
     newax.axis('off')
@@ -111,26 +113,31 @@ try:
     #plt.show()
     savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_mag.png"
     plt.savefig(savepath)
+    print ("Save 1 done")
+    savepath2 = "/srv/products/graphs/title/title_mag.png"
+    #/srv/products/graphs/title/
+    plt.savefig(savepath2)
+    print ("Save 2 done")
 
     # upload plot to homepage using credentials
-    cred = 'cobshomepage'
-    address=mpcred.lc(cred,'address')
-    user=mpcred.lc(cred,'user')
-    passwd=mpcred.lc(cred,'passwd')
-    port=mpcred.lc(cred,'port')
-    remotepath = 'zamg/images/slideshow/'
+    #cred = 'cobshomepage'
+    #address=mpcred.lc(cred,'address')
+    #user=mpcred.lc(cred,'user')
+    #passwd=mpcred.lc(cred,'passwd')
+    #port=mpcred.lc(cred,'port')
+    #remotepath = 'zamg/images/slideshow/'
 
     #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
-    scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
-except:
-    failure = True
+    #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
+#except:
+#    failure = True
 
-if not failure:
-    analysisdict.check({'script_title_mag_graph': ['success','=','success']})
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-    print ("        mag_graph successfully finished         ")
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-else:
-    analysisdict.check({'script_title_mag_graph': ['failure','=','success']})
+#if not failure:
+#    analysisdict.check({'script_title_mag_graph': ['success','=','success']})
+#    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
+#    print ("        mag_graph successfully finished         ")
+#    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
+#else:
+#    analysisdict.check({'script_title_mag_graph': ['failure','=','success']})
 
 

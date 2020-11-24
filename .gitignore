@@ -7,9 +7,13 @@
 *.png
 Logs
 *.log
+Logs/*.pkl
 TitleGraphs/*.jpg
 TitleGraphs/*.png
 build
 dist
 dist/*.egg
 GeomagPy.egg-info
+DataProducts/GIC.git
+DataProducts/bailey-gitupload
+DataProducts/StormDetector_old
