@@ -22,6 +22,8 @@ import urllib, json
 from martas import martaslog as ml
 logpath = '/var/log/magpy/mm-info.log'
 statusmsg = {}
+phamem = '/home/cobs/ANALYSIS/Logs/tg_pha.json'
+#phamem = '/tmp/tg_pha.json'  # tmp will be deletet if Pc is restarted
 
 # Connect to test database 
 # ------------------------------------------------------------
@@ -77,7 +79,7 @@ except:
 
 # Check existig data on disk
 try:
-    with open('/tmp/tg_pha.json') as json_file:  
+    with open(phamem) as json_file:  
          existdata = json.load(json_file)
     existalldata = existdata['data']
     #print (existdata['fields'].index('des'))
@@ -90,11 +92,15 @@ except:
     existalldata = []
     existname = []
 
+exceptlist = ["2020 SO"]
+# 2020 SO is not unique, two times the same name...
+
 print ("Checking for new objects ...")
 if len(alldata) > 0:
     for elem in alldata:
         aname = elem[field.index('des')]
-        if not elem in existalldata:
+        # add a mail repetion two weeks before
+        if not elem in existalldata and not elem[0] in exceptlist:
             print ("Found new data set")
             # Add new data to list
             existalldata.append(elem)
@@ -135,7 +141,7 @@ if len(alldata) > 0:
                 telegram_send.send(messages=[msgd],conf="/home/cobs/ANALYSIS/Info/conf/tg_weltraum.cfg",parse_mode="markdown")
 
 
-with open('/tmp/tg_pha.json', 'wb') as outfile:
+with open(phamem, 'wb') as outfile:
     json.dump(data, outfile,encoding="utf-8")
 
 

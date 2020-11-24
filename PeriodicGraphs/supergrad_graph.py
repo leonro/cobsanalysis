@@ -62,6 +62,7 @@ except:
 #  Basic definitions
 # #################### 
 failure = False
+noplot = False
 path2log = '/home/cobs/ANALYSIS/Logs/supergrad_graph.log'
 
 endtime = datetime.utcnow()
@@ -364,7 +365,11 @@ try:
     else:
         print('More thean two differnces are bad, fallback to worstcase scenario...')
         #mp.plotStreams([ns,ew,v],[['dx'],['dx'],['dy']], bgcolor = 'grey', gridcolor = '#316931',confinex=True, plottitle='Gradients: N-S(blue), E-W(green), VERTICAL(pink)', specialdict = [{'dx': [avgns - 3.0* devns, avgns + 3.0* devns]}, {'dx': [avgew - 3.0* devew, avgew + 3.0* devew]}, {'dy': [avgv - 3.0* devv, avgv + 3.0* devv]}],noshow=True)
-        mp.plotStreams([nsgraph,ewgraph,vgraph],[['dx'],['dx'],['dy']], bgcolor = 'yellow', gridcolor = '#316931',confinex=True, plottitle='Gradients: N-S(blue), E-W(green), VERTICAL(pink)', specialdict = [{'dx': [avgns - 3.0* devns, avgns + 3.0* devns]}, {'dx': [avgew - 3.0* devew, avgew + 3.0* devew]}, {'dy': [avgv - 3.0* devv, avgv + 3.0* devv]}],noshow=True)
+        try:
+            mp.plotStreams([nsgraph,ewgraph,vgraph],[['dx'],['dx'],['dy']], bgcolor = 'yellow', gridcolor = '#316931',confinex=True, plottitle='Gradients: N-S(blue), E-W(green), VERTICAL(pink)', specialdict = [{'dx': [avgns - 3.0* devns, avgns + 3.0* devns]}, {'dx': [avgew - 3.0* devew, avgew + 3.0* devew]}, {'dy': [avgv - 3.0* devv, avgv + 3.0* devv]}],noshow=True)
+        except:
+            print (" ----> and even this case failed")
+            noplot = True
  
 
 ###########################
@@ -390,41 +395,35 @@ try:
     #plt.show()
     #upload
     #plt.show()
-    savepath = "/srv/products/graphs/magnetism/supergrad_%s.png" % date
-    #savepath = "/home/cobs/ANALYSIS/PeriodicGraphs/tmpgraphs/supergrad_%s.png" % date
-    plt.savefig(savepath)
-    #mp.plot(ns,['y','z','dy'], gridcolor = '#316931',fill=['x','y','z'],confinex=True,noshow=True,plottitle='North-South system')
-    #maxval = max(ns.ndarray[KEYLIST.index('dy')])
-    #minval = min(ns.ndarray[KEYLIST.index('dy')])
-    #diff = maxval-minval
-    #plt.text(nsstat.ndarray[0][0]+0.01,minval+0.3*diff,line1)
-    #plt.text(nsstat.ndarray[0][0]+0.01,minval+0.1*diff,line2)
-    #savepath = "/home/cobs/ANALYSIS/PeriodicGraphs/tmpgraphs/supergradNS_%s.png" % date
-    #plt.savefig(savepath)
+    if not noplot:
+        # A further notification is not necessary if no data for ploos is available
+        savepath = "/srv/products/graphs/magnetism/supergrad_%s.png" % date
+        #savepath = "/home/cobs/ANALYSIS/PeriodicGraphs/tmpgraphs/supergrad_%s.png" % date
+        plt.savefig(savepath)
 
+        cred = 'cobshomepage'
+        #address=mpcred.lc(cred,'address')
+        user=mpcred.lc(cred,'user')
+        passwd=mpcred.lc(cred,'passwd')
+        #port=mpcred.lc(cred,'port')
+        remotepath = 'zamg/images/graphs/magnetism/supergrad/'
 
-    cred = 'cobshomepage'
-    #address=mpcred.lc(cred,'address')
-    user=mpcred.lc(cred,'user')
-    passwd=mpcred.lc(cred,'passwd')
-    #port=mpcred.lc(cred,'port')
-    remotepath = 'zamg/images/graphs/magnetism/supergrad/'
-
-    #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
-    #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
-    try:
-        # to send with 664 permission use a temporary directory
-        tmppath = "/tmp"
-        tmpfile= os.path.join( tmppath, os.path.basename(savepath))
-        from shutil import copyfile
-        copyfile(savepath,tmpfile)
-        scptransfer(tmpfile,'94.136.40.103:'+remotepath,passwd)
-        os.remove(tmpfile)
         #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
-        analysisdict.check({'upload_homepage_supergradEWplot': ['success','=','success']})
-    except:
-        analysisdict.check({'upload_homepage_supergradEWplot': ['failure','=','success']})
-        pass
+        #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
+        try:
+            # to send with 664 permission use a temporary directory
+            tmppath = "/tmp"
+            tmpfile= os.path.join( tmppath, os.path.basename(savepath))
+            from shutil import copyfile
+            copyfile(savepath,tmpfile)
+            scptransfer(tmpfile,'94.136.40.103:'+remotepath,passwd)
+            os.remove(tmpfile)
+            #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
+            analysisdict.check({'upload_homepage_supergradEWplot': ['success','=','success']})
+        except:
+            analysisdict.check({'upload_homepage_supergradEWplot': ['failure','=','success']})
+            pass
+
     statusmsg[name] = 'Supergrad analysis successful'
 except:
     failure = True

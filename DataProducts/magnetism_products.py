@@ -1073,15 +1073,15 @@ if part5 and part1:
            # to send with 664 permission use a temporary directory
            tmppath = "/tmp"
            tmpfile= os.path.join(tmppath,os.path.basename(pltsavepath))
-           from shutil import copyfile
-           copyfile(pltsavepath,tmpfile)
-           remotepath = 'zamg/images/graphs/magnetism/'
-           timeout = 300
-           print (" -- Starting scptransfer with timeout {}".format(timeout))
-           scptransfer(tmpfile,'94.136.40.103:'+remotepath,passwd,timeout=timeout)
-           print (" -- now removing temporary file...")
-           os.remove(tmpfile)
-           print ('  - Uploading of plots successful')
+           #from shutil import copyfile
+           #copyfile(pltsavepath,tmpfile)
+           #remotepath = 'zamg/images/graphs/magnetism/'
+           #timeout = 300
+           #print (" -- Starting scptransfer with timeout {}".format(timeout))
+           #scptransfer(tmpfile,'94.136.40.103:'+remotepath,passwd,timeout=timeout)
+           #print (" -- now removing temporary file...")
+           #os.remove(tmpfile)
+           #print ('  - Uploading of plots successful')
            statusmsg[name5] = 'uploading plots successful'
            # update upload time in current data file
            fulldict = getcurrentdata(currentvaluepath)
