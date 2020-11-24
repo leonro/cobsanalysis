@@ -90,18 +90,21 @@ try:
 
     #plt.show()
 
-    savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_gravity.png"
-    plt.savefig(savepath)
+    savepath2 = savepath = "/srv/products/graphs/title/title_gravity.png"
+    plt.savefig(savepath2)
 
-    cred = 'cobshomepage'
-    address=mpcred.lc(cred,'address')
-    user=mpcred.lc(cred,'user')
-    passwd=mpcred.lc(cred,'passwd')
-    port=mpcred.lc(cred,'port')
-    remotepath = 'zamg/images/slideshow/'
+    #savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_gravity.png"
+    #plt.savefig(savepath)
+
+    #cred = 'cobshomepage'
+    #address=mpcred.lc(cred,'address')
+    #user=mpcred.lc(cred,'user')
+    #passwd=mpcred.lc(cred,'passwd')
+    #port=mpcred.lc(cred,'port')
+    #remotepath = 'zamg/images/slideshow/'
 
     #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=$
-    scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
+    #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
 except:
     failure = True
 

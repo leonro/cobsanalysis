@@ -109,18 +109,21 @@ try:
     newax.imshow(img,origin='upper')
     newax.axis('off')
 
-    savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_weather.png"
-    plt.savefig(savepath)
+    #savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_weather.png"
+    #plt.savefig(savepath)
+    savepath2 = savepath = "/srv/products/graphs/title/title_weather.png"
+    plt.savefig(savepath2)
 
-    cred = 'cobshomepage'
-    address=mpcred.lc(cred,'address')
-    user=mpcred.lc(cred,'user')
-    passwd=mpcred.lc(cred,'passwd')
-    port=mpcred.lc(cred,'port')
-    remotepath = 'zamg/images/slideshow/'
+
+    #cred = 'cobshomepage'
+    #address=mpcred.lc(cred,'address')
+    #user=mpcred.lc(cred,'user')
+    #passwd=mpcred.lc(cred,'passwd')
+    #port=mpcred.lc(cred,'port')
+    #remotepath = 'zamg/images/slideshow/'
 
     #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
-    scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
+    #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
 except:
     failure = True
 
