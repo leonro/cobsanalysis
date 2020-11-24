@@ -17,3 +17,9 @@ GeomagPy.egg-info
 DataProducts/GIC.git
 DataProducts/bailey-gitupload
 DataProducts/StormDetector_old
+Info/plots/basegraph.png
+Logs/.magpyanalysismonitor.pkl
+Logs/primaryinst.pkl
+Logs/weekly.log
+Seismo/neic_quakes.d
+
