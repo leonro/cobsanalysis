@@ -72,4 +72,3 @@ time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,
 2020-11-17T16:07:54.401Z,-16.5497,-173.0955,22.4,4.6,mb,,89,3.927,0.62,us,us6000cqs9,2020-11-23T15:49:40.040Z,"99 km SE of Hihifo, Tonga",earthquake,14.1,6.2,0.165,15,reviewed,us,us
 2020-11-17T14:41:24.669Z,-40.9103,-16.7019,10,4.6,mb,,104,5.137,0.44,us,us6000cqs8,2020-11-23T15:25:06.040Z,"southern Mid-Atlantic Ridge",earthquake,8.6,1.9,0.164,11,reviewed,us,us
 2020-11-17T14:27:11.243Z,3.1781,122.6741,532.15,4.5,mb,,54,2.791,0.71,us,us6000cqs7,2020-11-23T15:09:16.040Z,"295 km N of Gorontalo, Indonesia",earthquake,10.1,4.5,0.074,53,reviewed,us,us
-2020-11-17T13:57:49.015Z,-19.9688,-176.0314,10,4.7,mb,,162,5.825,1.07,us,us6000cqs6,2020-11-22T22:11:48.040Z,"155 km NNW of Nuku‘alofa, Tonga",earthquake,15.5,1.9,0.246,9,reviewed,us,us
