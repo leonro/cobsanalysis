@@ -32,7 +32,7 @@ import itertools
 from threading import Thread
 from subprocess import check_output   # used for checking whether send process already finished
 
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
@@ -74,7 +74,7 @@ def active_pid(name):
         return False
     return True
 
-
+"""
 def convertGeoCoordinate(lon,lat,pro1,pro2):
      # Part of Magpy starting with version ??
     try:
@@ -89,7 +89,7 @@ def convertGeoCoordinate(lon,lat,pro1,pro2):
         return x2, y2
     except:
         return lon, lat
-
+"""
 
 def getcurrentdata(path):
     """
@@ -127,7 +127,7 @@ def writecurrentdata(path,dic):
 def ValidityCheckConfig(config={}, debug=False):
     """
     DESCRIPTION:
-        Check correctness of config data 
+        Check correctness of config data
     """
     success = True
     return success
@@ -135,9 +135,9 @@ def ValidityCheckConfig(config={}, debug=False):
 def ValidityCheckDirectories(config={},statusmsg={}, debug=False):
     """
     DESCRIPTION:
-        Check availability of paths for saving data products 
+        Check availability of paths for saving data products
     """
-    name0 = "{}-obligatory directories".format(config.get('logname','Dummy')) 
+    name0 = "{}-obligatory directories".format(config.get('logname','Dummy'))
     statusmsg[name0] = 'all accessible'
     successlist = [True,True]
 
@@ -201,7 +201,7 @@ def ValidityCheckDirectories(config={},statusmsg={}, debug=False):
 def ConnectDatabases(config={}, debug=False):
     """
     DESCRIPTION:
-        Database connection 
+        Database connection
     """
 
     connectdict = {}
@@ -218,7 +218,7 @@ def ConnectDatabases(config={}, debug=False):
         dbhost = mpcred.lc(credel,'host')
         dbuser = mpcred.lc(credel,'user')
         dbname = mpcred.lc(credel,'db')
-        
+
         # Connect DB
         if dbhost:
             try:
@@ -235,11 +235,11 @@ def ConnectDatabases(config={}, debug=False):
         print ("  No database found - aborting")
         sys.exit()
     else:
-        if debug:        
+        if debug:
             print ("    -- at least on db could be connected")
 
     if connectdict.get(dbcreds[0],None):
-        if debug:        
+        if debug:
             print ("    -- primary db is available: {}".format(dbcreds[0]))
         config['primaryDB'] = connectdict[dbcreds[0]]
 
@@ -353,13 +353,12 @@ def DoVarioCorrections(db, variostream, variosens='', starttimedt=datetime.utcno
             rotangle = 0.0
             lastrot = '0000'
         print ("        -> found rotation angle of {}".format(rotangle))
-        vario = vario.rotation(alpha=rotangle) 
+        variostream = variostream.rotation(alpha=rotangle)
         print ('     -- applying rotation: alpha={} determined in {}'.format(rotangle,lastrot))
         #convert latlong
         print ("     -- concerting lat and long to epsg 4326")
-        vario.header['DataAcquisitionLongitude'],vario.header['DataAcquisitionLatitude'] = convertGeoCoordinate(vario.header['DataAcquisitionLongitude'],vario.header['DataAcquisitionLatitude'],'epsg:31253','epsg:4326')
-        #print vario.header['DataAcquisitionLongitude'],vario.header['DataAcquisitionLatitude']
-        vario.header['DataLocationReference'] = 'WGS84, EPSG:4326'
+        variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'] = convertGeoCoordinate(variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'],'epsg:31253','epsg:4326')
+        variostream.header['DataLocationReference'] = 'WGS84, EPSG:4326'
 
     return variostream
 
@@ -374,22 +373,20 @@ def DoScalarCorrections(db, scalarstream, scalarsens='', starttimedt=datetime.ut
             - perform coordinate transformation of location to WGS84
     """
     print ("  -> Scalar corrections")
-    if (scalar.length()[0]) > 0:
-        print ("     -- obtained data - last F = {}".format(scalar.ndarray[4][-1]))
-        scalarflag = db2flaglist(db,scalasens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
+    if (scalarstream.length()[0]) > 0:
+        print ("     -- obtained data - last F = {}".format(scalarstream.ndarray[4][-1]))
+        scalarflag = db2flaglist(db,scalarsens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
         print ("     -- getting flags from DB: {}".format(len(scalarflag)))
-        #mp.plot(scalar)
         if len(scalarflag) > 0:
-            scalar = scalar.flag(scalarflag)
-            scalar = scalar.remove_flagged()
-        #mp.plot(scalar)
+            scalarstream = scalarstream.flag(scalarflag)
+            scalarstream = scalarstream.remove_flagged()
         print ("     -- applying deltasB:")
-        scalar = applyDeltas(db,scalar)
+        scalarstream = applyDeltas(db,scalarstream)
         print ("     -- resampling at 1 sec steps")
-        scalar = scalar.resample(['f'],period=1)
-        print ("     -- all corrections performed -last F = {}".format(scalar.ndarray[4][-1]))
+        scalarstream = scalarstream.resample(['f'],period=1)
+        print ("     -- all corrections performed -last F = {}".format(scalarstream.ndarray[4][-1]))
 
-    return scalar
+    return scalarstream
 
 
 def DoBaselineCorrection(db, variostream, config={}, baselinemethod='simple', debug=False):
@@ -406,7 +403,7 @@ def DoBaselineCorrection(db, variostream, config={}, baselinemethod='simple', de
 
     print ("  -> Baseline adoption")
     # Define BLV source:
-    blvdata = 'BLVcomp_{}_{}_{}'.format(variosens,scalarsens,primpier) 
+    blvdata = 'BLVcomp_{}_{}_{}'.format(variosens,scalarsens,primpier)
     blvpath = os.path.join(dipath,blvdata+'.txt')
     print ("     -- using BLV data in {}".format(blvdata))
     # Check if such a baseline is existing - if not abort and inform
@@ -499,7 +496,7 @@ def DoCombination(db, variostream, scalarstream, config={}, publevel=2, date='',
     """
 
     print ("  -> Combinations and Meta info")
-    prelim = mergeStreams(vario,scalar,keys=['f'])
+    prelim = mergeStreams(variostream,scalarstream,keys=['f'])
     print ("     -- preliminary data file after MERGE:", prelim.length()[0])
     prelim.header['DataPublicationLevel'] = str(publevel)
     prelim.header['DataPublicationDate'] = date
@@ -534,6 +531,9 @@ def ExportData(datastream, config={}, publevel=2):
     elif int(publevel)==3:
         pubtype = 'quasidefinitive'
         pubshort = 'q'
+    else:
+        pubtype = 'variation'
+        pubshort = 'v'
 
     print ("  -> Exporting data ")
     if 'IAGA' in explist:
@@ -541,10 +541,13 @@ def ExportData(datastream, config={}, publevel=2):
         datastream.write(vpathsec,filenamebegins="wic",dateformat="%Y%m%d",filenameends="{}sec.sec".format(pubshort),format_type='IAGA')
         # supported keys of IMAGCDF -> to IMF format
         #supkeys = ['time','x','y','z','f','df']
+        print ("       -> Done")
     if 'CDF' in explist:
         print ("     -- Saving one second data - CDF")
-        datastream.write(vpathcdf,filenamebegins="wic_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+prelim.header['DataPublicationLevel']+'.cdf')
+        datastream.write(vpathcdf,filenamebegins="wic_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+prelim.header.get('DataPublicationLevel')+'.cdf')
+        print ("       -> Done")
     if 'DBsec' in explist:
+        print ("     -- Saving one second data - Database")
         oldDataID = datastream.header['DataID']
         oldSensorID = datastream.header['SensorID']
         datastream.header['DataID'] = "WIC_{}_0001_0001".format(pubtype)
@@ -653,7 +656,7 @@ def AdjustedData(config={},statusmsg = {}, debug=False):
     print ("  ----------------------")
     name1e = "{}-AdjustedDataCombination".format(config.get('logname','Dummy'))
     try:
-        prelim = DoCombination(db, variostream, scalarstream, config=config, publevel=2, date=datetime.strftime(endtime,"%Y-%m-%d"), debug=debug)
+        prelim = DoCombination(db, vario, scalar, config=config, publevel=2, date=datetime.strftime(endtime,"%Y-%m-%d"), debug=debug)
         statusmsg[name1e] = 'combination finished'
     except:
         print (" !!!!!!!!!!! Combination failed")
@@ -665,7 +668,7 @@ def AdjustedData(config={},statusmsg = {}, debug=False):
     statusmsg[name1f] = 'export of adjusted data successful'
     if not debug:
         try:
-            prelimmin = ExportData(prelim, config={}, publevel=2)
+            prelimmin = ExportData(prelim, config=config, publevel=2)
         except:
             statusmsg[name1f] = 'export of adjusted data failed'
     else:
@@ -1151,9 +1154,10 @@ def main(argv):
 
 
     if not debug:
-        martaslog = ml(logfile=logpath,receiver='telegram')
-        martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-        martaslog.msg(statusmsg)
+        #martaslog = ml(logfile=logpath,receiver='telegram')
+        #martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
+        #martaslog.msg(statusmsg)
+        pass
     else:
         print ("Debug selected - statusmsg looks like:")
         print (statusmsg)
