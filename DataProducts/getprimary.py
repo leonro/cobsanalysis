@@ -8,10 +8,13 @@ from magpy.stream import *
 from magpy.database import *   
 import magpy.opt.cred as mpcred
 import json
-# old
-from pickle import dump
+import getopt
+import pwd
+import socket
+import sys  # for sys.version_info()
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
+coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
@@ -21,6 +24,7 @@ from acquisitionsupport import GetConf2 as GetConf
 Methods in several scripts:
 ConnectDatabases()
 DefineLogger()
+getstringdate()
 
 """
 
@@ -38,16 +42,18 @@ def getstringdate(input):
             return datetime.utcnow()
     return value
 
-def DefineLogger(config={}, category="DataProducts", newname=''):
+def DefineLogger(config={}, category="DataProducts", newname='', debug=False):
     host = socket.gethostname()
     jobname = os.path.splitext(os.path.basename(__file__))[0]
     name = "{}-{}-{}".format(host.upper(),category,jobname)
     # extract loggingpath from config
     if not newname == '':
-        logpath = os.path.abspath(config.get(logfile))
-        logdir = logpath.splittext[0]
-        logpath = ps.path.join(logdir,newname)
+        logpath = config.get('logfile')
+        logdir = os.path.split(logpath)[0]
+        logpath = os.path.join(logdir,newname)
         config['logfile'] = logpath
+        if debug:
+            print ("    - Saving logs to {}".format(logpath))
     # add name to config dict
     config['logname'] = name
 
@@ -188,7 +194,7 @@ def PrimaryScalar(db, scalarlist, endtime=datetime.utcnow(), logname='', statusm
     return scalainst, statusmsg
 
 
-def UpdateCurrentValuePath(currentvaluepath, varioinst='', scalainst='', logname='', statusmsg={}, debug=False)
+def UpdateCurrentValuePath(currentvaluepath, varioinst='', scalainst='', logname='', statusmsg={}, debug=False):
     try:
         if os.path.isfile(currentvaluepath):
             # read log if exists and exentually update changed information
@@ -279,8 +285,12 @@ def main(argv):
     print ("3. Connect databases and select first available")
     try:
         config = ConnectDatabases(config=config, debug=debug)
-        db = config.get('conncetedDB')[0]
+        db = config.get('primaryDB')
+        if debug:
+            print ("   -- success")
     except:
+        if debug:
+            print ("   -- database failed")
         statusmsg[name1] = 'database failed'
 
     print ("4. Checking variometer instruments")
@@ -288,6 +298,8 @@ def main(argv):
         varioinst, statusmsg = PrimaryVario(db, config.get('variometerinstruments'), endtime=endtime,  logname=name2, statusmsg=statusmsg, debug=debug)
         print ("   -> Using {}".format(varioinst))
     except:
+        if debug:
+            print ("   -- vario failed")
         statusmsg[name1] = 'vario failed'
 
     print ("5. Checking scalar instruments")
@@ -295,12 +307,17 @@ def main(argv):
         scalainst, statusmsg = PrimaryScalar(db, config.get('variometerinstruments'), endtime=endtime,  logname=name3, statusmsg=statusmsg, debug=debug)
         print ("   -> Using {}".format(scalainst))
     except:
+        if debug:
+            print ("   -- scalar failed")
         statusmsg[name1] = 'scalar failed'
 
     print ("6. Updating Current values")
     try:
-        statusmsg = UpdateCurrentValuePath(config.get('currentvaluepath'), varioinst=varioinst, scalainst=scalainst, logname=name4, statusmsg=statusmsg, debug=debug)
+        if not debug:
+            statusmsg = UpdateCurrentValuePath(config.get('currentvaluepath'), varioinst=varioinst, scalainst=scalainst, logname=name4, statusmsg=statusmsg, debug=debug)
     except:
+        if debug:
+            print ("   -- update current failed")
         statusmsg[name1] = 'current value update failed'
 
 
