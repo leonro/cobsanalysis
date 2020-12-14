@@ -12,12 +12,12 @@ PREREQUISITES
 
 principal idea: make it easy...
 
-    use a main function and 
+    use a main function and
 
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
@@ -100,7 +100,7 @@ def getcurrentdata(path):
     >>> valdict['k'] = [kval,'']
     >>> valdict['k-time'] = [kvaltime,'']
     >>> fulldict[u'magnetism'] = valdict
-    >>> writecurrentdata(path, fulldict) 
+    >>> writecurrentdata(path, fulldict)
     """
     if os.path.isfile(currentvaluepath):
         with open(currentvaluepath, 'r') as file:
@@ -520,6 +520,8 @@ def ExportData(datastream, config={}, publevel=2):
     explist = config.get('magnetismexports')
     obscode = config.get('obscode')
     connectdict = config.get('conncetedDB')
+    varioinst = config.get('primaryVarioInst')
+    scalainst = config.get('primaryScalarInst')
 
     vpathsec = os.path.join(config.get('variationpath'),'sec')
     vpathmin = os.path.join(config.get('variationpath'),'min')
@@ -544,7 +546,7 @@ def ExportData(datastream, config={}, publevel=2):
         print ("       -> Done")
     if 'CDF' in explist:
         print ("     -- Saving one second data - CDF")
-        datastream.write(vpathcdf,filenamebegins="wic_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+prelim.header.get('DataPublicationLevel')+'.cdf')
+        datastream.write(vpathcdf,filenamebegins="wic_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+datastream.header.get('DataPublicationLevel')+'.cdf')
         print ("       -> Done")
     if 'DBsec' in explist:
         print ("     -- Saving one second data - Database")
@@ -571,7 +573,7 @@ def ExportData(datastream, config={}, publevel=2):
         variocol = np.asarray([varioinst for el in prelimmin.ndarray[0]])
         scalacol = np.asarray([scalainst for el in prelimmin.ndarray[0]])
         prelimmin = prelimmin._put_column(variocol, 'str1')
-        prelimmin = prelimmin._put_column(scalacol, 'str2')        
+        prelimmin = prelimmin._put_column(scalacol, 'str2')
         for dbel in connectdict:
             db = connectdict[dbel]
             print ("     -- Writing {} data to DB {}".format(pubtype,dbel))
@@ -667,10 +669,10 @@ def AdjustedData(config={},statusmsg = {}, debug=False):
     name1f = "{}-AdjustedDataExport".format(config.get('logname','Dummy'))
     statusmsg[name1f] = 'export of adjusted data successful'
     if not debug:
-        try:
-            prelimmin = ExportData(prelim, config=config, publevel=2)
-        except:
-            statusmsg[name1f] = 'export of adjusted data failed'
+        #try:
+        prelimmin = ExportData(prelim, config=config, publevel=2)
+        #except:
+        #    statusmsg[name1f] = 'export of adjusted data failed'
     else:
         print ("Debug selected: export disabled")
 
@@ -688,17 +690,18 @@ def KValues(datastream,config={},statusmsg={}, debug=False):
         Obtain K values and update current data structure
     """
 
-    k9level = datastream.header.get('k9_level',500)
+    k9level = datastream.header.get('StationK9',500)
     name5b = "{}-KValueCurrentData".format(config.get('logname','Dummy'))
-    currentdatapath = config.get('currentvaluepath')
+    currentvaluepath = config.get('currentvaluepath')
+    connectdict = config.get('conncetedDB')
     success = True
 
     ## What about k values ??
     print ("  K values")
     print ("  ----------------------")
-    print ("     -- K9 level in stream: {}".format(datastream.header.get('k9_level')))
+    print ("     -- K9 level in stream: {}".format(datastream.header.get('StationK9')))
     try:
-        if prelimmin.length()[0] > 1600:
+        if datastream.length()[0] > 1600:
             # Only perform this job if enough minute data is available
             # Thus there won't be any calculation between 0.00 and 1:30 
             kvals = datastream.k_fmi(k9_level=k9level)
@@ -730,7 +733,7 @@ def KValues(datastream,config={},statusmsg={}, debug=False):
                     valdict['k-time'] = [kvaltime,'']
                     fulldict[u'magnetism'] = valdict
                 with open(currentvaluepath, 'w',encoding="utf-8") as file:
-                    file.write(unicode(json.dumps(fulldict))) 
+                    file.write(unicode(json.dumps(fulldict)))
                 print ("     -- K value has been updated to {}".format(kval))
             try:
                 if not debug:
@@ -767,12 +770,13 @@ def CreateDiagram(datastream,config={},statusmsg={}, debug=False):
             pnd = datastream._select_timerange(starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
             pst = DataStream([LineStruct()],datastream.header,pnd)
             pst = pst.xyz2hdz()
-            mp.plotStreams([pst],[['x','y','z','f']], gridcolor='#316931',fill=['x','z','f'],confinex=True, fullday=True, opacity=0.7, plottitle='Geomagnetic variation (until %s)' % (datetime.utcnow().date()),noshow=True)
+            #mp.plotStreams([pst],[['x','y','z','f']], gridcolor='#316931',fill=['x','z','f'],confinex=True, fullday=True, opacity=0.7, plottitle='Geomagnetic variation (until %s)' % (datetime.utcnow().date()),noshow=True)
             print ("     -- Saving diagram to products folder")
 
             pltsavepath = os.path.join(figpath,"magvar_{}.png".format(date))
-            plt.savefig(pltsavepath)
+            #plt.savefig(pltsavepath)
             statusmsg[name5] = 'creating and saving graph successful'
+            print ("      -> Done")
     except:
             statusmsg[name5] = 'failed to save data - remount necessary?'
             success = False
@@ -1143,7 +1147,7 @@ def main(argv):
     if mindata.length()[0]>0:
         if debug:
             print ("8. Diagrams")
-        suc,statusmsg = CreateDiagrams(mindata, config=config,statusmsg=statusmsg)
+        suc,statusmsg = CreateDiagram(mindata, config=config,statusmsg=statusmsg)
         if debug:
             print ("9. K Values")
         suc,statusmsg = KValues(mindata, config=config,statusmsg=statusmsg)
