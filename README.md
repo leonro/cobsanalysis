@@ -10,10 +10,9 @@ The following README contains an overview about all analysis scripts used at the
 Script                        | Location        |  Schedule         |  Config        |   Monitor         |  Dependencies  | Comments
 ----------------------------- | --------------- | ----------------- | -------------- | ----------------- | -------------- | --------
 magnetism\_products\_new.py   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-current\_weather\_new.py      | DataProducts    | analysis_hourly   |                |  MARTAS telegram  |                | 
-getprimary.py                 | DataProducts    | analysis_5min     |                |  MARTAS telegram  |                | 
-flagging.py                   | DataProducts    | analysis_5min     |                |  MARTAS telegram  |                | 
-current\_weather.py           | DataProducts    | analysis_hourly   |                |  MARTAS telegram  |                | 
+current\_weather\_new.py      | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+getprimary.py                 | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+flagging.py                   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 radon\_project.py             | DataProducts    | analysis_hourly   |                |  MARTAS telegram  |                | 
 rcsdata\_upload.py            | DataProducts    | analysis_hourly   |                |  MARTAS telegram  |                | 
 magnetism\_checkadj.py        | DataProducts    | analysis_daily    |                |  MARTAS telegram  |                | 
