@@ -33,7 +33,7 @@ from threading import Thread
 from subprocess import check_output   # used for checking whether send process already finished
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+#coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
@@ -487,7 +487,7 @@ def GetQDTimeslot(config={}, debug=False):
         Check whether the current time slot justifies QD analysis
     RETURN
         True if valid
-    """    
+    """
     runqd = True
     # Get the current weekday
     qdstart = datetime.utcnow()
