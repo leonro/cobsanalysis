@@ -4,8 +4,8 @@
 Flagging data
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
@@ -21,7 +21,7 @@ import sys  # for sys.version_info()
 
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+#coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf

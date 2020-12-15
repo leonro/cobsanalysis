@@ -4,8 +4,8 @@
 Magnetism - primary instruments
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 import magpy.opt.cred as mpcred
 import json
 import getopt
@@ -14,7 +14,7 @@ import socket
 import sys  # for sys.version_info()
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+#coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
@@ -162,7 +162,7 @@ def PrimaryScalar(db, scalarlist, endtime=datetime.utcnow(), logname='', statusm
     """
     ## Step 2: checking available scalar data (need to be valid data and cover one day)
     ##         the first instrument fitting these conditions is selected
-    for inst in scalalist:
+    for inst in scalarlist:
         print ("    -- Checking ", inst)
         try:
             sr = dbselect(db,'DataSamplingRate','DATAINFO','DataID LIKE "{}"'.format(inst))
