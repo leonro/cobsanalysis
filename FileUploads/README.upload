@@ -1,1 +1,0 @@
-# All upload jobs to the BROKER are currently performed from the main servers using plain rsync
