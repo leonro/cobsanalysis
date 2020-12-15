@@ -20,7 +20,6 @@ tg\_pha.py                    | Info            | analysis_20min    |           
 tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_base.py                   | Info            | analysis_weekly   |                |  MARTAS telegram  |                | 
-file\_upload\_qd.py           | FileUploads     | analysis_daily    |                |  MARTAS telegram  |                | 
 neic\_download.py             | FileDownloads   | analysis_20min    |                |  MARTAS telegram  |                | 
 mag\_graph.py                 | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 weather\_graph.py             | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 

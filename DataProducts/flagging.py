@@ -25,6 +25,10 @@ coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate
 
 
 
@@ -45,94 +49,6 @@ flagdict = {'LEMI036':[7200,'x,y,z',6,'Default',True,'None','None'],
             'GP20S3NSS2':[7200,'f',5,'Default',False,'None','None'],
             'POS1':[7200,'f',4,100,False,'None','None'],
             'BM35':[7200,'var3','None','None',False,750,1000]}
-
-
-def DefineLogger(config={}, category="DataProducts", newname='', debug=False):
-    host = socket.gethostname()
-    jobname = os.path.splitext(os.path.basename(__file__))[0]
-    name = "{}-{}-{}".format(host.upper(),category,jobname)
-    # extract loggingpath from config
-    if not newname == '':
-        logpath = config.get('logfile')
-        logdir = os.path.split(logpath)[0]
-        logpath = os.path.join(logdir,newname)
-        config['logfile'] = logpath
-        if debug:
-            print ("    - Saving logs to {}".format(logpath))
-    # add name to config dict
-    config['logname'] = name
-
-    return config
-
-def getstringdate(strdate):
-    dbdateformat1 = "%Y-%m-%d %H:%M:%S.%f"
-    dbdateformat2 = "%Y-%m-%d %H:%M:%S"
-    try:
-        value = datetime.strptime(strdate,dbdateformat1)
-    except:
-        try:
-            value = datetime.strptime(strdate,dbdateformat2)
-        except:
-            print ("Get primary: error when converting database date to datetime")
-            return datetime.utcnow()
-    return value
-
-
-def ConnectDatabases(config={}, debug=False):
-    """
-    DESCRIPTION:
-        Database connection
-    """
-
-    connectdict = {}
-    config['primaryDB'] = None
-
-    dbcreds = config.get('dbcredentials')
-    if not isinstance(dbcreds,list):
-        dbcreds = [dbcreds]
-
-    # First in list is primary
-    for credel in dbcreds:
-        # Get credentials
-        dbpwd = mpcred.lc(credel,'passwd')
-        dbhost = mpcred.lc(credel,'host')
-        dbuser = mpcred.lc(credel,'user')
-        dbname = mpcred.lc(credel,'db')
-
-        # Connect DB
-        if dbhost:
-            try:
-                if debug:
-                    print ("    -- Connecting to database {} ...".format(credel))
-                    print ("    -- {} {} {}".format(dbhost, dbuser, dbname))
-                connectdict[credel] = mysql.connect(host=dbhost,user=dbuser,passwd=dbpwd,db=dbname)
-                if debug:
-                    print ("...success")
-            except:
-                pass
-
-    if len(connectdict) == 0:
-        print ("  No database found - aborting")
-        sys.exit()
-    else:
-        if debug:
-            print ("    -- at least on db could be connected")
-
-    if connectdict.get(dbcreds[0],None):
-        if debug:
-            print ("    -- primary db is available: {}".format(dbcreds[0]))
-        config['primaryDB'] = connectdict[dbcreds[0]]
-    else:
-        print (" Primary database not available - selecting alternative as primary")
-        for el in dbcreds:
-            if connectdict.get(el,None):
-                config['primaryDB'] = connectdict[el]
-                print ("   -> selected database {} as primary".format(el))
-                break
-
-    config['conncetedDB'] = connectdict
-
-    return config
 
 
 def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False, critamount=20, flagids=None, debug=False):
@@ -360,7 +276,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", newname='mm-dp-flagging.log')
+    config = DefineLogger(config=config, category = "DataProducts", newname='mm-dp-flagging.log', debug=debug)
 
     name1 = "{}-flag".format(config.get('logname'))
     name2 = "{}-flag-lemitest".format(config.get('logname'))
@@ -733,7 +649,7 @@ def main(argv):
     print ("SUCCESS")
 
     if not debug:
-        #martaslog = ml(logfile=logpath,receiver='telegram')
+        #martaslog = ml(logfile=config.get('logfile'),receiver='telegram')
         #martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
         #martaslog.msg(statusmsg)
         pass

@@ -33,38 +33,14 @@ from threading import Thread
 from subprocess import check_output   # used for checking whether send process already finished
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
+coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
-
-
-# ################################################
-#    general inits
-# ################################################
-
-endtime = datetime.utcnow()
-
-
-
-# ################################################
-#            Local Methods
-# ################################################
-
-"""
-def getstringdate(input):
-     # Part of Magpy starting with version ??
-    dbdateformat1 = "%Y-%m-%d %H:%M:%S.%f"
-    dbdateformat2 = "%Y-%m-%d %H:%M:%S"
-    try:
-        value = datetime.strptime(input,dbdateformat1)
-    except:
-        try:
-            value = datetime.strptime(input,dbdateformat2)
-        except:
-            print ("Getprimary: error when converting database date to datetime")
-            return datetime.utcnow()
-    return value
-"""
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata
 
 def active_pid(name):
      # Part of Magpy starting with version ??
@@ -74,50 +50,6 @@ def active_pid(name):
         return False
     return True
 
-"""
-def convertGeoCoordinate(lon,lat,pro1,pro2):
-     # Part of Magpy starting with version ??
-    try:
-        from pyproj import Proj, transform
-        p1 = Proj(init=pro1)
-        x1 = lon
-        y1 = lat
-        # projection 2: WGS 84
-        p2 = Proj(init=pro2)
-        # transform this point to projection 2 coordinates.
-        x2, y2 = transform(p1,p2,x1,y1)
-        return x2, y2
-    except:
-        return lon, lat
-"""
-
-def getcurrentdata(path):
-    """
-    usage: getcurrentdata(currentvaluepath)
-    example: update kvalue
-    >>> fulldict = getcurrentdata(currentvaluepath)
-    >>> valdict = fulldict.get('magnetism',{})
-    >>> valdict['k'] = [kval,'']
-    >>> valdict['k-time'] = [kvaltime,'']
-    >>> fulldict[u'magnetism'] = valdict
-    >>> writecurrentdata(path, fulldict)
-    """
-    if os.path.isfile(currentvaluepath):
-        with open(currentvaluepath, 'r') as file:
-            fulldict = json.load(file)
-        return fulldict
-    else:
-        print ("path not found")
-
-def writecurrentdata(path,dic):
-    """
-    usage: writecurrentdata(currentvaluepath,fulldict)
-    example: update kvalue
-    >>> see getcurrentdata
-    >>>
-    """
-    with open(currentvaluepath, 'w',encoding="utf-8") as file:
-        file.write(unicode(json.dumps(dic)))
 
 
 # ################################################
@@ -197,62 +129,12 @@ def ValidityCheckDirectories(config={},statusmsg={}, debug=False):
 
     return success, statusmsg
 
-
-def ConnectDatabases(config={}, debug=False):
-    """
-    DESCRIPTION:
-        Database connection
-    """
-
-    connectdict = {}
-    config['primaryDB'] = None
-
-    dbcreds = config.get('dbcredentials')
-    if not isinstance(dbcreds,list):
-        dbcreds = [dbcreds]
-
-    # First in list is primary
-    for credel in dbcreds:
-        # Get credentials
-        dbpwd = mpcred.lc(credel,'passwd')
-        dbhost = mpcred.lc(credel,'host')
-        dbuser = mpcred.lc(credel,'user')
-        dbname = mpcred.lc(credel,'db')
-
-        # Connect DB
-        if dbhost:
-            try:
-                if debug:
-                    print ("    -- Connecting to database {} ...".format(credel))
-                    print ("    -- {} {} {}".format(dbhost, dbuser, dbname))
-                connectdict[credel] = mysql.connect(host=dbhost,user=dbuser,passwd=dbpwd,db=dbname)
-                if debug:
-                    print ("...success")
-            except:
-                pass
-
-    if len(connectdict) == 0:
-        print ("  No database found - aborting")
-        sys.exit()
-    else:
-        if debug:
-            print ("    -- at least on db could be connected")
-
-    if connectdict.get(dbcreds[0],None):
-        if debug:
-            print ("    -- primary db is available: {}".format(dbcreds[0]))
-        config['primaryDB'] = connectdict[dbcreds[0]]
-
-    config['conncetedDB'] = connectdict
-
-    return config
-
-
-def GetInstruments(config={}, statusmsg={}, debug = False):
-    """
+"""
+def GetPrimaryInstruments(config={}, statusmsg={}, debug = False):
+    #""
     DESCRIPTION
         Obtain the primary instruments from current data structure
-    """
+    #""
     if debug:
         print (" -> get primary instruments")
     currentvaluepath = config.get('currentvaluepath')
@@ -302,192 +184,7 @@ def GetInstruments(config={}, statusmsg={}, debug = False):
     config['QDenddate'] = QDenddate
 
     return config, statusmsg
-
-
-def DoVarioCorrections(db, variostream, variosens='', starttimedt=datetime.utcnow(), debug=False):
-    """
-    DESCRIPTION:
-        Apply the following corrections to variometer data:
-            - apply flags from database
-            - apply compensation fields
-            - apply delta values from DB
-            - apply alpha rotations (horizontal)
-            - perform coordinate transformation of location to WGS84
-    """
-    print ("  -> Variometer corrections")
-    if (variostream.length()[0]) > 0 and db:
-        # Apply existing flags from DB
-        varioflag = db2flaglist(db,variosens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
-        print ("     -- getting flags from DB: {}".format(len(varioflag)))
-        if len(varioflag) > 0:
-            variostream = variostream.flag(varioflag)
-            variostream = variostream.remove_flagged()
-        print ("   -- applying deltas")
-        variostream = applyDeltas(db,variostream)
-        # Apply compensation offsets
-        print ("   -- offsets")
-        offdict = {}
-        xcomp = variostream.header.get('DataCompensationX','0')
-        ycomp = variostream.header.get('DataCompensationY','0')
-        zcomp = variostream.header.get('DataCompensationZ','0')
-        if not float(xcomp) == 0:
-            offdict['x'] = -1*float(xcomp)*1000.
-        if not float(ycomp) == 0:
-            offdict['y'] = -1*float(ycomp)*1000.
-        if not float(zcomp) == 0:
-            offdict['z'] = -1*float(zcomp)*1000.
-        print ('     -- applying compensation fields: x={}, y={}, z={}'.format(xcomp,ycomp,zcomp))
-        variostream = variostream.offset(offdict)
-        print ("     -- rotation")
-        rotstring = variostream.header.get("DataRotationAlpha","0")
-        # Apply rotation data
-        try:
-            rotdict = string2dict(rotstring,typ='listofdict')[0]
-        except:
-            rotdict = string2dict(rotstring,typ='listofdict')
-        #print ("     -> rotation dict: {}".format(rotdict))
-        try:
-            lastrot = sorted(rotdict)[-1]
-            rotangle = float(rotdict.get(lastrot,0))
-        except:
-            rotangle = 0.0
-            lastrot = '0000'
-        print ("        -> found rotation angle of {}".format(rotangle))
-        variostream = variostream.rotation(alpha=rotangle)
-        print ('     -- applying rotation: alpha={} determined in {}'.format(rotangle,lastrot))
-        #convert latlong
-        print ("     -- concerting lat and long to epsg 4326")
-        variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'] = convertGeoCoordinate(variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'],'epsg:31253','epsg:4326')
-        variostream.header['DataLocationReference'] = 'WGS84, EPSG:4326'
-
-    return variostream
-
-def DoScalarCorrections(db, scalarstream, scalarsens='', starttimedt=datetime.utcnow(), debug=False):
-    """
-    DESCRIPTION:
-        Apply the following corrections to variometer data:
-            - apply flags from database
-            - apply compensation fields
-            - apply delta values from DB
-            - apply alpha rotations (horizontal)
-            - perform coordinate transformation of location to WGS84
-    """
-    print ("  -> Scalar corrections")
-    if (scalarstream.length()[0]) > 0:
-        print ("     -- obtained data - last F = {}".format(scalarstream.ndarray[4][-1]))
-        scalarflag = db2flaglist(db,scalarsens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
-        print ("     -- getting flags from DB: {}".format(len(scalarflag)))
-        if len(scalarflag) > 0:
-            scalarstream = scalarstream.flag(scalarflag)
-            scalarstream = scalarstream.remove_flagged()
-        print ("     -- applying deltasB:")
-        scalarstream = applyDeltas(db,scalarstream)
-        print ("     -- resampling at 1 sec steps")
-        scalarstream = scalarstream.resample(['f'],period=1)
-        print ("     -- all corrections performed -last F = {}".format(scalarstream.ndarray[4][-1]))
-
-    return scalarstream
-
-
-def DoBaselineCorrection(db, variostream, config={}, baselinemethod='simple', debug=False):
-    """
-    DESCRIPTION:
-        Apply baseline correction
-    """
-
-    variosens = config.get('primaryVario')
-    scalarsens = config.get('primaryScalar')
-    dipath = config.get('dipath')
-    primpier = config.get('primarypier')
-    ndays = config.get('baselinedays')
-
-    print ("  -> Baseline adoption")
-    # Define BLV source:
-    blvdata = 'BLVcomp_{}_{}_{}'.format(variosens,scalarsens,primpier)
-    blvpath = os.path.join(dipath,blvdata+'.txt')
-    print ("     -- using BLV data in {}".format(blvdata))
-    # Check if such a baseline is existing - if not abort and inform
-    msg = 'baseline correction successful'
-
-    if baselinemethod == 'simple':
-        try:
-            print ("     -- reading BLV data from file")
-            starttime = endtime-timedelta(days=ndays)
-            absr = read(blvpath, starttime=starttime)
-            blvflagdata = blvdata.replace("comp","")
-            blvflaglist = db2flaglist(db,blvflagdata, begin=datetime.strftime(starttime,"%Y-%m-%d %H:%M:%S"))
-            print ("     -- found {} flags for baseline values of the last {} days".format(len(blvflaglist),ndays))
-            if len(blvflaglist) > 0:
-                absr = absr.flag(blvflaglist)
-                absr = absr.remove_flagged()
-            print ("     -- dropping all line with NAN in basevalues")
-            absr = absr._drop_nans('dx')
-            absr = absr._drop_nans('dy')
-            absr = absr._drop_nans('dz')
-            print ("     -- calculation medians for basevalues")
-            bh, bhstd = absr.mean('dx',meanfunction='median',std=True)
-            bd, bdstd = absr.mean('dy',meanfunction='median',std=True)
-            bz, bzstd = absr.mean('dz',meanfunction='median',std=True)
-            print ("       -> Basevalues for last 100 days:")
-            print ("          Delta H = {a} +/- {b}".format(a=bh, b=bhstd))
-            print ("          Delta D = {a} +/- {b}".format(a=bd, b=bdstd))
-            print ("          Delta Z = {a} +/- {b}".format(a=bz, b=bzstd))
-            print ("     -- Performing constant basevalue correction")
-            variostream = variostream.simplebasevalue2stream([bh,bd,bz])
-        except:
-            msg = 'simple baseline correction failed'
-            print ('  -> {}'.format(msg))
-    else:
-       try:
-            print ("     -- reading BLV data from file")
-            absst= read(blvpath)
-            blvflagdata = blvdata.replace("comp","")
-            absflag = db2flaglist(db,blvflagdata)
-            print ("     -- found {} flags for basevalues".format(len(absflag)))
-            if len(absflag) > 0:
-                absst = absst.flag(absflag)
-                absst = absst.remove_flagged()
-            print ("     -- dropping all line with NAN in basevalues")
-            absst = absst._drop_nans('dx')
-            absst = absst._drop_nans('dy')
-            absst = absst._drop_nans('dz')
-            print ("     -- reading BLV parameter from database")
-            baselst = getBaseline(db,variosens,date=datetime.strftime(endtime,"%Y-%m-%d"))
-            if debug:
-                print ("Obtained the following baseline parameters from DB: {}".format(baselst))
-            try:
-                # valid for old dummy
-                startabs = baselst[1][0]
-                func = baselst[3][0]
-                fitdeg = int(baselst[4][0])
-                try:
-                    fitknot = float(baselst[5][0])
-                except:
-                    fitknot = 0.3
-            except:
-                # valid for true input and new dummy (> magpy 0.4.6)
-                startabs = baselst[1][0]
-                func = baselst[4][0]
-                fitdeg = int(baselst[5][0])
-                try:
-                    fitknot = float(baselst[6][0])
-                except:
-                    fitknot = 0.3
-            print ("       -> using function {} with knots at {} intervals beginning at {}".format(func,fitknot,startabs))
-            print ("     -- checking and eventually adepting start of baseline")
-            print ("       -> initial starttime: {}".format(startabs))
-            startabsdatetime = absst._testtime(startabs)
-            if startabsdatetime < datetime.utcnow()-timedelta(days=365):
-                startabs = datetime.strftime(datetime.utcnow()-timedelta(days=365),"%Y-%m-%d")
-            print ("       -> refined starttime: {}".format(startabs))
-            print ("     -- calculating and applying adopted baseline")
-            baselinefunc = variostream.baseline(absst,startabs=startabs,fitfunc=func,fitdegree=fitdeg,knotstep=fitknot)
-            variostream = variostream.bc()
-            msg = 'baseline correction using function {} and (knot: {}, degree: {})'.format(func,fitknot,fitdeg)
-       except:
-            msg = 'baseline correction failed'
-
-    return variostream, msg
+"""
 
 def DoCombination(db, variostream, scalarstream, config={}, publevel=2, date='', debug=False):
     """
@@ -583,7 +280,7 @@ def ExportData(datastream, config={}, publevel=2):
 
 
 
-def AdjustedData(config={},statusmsg = {}, debug=False):
+def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=False):
     """
     DESCRIPTION
         Create and submit variation/adjusted data
@@ -649,7 +346,7 @@ def AdjustedData(config={},statusmsg = {}, debug=False):
     print ("  Instruments: {} and {}".format(varioinst, scalarinst))
 
     name1d = "{}-AdjustedBaselineData".format(config.get('logname','Dummy'))
-    vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple')
+    vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple',endtime=endtime)
     statusmsg[name1d] = msg
     if not msg == 'baseline correction successful':
         success = False
@@ -751,7 +448,7 @@ def KValues(datastream,config={},statusmsg={}, debug=False):
 
     return success, statusmsg
 
-def CreateDiagram(datastream,config={},statusmsg={}, debug=False):
+def CreateDiagram(datastream,config={},statusmsg={}, endtime=datetime.utcnow(), debug=False):
     """
     DESCRIPTION
         Create diagram of adjusted data
@@ -862,7 +559,7 @@ def GetQDDonealready(lastQDdate='', QDenddate='', newQDenddate='', debug=False):
     RETURN
         True if valid
     """
-    date = datetime.strftime(endtime,"%Y-%m-%d")
+    date = datetime.strftime(datetime.utcnow(),"%Y-%m-%d")
     runqd = True
 
     print ("  -> checking whether QD determination has already been performed within the current time period")
@@ -920,7 +617,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
     print ("  ----------------------")
 
     name3a = "{}-QDanalysis".format(config.get('logname','Dummy'))
-    statusmsg[name3a] = "last suitability test for quasidefinitive finished"
+    statusmsg[name3a] = "last suitability-test for quasidefinitive finished"
     try:
         runqd = GetQDTimeslot(config=config, debug=debug)
         if runqd:
@@ -928,7 +625,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
         if runqd:
             runqd = GetQDDonealready(lastQDdate=lastQDdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
     except:
-        statusmsg[name3a] = "suitability test for quasidefinitive failed"
+        statusmsg[name3a] = "suitability-test for quasidefinitive failed"
 
     if runqd:
         print ("  Running QD analysis")
@@ -1014,7 +711,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             print ("  -> Combining all data sets")
             name3g = "{}-QDDataCombination".format(config.get('logname','Dummy'))
             try:
-                qddata = DoCombination(db, vario, scalar, config=config, publevel=3, date=datetime.strftime(endtime,"%Y-%m-%d"), debug=debug)
+                qddata = DoCombination(db, vario, scalar, config=config, publevel=3, date=datetime.strftime(datetime.utcnow(),"%Y-%m-%d"), debug=debug)
                 statusmsg[name3g] = 'combination finished'
             except:
                 print ("      !!!!!!!!!!! Combination failed")
@@ -1041,7 +738,6 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
                 with open(currentvaluepath, 'w',encoding="utf-8") as file:
                     file.write(unicode(json.dumps(fulldict)))
                     print ("    -- last QD analysis date has been updated from {} to {}".format(lastQDdate,date))
-
             nameqd = "{}-quasidefinitive".format(config.get('logname','Dummy'))
             statusmsg[name3b] = "QD data between {} and {} calculated and published (parameter: rotangle={})".format(qdstarttime, qdendtime, rotangle)
         except:
@@ -1061,9 +757,10 @@ def main(argv):
     configpath = ''
     statusmsg = {}
     debug=False
+    endtime = None
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:D",["config=","joblist=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:j:D",["config=","joblist=","endtime=","debug=",])
     except getopt.GetoptError:
         print ('magnetism_products.py -c <config>')
         sys.exit(2)
@@ -1082,6 +779,8 @@ def main(argv):
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
+            print ('-j            : adjusted, quasidefinitive,upload,plots')
+            print ('-e            : endtime')
             print ('-------------------------------------')
             print ('Application:')
             print ('python magnetism_products.py -c /etc/marcos/analysis.cfg')
@@ -1092,6 +791,9 @@ def main(argv):
         elif opt in ("-j", "--joblist"):
             # get a list of jobs (adjusted, quasidefinitive,upload,plots)
             joblist = arg.split(',')
+        elif opt in ("-e", "--endtime"):
+            # get a list of jobs (adjusted, quasidefinitive,upload,plots)
+            endtime = arg
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
@@ -1104,6 +806,15 @@ def main(argv):
         print ('-- check magnetism_products.py -h for more options and requirements')
         sys.exit()
 
+    if endtime:
+        try:
+            endtime = DataStream()._testtime(endtime)
+        except:
+            print ("Endtime could not be interpreted - Aborting")
+            sys.exit(1)
+    else:
+        endtime = datetime.utcnow()
+
     if debug:
         print ("1. Read and check validity of configuration data")
     config = GetConf(configpath)
@@ -1114,15 +825,7 @@ def main(argv):
     # #############################################################
     if debug:
         print ("2. Activate logging scheme as selected in config")
-    # create statusmsgname
-    category = "DataProducts"
-    host = socket.gethostname()
-    jobname = os.path.splitext(os.path.basename(__file__))[0]
-    name = "{}-{}-{}".format(host,category,jobname)
-    # extract loggingpath from config 
-    #logpath = config.get(logfile) # '/var/log/magpy/mm-dp-magnetism.log'
-    # add name to config dict
-    config['logname'] = name
+    config = DefineLogger(config=config, category = "DataProducts", newname='mm-dp-magnetism.log', debug=debug)
 
     if debug:
         print (" -> Config contents:")
@@ -1134,7 +837,7 @@ def main(argv):
 
     if debug:
         print ("4. Loading current.data and getting primary instruments")
-    config, statusmsg = GetInstruments(config=config, statusmsg=statusmsg, debug=debug)
+    config, statusmsg = GetPrimaryInstruments(config=config, statusmsg=statusmsg, debug=debug)
 
     if debug:
         print ("5. Connect to databases")
@@ -1142,12 +845,12 @@ def main(argv):
 
     if debug:
         print ("6. Obtain adjusted data")
-    mindata,statusmsg = AdjustedData(config=config, statusmsg=statusmsg, debug=debug)
+    mindata,statusmsg = AdjustedData(config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
 
     if mindata.length()[0]>0:
         if debug:
             print ("8. Diagrams")
-        suc,statusmsg = CreateDiagram(mindata, config=config,statusmsg=statusmsg)
+        suc,statusmsg = CreateDiagram(mindata, config=config,statusmsg=statusmsg, endtime=endtime)
         if debug:
             print ("9. K Values")
         suc,statusmsg = KValues(mindata, config=config,statusmsg=statusmsg)
@@ -1158,7 +861,7 @@ def main(argv):
 
 
     if not debug:
-        #martaslog = ml(logfile=logpath,receiver='telegram')
+        #martaslog = ml(logfile=config.get('logfile'),receiver='telegram')
         #martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
         #martaslog.msg(statusmsg)
         pass
@@ -1186,11 +889,9 @@ obscode                :      WIC
 # Basic analysis parameters
 # --------------------------------------------------------------
 
+meteorange             :       3
 daystodeal             :      2
 
-submit2gin = True
-submit2app = True
-submitlist = ['submitGINasIAGA', 'submitGINasIMCDF', 'submitZAMGFTPasIAGA', 'submitZAMGFTPasIMCDF', 'submitAPPasIAGA']
 
 #  - MAGNETISM
 
@@ -1216,12 +917,25 @@ dbcredentials          :      list
 # Paths and Directories
 # --------------------------------------------------------------
 
+#  - METEOROLOGY
+
+sgopath                :       /srv/archive/SGO
+meteoproducts          :       /srv/products/data/meteo
+meteoimages            :       /srv/products/graphs/meteo
+
 #  - MAGNETISM
 
 variationpath          :       /srv/products/data/magnetism/variation/
 quasidefinitivepath    :       /srv/products/data/magnetism/quasidefinitive/
 dipath                 :       /srv/archive/WIC/DI/data
 archivepath            :       /srv/archive/WIC
+
+#  - GAMMA
+
+rcsg0rawdata           :       /srv/archive/SGO/RCSG0temp_20161027_0001/raw/
+gammarawdata           :       /srv/archive/SGO/GAMMA_SFB867_0001/raw/
+gammaresults           :       /srv/projects/radon/tables/
+
 
 #  - GENERAL
 
@@ -1233,7 +947,7 @@ magfigurepath          :       /srv/products/graphs/magnetism/
 # --------------------------------------------------------------
 
 # Logfile (a json style dictionary, which contains statusmessages) 
-logfile              :   /var/log/magpy/mm-dp-magnetism.log
+loggingdirectory       :   /var/log/magpy
 
 # Notifaction (uses martaslog class, one of email, telegram, mqtt, log) 
 notification         :   telegram

@@ -18,6 +18,10 @@ coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate
 
 
 """
@@ -28,7 +32,7 @@ getstringdate()
 
 """
 
-
+"""
 def getstringdate(input):
     dbdateformat1 = "%Y-%m-%d %H:%M:%S.%f"
     dbdateformat2 = "%Y-%m-%d %H:%M:%S"
@@ -42,14 +46,14 @@ def getstringdate(input):
             return datetime.utcnow()
     return value
 
+
 def DefineLogger(config={}, category="DataProducts", newname='', debug=False):
     host = socket.gethostname()
     jobname = os.path.splitext(os.path.basename(__file__))[0]
     name = "{}-{}-{}".format(host.upper(),category,jobname)
     # extract loggingpath from config
     if not newname == '':
-        logpath = config.get('logfile')
-        logdir = os.path.split(logpath)[0]
+        logdir = config.get('loggingdirectory')
         logpath = os.path.join(logdir,newname)
         config['logfile'] = logpath
         if debug:
@@ -61,10 +65,10 @@ def DefineLogger(config={}, category="DataProducts", newname='', debug=False):
 
 
 def ConnectDatabases(config={}, debug=False):
-    """
+    #""
     DESCRIPTION:
         Database connection
-    """
+    #""
 
     connectdict = {}
     config['primaryDB'] = None
@@ -104,11 +108,18 @@ def ConnectDatabases(config={}, debug=False):
         if debug:
             print ("    -- primary db is available: {}".format(dbcreds[0]))
         config['primaryDB'] = connectdict[dbcreds[0]]
+    else:
+        print (" Primary database not available - selecting alternative as primary")
+        for el in dbcreds:
+            if connectdict.get(el,None):
+                config['primaryDB'] = connectdict[el]
+                print ("   -> selected database {} as primary".format(el))
+                break
 
     config['conncetedDB'] = connectdict
 
     return config
-
+"""
 
 def PrimaryVario(db, variolist, endtime=datetime.utcnow(), logname='', statusmsg={}, debug=False):
     """
@@ -322,7 +333,7 @@ def main(argv):
 
 
     if not debug:
-        #martaslog = ml(logfile=logpath,receiver='telegram')
+        #martaslog = ml(logfile=config.get('logfile'),receiver='telegram')
         #martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
         #martaslog.msg(statusmsg)
         pass
