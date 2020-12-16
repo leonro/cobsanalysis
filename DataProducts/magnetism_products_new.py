@@ -825,7 +825,7 @@ def main(argv):
     # #############################################################
     if debug:
         print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", newname='mm-dp-magnetism.log', debug=debug)
+    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-magnetism.log', debug=debug)
 
     if debug:
         print (" -> Config contents:")
