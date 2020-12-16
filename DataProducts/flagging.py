@@ -2,6 +2,38 @@
 
 """
 Flagging data
+
+DESCRIPTION
+   This method can be used to flag data regularly, to clean up the
+   existing falgging database, to upload new flags from files and
+   to archive "old" flags into json file structures.
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    flagdict          :  dict       :  currently hardcoded into the method
+            { SensorNamePart : 
+              [timerange, keys, threshold, window, markall, lowlimit, highlimit]
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -j joblist             :   list    :  jobs to be performed - default "flag"
+                                          (flag, clean, uploud, archive)
+    -e endtime             :   date    :  date until analysis is performed
+                                          default "datetime.utcnow()"
+
+APPLICATION
+    PERMANENT with cron:
+        python flagging.py -c /etc/marcos/analysis.cfg
+    YEARLY with cron:
+        python flagging.py -c /etc/marcos/analysis.cfg -j archive
+    DAILY with cron:
+        python flagging.py -c /etc/marcos/analysis.cfg -j upload,clean -p /srv/archive/flags/uploads/
+    REDO:
+        python flagging.py -c /etc/marcos/analysis.cfg -e 2020-11-22
 """
 
 from magpy.stream import *
@@ -61,7 +93,7 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
         result       (BOOL)  :  True will replace consecutive data with a new flag, False will remove consecutive data from flaglist
         overlap      (BOOL)  :  if True than overlapping flags will also be combined, comments from last modification will be used
         singular     (BOOL)  :  if True than only single time stamp flags will be investigated (should be spikes)
-    INPUT: 
+    INPUT:
         flaglist with line like
         [datetime.datetime(2016, 4, 13, 16, 54, 40, 32004), datetime.datetime(2016, 4, 13, 16, 54, 40, 32004), 't2', 3,
          'spike and woodwork', 'LEMI036_1_0002', datetime.datetime(2016, 4, 28, 15, 25, 41, 894402)]
@@ -104,7 +136,7 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
             newflaglist.extend(nonsingularflaglist)
         else:
             testlist = cflaglist
-        
+
         #if debug:
         #    print (name, len(testlist))
         # extract possible components
@@ -180,7 +212,7 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
                         startt = t0
                         if tmem:
                             startt = tmem
-                        endt = t0                            
+                        endt = t0
                     if startt and endt:
                         # add new line
                         if not remove:
@@ -188,7 +220,7 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
                             newflaglist.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
                         else:
                             if unid == 1 and (endt-startt).total_seconds()/float(sr) >= critamount:
-                                # do not add subsequent automatic flags 
+                                # do not add subsequent automatic flags
                                 pass
                             else:
                                 new2list.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
@@ -211,9 +243,10 @@ def main(argv):
     varioinst = ''
     scalainst = ''
     #joblist = ['flag','clean','archive','update','delete']
-    joblist = ['flag','update']
+    joblist = ['flag']
     flagfilearchivepath = '' # default:    flagarchive : /srv/archive/flags
     flagfilepath = ''
+    consecutivethreshold = 26000
 
     try:
         opts, args = getopt.getopt(argv,"hc:e:j:p:D",["config=","endtime=","joblist=","path=","debug=",])
@@ -276,7 +309,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", newname='mm-dp-flagging.log', debug=debug)
+    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-flagging.log', debug=debug)
 
     name1 = "{}-flag".format(config.get('logname'))
     name2 = "{}-flag-lemitest".format(config.get('logname'))
@@ -371,12 +404,12 @@ def main(argv):
             validsr = []
             for idx,sensor in enumerate(validsensors1):
                 last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
-                print (last)
+                if debug:
+                    print ("   Last time", last)
                 try:
                     dbdate = last[0]
                 except:
                     print ("    - No data found for {}".format(sensor))
-                print (" TESTTTTTTTTT", getstringdate(dbdate))
                 try:
                     if getstringdate(dbdate) > starttime:
                         print ("    - Valid data for {}".format(sensor))
@@ -406,13 +439,14 @@ def main(argv):
                     flaglist = []
                     if threshold:
                        print ("  - determining new outliers")
-                       print (markall)
+                       if debug:
+                           print ("MARK all: ",  markall)
                        flagls = lastdata.flag_outlier(keys=keys,threshold=threshold,timerange=window,returnflaglist=True,markall=markall)
                        # now check flaglist---- if more than 10 consecutive flags... then drop it
                        flaglist = consecutive_check(flagls, remove=True)
                        #if len(flagls) > len(flaglist)+1 and sensor.startswith("LEMI036_1"):   #+1 to add some room
                        #    statusmsg[name2] = 'Step1: removed consecutive flags for {}: Found {}, Clean: {}'.format(sensor, len(flagls), len(flaglist))
-                       print ("  - new flags: {}".format(len(flagls)))
+                       print ("  - new outlier flags: {}".format(len(flagls)))
                     if lowlimit:
                        print ("  - flagging data below lower limit")
                        flaglow = lastdata.flag_range(keys=keys,below=lowlimit, text='below lower limit {}'.format(lowlimit),flagnum=3)
@@ -428,7 +462,7 @@ def main(argv):
                        else:
                            flaglist.extend(flaghigh)
 
-                    print ("RESULT: found {} new flags".format(flaglist))
+                    print (" -> RESULT: found {} new flags".format(flaglist))
 
                     if not debug and len(flaglist) > 0:
                         for dbel in connectdict:
@@ -464,7 +498,7 @@ def main(argv):
                     print(" - Loaded {} flags from file for {}".format(len(fileflaglist),instname))
                     # get all flags from DB
                     dbflaglist = db2flaglist(db,instname)
-                    print(" - {} flags in DB for {}".format(len(dbflaglist),instname))      
+                    print(" - {} flags in DB for {}".format(len(dbflaglist),instname))
                     # combine flaglist
                     if len(dbflaglist) > 0:
                         fileflaglist.extend(dbflaglist)
@@ -536,7 +570,7 @@ def main(argv):
         yearlist = [i for i in range(2000,currentyear+1)]
         for year in yearlist:
             startyear = year -1
-            print (" Checking data from {} until {}".format(startyear, year)) 
+            print (" Checking data from {} until {}".format(startyear, year))
             beg = '{}-01-01'.format(startyear)
             end = '{}-01-01'.format(year)
             flaglist_tmp = db2flaglist(db,'all',begin=beg, end=end)
@@ -545,7 +579,7 @@ def main(argv):
                 print ("  - Cleaning up flaglist")
                 clflaglist_tmp = stream.flaglistclean(flaglist_tmp,progress=True)
                 print ("   -> {} flags remaining".format(len(clflaglist_tmp)))
-                if len(clflaglist_tmp) < 25000:
+                if len(clflaglist_tmp) < consecutivethreshold:
                     # TODO this method leads to a killed process sometimes...
                     print ("  - Combining consecutives")
                     coflaglist_tmp = consecutive_check(clflaglist_tmp) #debug=debug)
