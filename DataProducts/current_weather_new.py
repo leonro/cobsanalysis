@@ -1,13 +1,33 @@
 
 #!/usr/bin/env python
 """
-MagPy - RCS Analysis 
-Analyze Weather measurements from different sources
-Sources are RCST7, LNM, ULTRASONIC, PRESSURE 
-Provides:
-- General minute METEO date for plots and distribution 
-- Provide some specific combinantions for certain projects
-- Analysis checks of data validity in source data
+DESCRIPTION
+   Analyses environmental data from various different sensors providing weather information.
+   Sources are RCS raw data, RCS analyzed meteo data, ultrasonic, LNM and BM35 pressure.
+   Creates a general METEO table called METEOSGO_adjusted, by applying various flagging
+   methods and synop codes (LNM). Additionally, a short term current condition table is created (30min mean),
+   two day and one year plots are generated. Beside, different measurements are compared for similarity (e.g.
+   rain from bucket and lnm)
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -e endtime             :   date    :  date until analysis is performed
+                                          default "datetime.utcnow()"
+
+APPLICATION
+    PERMANENTLY with cron:
+        python weather_products.py -c /etc/marcos/analysis.cfg
+    REDO analysis for a time range:
+        (startime is defined by endtime - daystodeal as given in the config file 
+        python weather_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
+
 """
 from magpy.stream import *   
 from magpy.database import *   
@@ -544,14 +564,14 @@ def ExportData(datastream, config={}):
             for dbel in connectdict:
                 dbw = connectdict[dbel]
                 ## Set some important header infos
-                datastream.header['SensorID'] = 'METEO_adjusted_0001'
-                datastream.header['DataID'] = 'METEO_adjusted_0001_0001'
+                datastream.header['SensorID'] = 'METEOSGO_adjusted_0001'
+                datastream.header['DataID'] = 'METEOSGO_adjusted_0001_0001'
                 datastream.header['SensorGroup'] = 'services'
                 # check if table exists... if not use:
                 writeDB(dbw,datastream)
                 # else use
                 #writeDB(dbw,datastream, tablename=...)
-                print ("  -> METEO_adjusted written to DB {}".format(dbel))
+                print ("  -> METEOSGO_adjusted written to DB {}".format(dbel))
         success = True
     except:
         success = False

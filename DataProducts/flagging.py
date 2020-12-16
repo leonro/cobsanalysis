@@ -15,15 +15,22 @@ PREREQUISITES
       martas.acquisitionsupport
       analysismethods
 
+   The upload method also works for pkl (pickle) files. However,
+   a successful upload requires that the upload is performed with
+   the same major python version as used for pkl creation. 
+
 PARAMETERS
     flagdict          :  dict       :  currently hardcoded into the method
             { SensorNamePart : 
               [timerange, keys, threshold, window, markall, lowlimit, highlimit]
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
     -j joblist             :   list    :  jobs to be performed - default "flag"
-                                          (flag, clean, uploud, archive)
+                                          (flag, clean, uploud, archive, delete)
     -e endtime             :   date    :  date until analysis is performed
                                           default "datetime.utcnow()"
+    -p path                :   string  :  upload - path to upload directory
+    -s sensor              :   string  :  delete - sensor of which data is deleted 
+    -o comment             :   string  :  delete - flag comment for data sets to be deleted
 
 APPLICATION
     PERMANENT with cron:
@@ -247,9 +254,11 @@ def main(argv):
     flagfilearchivepath = '' # default:    flagarchive : /srv/archive/flags
     flagfilepath = ''
     consecutivethreshold = 26000
+    delsensor = 'RCST7_20160114_0001'
+    delcomment = 'aof - threshold 5.0 window 43200.0 sec'
 
     try:
-        opts, args = getopt.getopt(argv,"hc:e:j:p:D",["config=","endtime=","joblist=","path=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:e:j:p:s:o:D",["config=","endtime=","joblist=","path=","sensor=","comment=","debug="])
     except getopt.GetoptError:
         print ('flagging.py -c <config>')
         sys.exit(2)
@@ -269,8 +278,10 @@ def main(argv):
             print ('Options:')
             print ('-c (required) : configuration data path')
             print ('-e            : endtime, default is now')
-            print ('-j            : joblist: flag,clean,archive,update; default is flag,clean')
+            print ('-j            : joblist: flag,clean,archive,update,delete; default is flag,clean')
             print ('-p            : update - path to json files which end with flags.json')
+            print ('-s            : delete - sensor')
+            print ('-o            : delete - comment')
             print ('-------------------------------------')
             print ('Application:')
             print ('python flagging.py -c /etc/marcos/analysis.cfg')
@@ -293,6 +304,11 @@ def main(argv):
         elif opt in ("-p", "--path"):
             # delete any / at the end of the string
             flagfilepath = os.path.abspath(arg)
+        elif opt in ("-s", "--sensor"):
+            # hidden: delete sensor data
+            delsensor = arg
+        elif opt in ("-o", "--comment"):
+            delcomment = arg
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
@@ -487,13 +503,14 @@ def main(argv):
         filelist = []
         print (" Searching for new flagging files")
         for fi in os.listdir(flagfilepath):
-            if fi.endswith("_flags.json"):
+            if fi.endswith("flags.json") or fi.endswith("flags.pkl"):
                 print ("   -> found: {}".format(os.path.join(flagfilepath, fi)))
                 filelist.append(os.path.join(flagfilepath, fi))
         if len(filelist) > 0:
             for fi in filelist:
                 fileflaglist = loadflags(fi)
-                instname = os.path.basename(fi).replace('_flags.json','')
+                instnamel = os.path.basename(fi).split('_')
+                instname = "_".join(instnamel[:3])
                 if len(fileflaglist) > 0:
                     print(" - Loaded {} flags from file for {}".format(len(fileflaglist),instname))
                     # get all flags from DB
@@ -523,15 +540,17 @@ def main(argv):
                     else:
                         print (" -> debug: will upload new datasets: {}".format(date))
                     statusmsg[name5] = 'Upload: new flagging data sets uploaded'
+                else:
+                    print (" -> Flaglist {} is empty. If pkl file check python version...".format(fi))
 
 
     if 'delete' in joblist and flagfilearchivepath:
         print ("Not existing. Deleting content")
         # not yet available
-        delsensor = 'RCST7_20160114_0001'
-        delsensor = 'LEMI036_3_0001'
-        delcomment = 'aof - threshold 5.0 window 43200.0 sec'
-        delcomment = 'aof - threshold: 6, window: 600.0 sec'
+        #delsensor = 'RCST7_20160114_0001'
+        #delsensor = 'LEMI036_3_0001'
+        #delcomment = 'aof - threshold 5.0 window 43200.0 sec'
+        #delcomment = 'aof - threshold: 6, window: 600.0 sec'
         # Backup any data too bee deleted?
         print (" - selected sensor {}".format(delsensor))
         flaglist = db2flaglist(db,delsensor)
@@ -567,7 +586,7 @@ def main(argv):
         stream.flagliststats(flaglist, intensive=True)
         print (" --------------------------------------")
         currentyear = endtime.year
-        yearlist = [i for i in range(2000,currentyear+1)]
+        yearlist = [i for i in range(2000,currentyear+2)]
         for year in yearlist:
             startyear = year -1
             print (" Checking data from {} until {}".format(startyear, year))

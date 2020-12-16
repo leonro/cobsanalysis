@@ -1,7 +1,25 @@
 #!/usr/bin/env python
 
 """
-Magnetism - primary instruments
+DESCRIPTION
+   Checks all variometers and scalar sensors as defined in a configuration file.
+   The first instrument in the list, which fulfills criteria on data availablility
+   will be selected as primary instrument. Both primary instruments will be stored
+   within a current.data json structure.
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+
+APPLICATION
+    PERMANENTLY with cron:
+        python getprimary.py -c /etc/marcos/analysis.cfg
 """
 
 from magpy.stream import *

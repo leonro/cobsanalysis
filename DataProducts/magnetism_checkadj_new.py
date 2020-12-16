@@ -1,7 +1,31 @@
 #!/usr/bin/env python
 
 """
-Magnetism products and graphs
+DESCRIPTION
+   Compares adjusted data sets from all sensors for similarity. If not similar then a
+   waring is send out. The same comparison is done for all F sensors using the 
+   offsets contained in the database.
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -j joblist             :   list    :  vario,scalar
+    -e endtime             :   date    :  date until analysis is performed
+                                          default "datetime.utcnow()"
+
+APPLICATION
+    PERMANENTLY with cron:
+        python magnetism_checkadj.py -c /etc/marcos/analysis.cfg
+    REDO analysis for a time range:
+        (startime is defined by endtime - daystodeal as given in the config file 
+        python magnetism_checkadj.py -c /etc/marcos/analysis.cfg -e 2020-11-22
+
 """
 
 from magpy.stream import *
