@@ -13,9 +13,8 @@ magnetism\_products\_new.py   | DataProducts    | analysis_5min     | CONF/wic.c
 current\_weather\_new.py      | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 getprimary.py                 | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 flagging.py                   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-radon\_project.py             | DataProducts    | analysis_hourly   |                |  MARTAS telegram  |                | 
-rcsdata\_upload.py            | DataProducts    | analysis_hourly   |                |  MARTAS telegram  |                | 
-magnetism\_checkadj.py        | DataProducts    | analysis_daily    |                |  MARTAS telegram  |                | 
+radon\_project.py             | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 tg\_pha.py                    | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
@@ -51,13 +50,13 @@ The folder DataProducts contains scripts which aim on the production of data set
 
 ### 3.2 flagging.py
 
-### 3.3 magnetism\_products\_new.py
+### 3.3 magnetism\_products.py
 
-### 3.4 current\_weather\_new.py
+copy DECSRITION here (add usage for old data)
 
-### 3.5 rcsdata\_upload.py
+### 3.4 weather\_products.py
 
-### 3.6 radon\_project.py
+### 3.5 gamma\_products.py
 
 
 ## 4. Descriptions of TitleGraphs scripts
