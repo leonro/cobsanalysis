@@ -223,6 +223,7 @@ def UpdateCurrentValuePath(currentvaluepath, varioinst='', scalainst='', logname
         fulldict[u'magnetism'] = valdict
         with open(currentvaluepath, 'w',encoding="utf-8") as file:
             file.write(unicode(json.dumps(fulldict))) # use `json.loads` to do $
+        print ("  -> current.value succesfully updated")
         statusmsg[logname] = 'values written'
     except:
         statusmsg[logname] = 'problem when writing current values '
@@ -285,7 +286,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", newname='mm-dp-getprimary.log')
+    config = DefineLogger(config=config, category="DataProducts", job=os.path.basename(__file__), newname='mm-dp-getprimary.log')
 
     name1 = "{}-process".format(config.get('logname'))
     name2 = "{}-vario".format(config.get('logname'))
@@ -315,7 +316,7 @@ def main(argv):
 
     print ("5. Checking scalar instruments")
     try:
-        scalainst, statusmsg = PrimaryScalar(db, config.get('variometerinstruments'), endtime=endtime,  logname=name3, statusmsg=statusmsg, debug=debug)
+        scalainst, statusmsg = PrimaryScalar(db, config.get('scalarinstruments'), endtime=endtime,  logname=name3, statusmsg=statusmsg, debug=debug)
         print ("   -> Using {}".format(scalainst))
     except:
         if debug:
