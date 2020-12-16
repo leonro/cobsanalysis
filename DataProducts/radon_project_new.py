@@ -1,10 +1,31 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 """
-Radon DataTreatment
-    - Prepare DataProducts (Tables)
-    - Ideally prepare a single table with environment( tunnel and outside temperatures)
-    - GAMMA_adjusted_0001
+DESCRIPTION
+   Analyses gamma measurements.
+   Sources are SCA gamma and METEO data. Created standard project tables and a Webservice
+   table version.
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -e endtime             :   date    :  date until analysis is performed
+                                          default "datetime.utcnow()"
+
+APPLICATION
+    PERMANENTLY with cron:
+        python gamma_products.py -c /etc/marcos/analysis.cfg
+    REDO analysis for a time range:
+        (startime is defined by endtime - daystodeal as given in the config file 
+        python gamma_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
+
 """
 
 from magpy.stream import *
@@ -92,12 +113,62 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
 
 def CreateWebserviceTable():
 
-        # 1. read data
+    # 1. read data
+    rawdatapath = config.get('gammarawdata')
+    meteopath = config.get('meteoproducts')
+    result = DataStream()
+    rcsg0path = config.get('rcsg0rawdata')
+    name = "{}-servicetables".format(config.get('logname'))
+
+    try:
+        if debug:
+             p2start = datetime.utcnow()
+             print ("-----------------------------------")
+             print ("PART 2:")
+        print ("  Reading SCA Gamma data...")
         gammasca = read(os.path.join(rawradpath,'COBSEXP_2_*'), starttime=start, endtime=end)
-        # 2. join with other data from meteo
-        # 3. add new meta information
-        # 4. export to DB as GAMMA_adjusted_0001_0001 in minute resolution
+        print (gammasca._get_key_headers())
+
+        print ("  Reading meteo data ...")
+        meteo = read(os.path.join(meteopath,'meteo-1min_*'), starttime=start, endtime=end)
+        if meteo.length()[0] > 0:
+            print (meteo.length())
+            meteo._drop_column('y')
+            meteo._drop_column('t1')
+            meteo._drop_column('var4')
+            meteo._move_column('f','t2')
+            meteo._drop_column('f')
+            #meteo._move_column('f','var2')
+            #meteo._drop_column('f')
+            #meteo._move_column('x','var3')
+            #meteo._drop_column('x')
+            print (meteo.length())
+            print (meteo.header)
+            #meteo.header['col-t2'] = 'T'
+            #meteo.header['unit-col-t2'] = 'deg C'
+            #meteo.header['col-var2'] = 'P'
+            #meteo.header['unit-col-var2'] = 'hPa'
+            #meteo.header['col-var3'] = 'snowheight'
+            #meteo.header['unit-col-var3'] = 'cm'
+    except:
         pass
+    # 2. join with other data from meteo
+    #result = mergeStreams(gammasca,meteo)
+    # 3. add new meta information
+    #result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
+    #result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
+    #result.header['SensorGroup'] = 'services'
+
+    # 4. export to DB as GAMMASGO_adjusted_0001_0001 in minute resolution
+    if result.lenght()[0] > 0:
+        if len(connectdict) > 0:
+            for dbel in connectdict:
+                dbw = connectdict[dbel]
+                # check if table exists... if not use:
+                writeDB(dbw,result)
+                # else use
+                #writeDB(dbw,datastream, tablename=...)
+                print ("  -> GAMMASGO_adjusted written to DB {}".format(dbel))
 
 
 
@@ -105,35 +176,35 @@ def main(argv):
     version = '1.0.0'
     configpath = ''
     statusmsg = {}
-    joblist = ['vario','scalar']
+    joblist = ['default','service']
     debug=False
     endtime = None
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:D",["config=","joblist=","endtime=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:j:e:D",["config=","joblist=","endtime=","debug=",])
     except getopt.GetoptError:
-        print ('magnetism_checkadj.py -c <config>')
+        print ('gamma_products.py -c <config>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print ('-------------------------------------')
             print ('Description:')
-            print ('-- magnetism_checkadj.py will analyse magnetic data --')
+            print ('-- gamma_products.py will analyse magnetic data --')
             print ('-----------------------------------------------------------------')
             print ('detailed description ..')
             print ('...')
             print ('...')
             print ('-------------------------------------')
             print ('Usage:')
-            print ('python magnetism_checkadj.py -c <config>')
+            print ('python gamma_products.py -c <config>')
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
-            print ('-j            : vario, scalar')
+            print ('-j            : default, service')
             print ('-e            : endtime')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python magnetism_checkadj.py -c /etc/marcos/analysis.cfg')
+            print ('python gamma_products.py -c /etc/marcos/analysis.cfg')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -177,8 +248,9 @@ def main(argv):
         print (config)
 
     starttime = datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
-    print ("3. Create standard data table")
-    statusmsg = CreateOldsProductsTables(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
+    if 'default' in joblist:
+        print ("3. Create standard data table")
+        statusmsg = CreateOldsProductsTables(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
 
     print ("4. Create Webservice table")
     #statusmsg = CreateWebserviceTable(config=config, statusmsg=statusmsg, start=starttime, end=endtime)

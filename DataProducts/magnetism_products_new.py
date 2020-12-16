@@ -3,17 +3,32 @@
 
 """
 DESCRIPTION
-
-    Magnetism products and graphs. The new version making use of a configuration file
+   Creates magnetism products and graphs. The new version is making use of a configuration file.
+   magneism_products.py creates adjusted data files and if a certain time condition as defined
+   in the configuration file is met, then quasidefinitive data is produced as well, provided
+   actual flagging information is available.
+   Date files are stored in the archive directory and uploaded to all connected databases.
+   Besides adjusted and quasidefinitive data, k-values and a general two-day variation graph is
+   created.
 
 PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
 
-    Needs the GetConf2 function of martas.core acquisitionsupport
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -e endtime             :   date    :  date until analysis is performed
+                                          default "datetime.utcnow()"
 
-principal idea: make it easy...
-
-    use a main function and
-
+APPLICATION
+    PERMANENTLY with cron:
+        python magnetism_products.py -c /etc/marcos/analysis.cfg
+    REDO analysis for a time range:
+        (startime is defined by endtime - daystodeal as given in the config file 
+        python magnetism_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
 """
 
 from magpy.stream import *
