@@ -6,7 +6,9 @@ Flagging data
 DESCRIPTION
    This method can be used to flag data regularly, to clean up the
    existing falgging database, to upload new flags from files and
-   to archive "old" flags into json file structures.
+   to archive "old" flags into json file structures. It is also possibe
+   to delete flags from the database. The delete method will always save
+   a backup before removing flag data.
 
 PREREQUISITES
    The following packegas are required:
@@ -41,6 +43,13 @@ APPLICATION
         python flagging.py -c /etc/marcos/analysis.cfg -j upload,clean -p /srv/archive/flags/uploads/
     REDO:
         python flagging.py -c /etc/marcos/analysis.cfg -e 2020-11-22
+    DELETE data with comment:
+        python flagging.py -c /etc/marcos/analysis.cfg -j delete -s MYSENSORID -o "my strange comment"
+    DELETE data for FlagID Number (e.g. all automatic flags):
+        python flagging.py -c /etc/marcos/analysis.cfg -j delete -s MYSENSORID -o "1"
+    DELETE data all flags for key "f":
+        python flagging.py -c /etc/marcos/analysis.cfg -j delete -s MYSENSORID -o "f"
+
 """
 
 from magpy.stream import *
@@ -60,7 +69,7 @@ import sys  # for sys.version_info()
 
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-#coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
@@ -151,90 +160,96 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
         # better use componentgroups
         uniquecomponents = list(set([el[2] for el in testlist]))
         if debug:
-            print ("Components", uniquecomponents)
+            print (" - Components", uniquecomponents)
 
         for unid in uniqueids:
             idlist = [el for el in testlist if el[3] == unid]
             for comp in uniquecomponents:
                 complist = [el for el in idlist if comp == el[2]]
                 if debug:
-                    print ("Inputs for component {}: {}".format(comp,len(complist)))
-                extendedcomplist = []
-                for line in complist:
-                    tdiff = (line[1]-line[0]).total_seconds()
-                    if tdiff > sr-(0.05*sr):
-                        # add steps
-                        firstt = line[0]
-                        lastt = line[1]
-                        steps = int(np.ceil(tdiff/float(sr)))
-                        #line[1] = firstt
-                        #extendedcomplist.append(line)
-                        for step in range(0,steps):
-                            val0 = firstt+timedelta(seconds=step*sr)
-                            extendedcomplist.append([val0,val0,line[2],line[3],line[4],line[5],line[6]])
-                        extendedcomplist.append([lastt,lastt,line[2],line[3],line[4],line[5],line[6]])
-                    else:
-                        extendedcomplist.append(line)
-                if debug:
-                    print (" - Individual time stamps: {}".format(len(extendedcomplist)))
-                if overlap:
-                    if debug:
-                        print ("removing overlaps")
-                    # Now sort the extendedlist according to modification date
-                    extendedcomplist.sort(key=lambda x: x[-1], reverse=True)
-                    #print (extendedcomplist)
-                    # Now remove all overlapping data
-                    seen = set()
-                    new1list = []
-                    for item in extendedcomplist:
-                        ti = item[0]
-                        if item[0] not in seen:
-                            new1list.append(item)
-                            seen.add(ti)
-                    extendedcomplist = new1list
-                    if debug:
-                        print (" - After overlap removal - time stamps: {}".format(len(extendedcomplist)))
-                # now combine all subsequent time steps below sr to single inputs again
-                extendedcomplist.sort(key=lambda x: x[0])
-                new2list = []
-                startt = None
-                endt = None
-                tmem = None
-                for idx,line in enumerate(extendedcomplist):
-                    if idx < len(extendedcomplist)-1:
-                        t0 = line[0]
-                        t1 = extendedcomplist[idx+1][0]
-                        tdiff = (t1-t0).total_seconds()
-                        if tdiff <= sr+(0.05*sr):
-                            if not tmem:
-                                tmem = t0
-                            endt = None
+                    print ("  - Inputs for component {} with flagID {}: {}".format(comp,unid,len(complist)))
+                idxtmp = 0
+                testcnt = 0
+                while idxtmp < len(complist):
+                    complist = complist[idxtmp:]
+                    extendedcomplist = []
+                    for idx,line in enumerate(complist):
+                        tdiff = (line[1]-line[0]).total_seconds()
+                        if tdiff > sr-(0.05*sr):
+                            # add steps
+                            firstt = line[0]
+                            lastt = line[1]
+                            steps = int(np.ceil(tdiff/float(sr)))
+                            for step in np.arange(steps):
+                                val0 = firstt+timedelta(seconds=int(step)*sr)
+                                extendedcomplist.append([val0,val0,line[2],line[3],line[4],line[5],line[6]])
+                            extendedcomplist.append([lastt,lastt,line[2],line[3],line[4],line[5],line[6]])
                         else:
+                            extendedcomplist.append(line)
+                        if len(extendedcomplist) > 500000:
+                            idxtmp = idx+1
+                            break
+                        idxtmp = idx+1
+                    if debug:
+                        print ("    -> Individual time stamps: {}".format(len(extendedcomplist)))
+                    if overlap:
+                        if debug:
+                            print ("    -> removing overlaps")
+                        # Now sort the extendedlist according to modification date
+                        extendedcomplist.sort(key=lambda x: x[-1], reverse=True)
+                        #print (extendedcomplist)
+                        # Now remove all overlapping data
+                        seen = set()
+                        new1list = []
+                        for item in extendedcomplist:
+                            ti = item[0]
+                            if item[0] not in seen:
+                                new1list.append(item)
+                                seen.add(ti)
+                        extendedcomplist = new1list
+                        if debug:
+                            print ("    -> After overlap removal - time stamps: {}".format(len(extendedcomplist)))
+                    # now combine all subsequent time steps below sr to single inputs again
+                    extendedcomplist.sort(key=lambda x: x[0])
+                    new2list = []
+                    startt = None
+                    endt = None
+                    tmem = None
+                    for idx,line in enumerate(extendedcomplist):
+                        if idx < len(extendedcomplist)-1:
+                            t0 = line[0]
+                            t1 = extendedcomplist[idx+1][0]
+                            tdiff = (t1-t0).total_seconds()
+                            if tdiff <= sr+(0.05*sr):
+                                if not tmem:
+                                    tmem = t0
+                                endt = None
+                            else:
+                                startt = t0
+                                if tmem:
+                                    startt = tmem
+                                endt = t0
+                        else:
+                            t0 = line[0]
                             startt = t0
                             if tmem:
                                 startt = tmem
                             endt = t0
-                    else:
-                        t0 = line[0]
-                        startt = t0
-                        if tmem:
-                            startt = tmem
-                        endt = t0
-                    if startt and endt:
-                        # add new line
-                        if not remove:
-                            new2list.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
-                            newflaglist.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
-                        else:
-                            if unid == 1 and (endt-startt).total_seconds()/float(sr) >= critamount:
-                                # do not add subsequent automatic flags
-                                pass
-                            else:
+                        if startt and endt:
+                            # add new line
+                            if not remove:
                                 new2list.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
                                 newflaglist.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
-                        tmem = None
-                if debug:
-                    print (" - After recombination: {}".format(len(new2list)))
+                            else:
+                                if unid == 1 and (endt-startt).total_seconds()/float(sr) >= critamount:
+                                    # do not add subsequent automatic flags
+                                    pass
+                                else:
+                                    new2list.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
+                                    newflaglist.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
+                            tmem = None
+                    if debug:
+                        print ("    -> After recombination: {}".format(len(new2list)))
             #print (unid, len(newflaglist))
 
     return newflaglist
@@ -552,14 +567,23 @@ def main(argv):
         #delcomment = 'aof - threshold 5.0 window 43200.0 sec'
         #delcomment = 'aof - threshold: 6, window: 600.0 sec'
         # Backup any data too bee deleted?
+        parameter = 'comment'
+        if delcomment in ['0','1','2','3','4']:
+            parameter = 'flagnumber'
+            print (" - found a valid flagnumber as value: removing flags with FlagID {}".format(delcomment))
+        elif delcomment in KEYLIST:
+            parameter = 'key'
+            print (" - found a valid key as value: removing all flags for key {}".format(delcomment))
         print (" - selected sensor {}".format(delsensor))
         flaglist = db2flaglist(db,delsensor)
         print (" - got {} flags".format(len(flaglist)))
+        toberemovedflaglist = DataStream().flaglistmod('select', flaglist, parameter=parameter, value=delcomment)
+        print (" - will backup and then remove {} flags matching your criteria".format(len(toberemovedflaglist)))
         flagfile = os.path.join(flagfilearchivepath,'flags_{}_backup_{}.json'.format(delsensor,datetime.strftime(datetime.utcnow(),"%Y%m%d%H%M")))
-        succ = saveflags(flaglist, flagfile)
+        succ = saveflags(toberemovedflaglist, flagfile)
         if succ:
             print (" - backup saved to {}".format(flagfile))
-            remainingflaglist = DataStream().flaglistmod('delete', flaglist, parameter='comment', value=delcomment)
+            remainingflaglist = DataStream().flaglistmod('delete', flaglist, parameter=parameter, value=delcomment)
             print (" - remaining {} flags".format(len(remainingflaglist)))
             if not debug:
                 for dbel in connectdict:
