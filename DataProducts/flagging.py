@@ -268,7 +268,7 @@ def main(argv):
     joblist = ['flag']
     flagfilearchivepath = '' # default:    flagarchive : /srv/archive/flags
     flagfilepath = ''
-    consecutivethreshold = 26000
+    consecutivethreshold = 100000
     delsensor = 'RCST7_20160114_0001'
     delcomment = 'aof - threshold 5.0 window 43200.0 sec'
 
@@ -599,52 +599,55 @@ def main(argv):
 
     if 'clean' in joblist:
         print ("6. Cleaning flagging list")
-        #try:
-        print (" Cleaning up all records")
-        cumflag = []
-        stream = DataStream()
-        flaglist = db2flaglist(db,'all')
-        if debug:
-            print ("   -> Found {} flags in database".format(len(flaglist)))
-        print (" --------------------------------------")
-        stream.flagliststats(flaglist, intensive=True)
-        print (" --------------------------------------")
-        currentyear = endtime.year
-        yearlist = [i for i in range(2000,currentyear+2)]
-        for year in yearlist:
-            startyear = year -1
-            print (" Checking data from {} until {}".format(startyear, year))
-            beg = '{}-01-01'.format(startyear)
-            end = '{}-01-01'.format(year)
-            flaglist_tmp = db2flaglist(db,'all',begin=beg, end=end)
-            print ("   -> Found {} flags in database between {} and {}".format(len(flaglist_tmp),startyear,year))
-            if len(flaglist_tmp) > 0:
-                print ("  - Cleaning up flaglist")
-                clflaglist_tmp = stream.flaglistclean(flaglist_tmp,progress=True)
-                print ("   -> {} flags remaining".format(len(clflaglist_tmp)))
-                if len(clflaglist_tmp) < consecutivethreshold:
-                    # TODO this method leads to a killed process sometimes...
-                    print ("  - Combining consecutives")
-                    coflaglist_tmp = consecutive_check(clflaglist_tmp) #debug=debug)
-                else:
-                    coflaglist_tmp = clflaglist_tmp
-                print ("   -> {} flags remaining".format(len(coflaglist_tmp)))
-                if len(cumflag) == 0:
-                    cumflag = coflaglist_tmp
-                else:
-                    cumflag.extend(coflaglist_tmp)
-        if debug:
-            print ("   -> cleaned record contains {} flags".format(len(cumflag)))
-        print (" --------------------------------------")
-        stream.flagliststats(cumflag, intensive=True)
-        print (" --------------------------------------")
-        if not debug:
-            for dbel in connectdict:
-                dbt = connectdict[dbel]
-                print ("  -- Writing flags to DB {}".format(dbel))
-                flaglist2db(dbt,cumflag,mode='delete',sensorid='all')
-            print ("   -> cleaned flaglist uploaded to DB")
-            statusmsg[name3] = 'Cleanup successfully finished'
+        try:
+            print (" Cleaning up all records")
+            cumflag = []
+            stream = DataStream()
+            flaglist = db2flaglist(db,'all')
+            if debug:
+                print ("   -> Found {} flags in database".format(len(flaglist)))
+            print (" --------------------------------------")
+            stream.flagliststats(flaglist, intensive=True)
+            print (" --------------------------------------")
+            currentyear = endtime.year
+            yearlist = [i for i in range(2000,currentyear+2)]
+            for year in yearlist:
+                startyear = year -1
+                print (" Checking data from {} until {}".format(startyear, year))
+                beg = '{}-01-01'.format(startyear)
+                end = '{}-01-01'.format(year)
+                flaglist_tmp = db2flaglist(db,'all',begin=beg, end=end)
+                print ("   -> Found {} flags in database between {} and {}".format(len(flaglist_tmp),startyear,year))
+                if len(flaglist_tmp) > 0:
+                    print ("  - Cleaning up flaglist")
+                    clflaglist_tmp = stream.flaglistclean(flaglist_tmp,progress=True)
+                    print ("   -> {} flags remaining".format(len(clflaglist_tmp)))
+                    if len(clflaglist_tmp) < consecutivethreshold:
+                        # TODO this method leads to a killed process sometimes...
+                        print ("  - Combining consecutives")
+                        coflaglist_tmp = consecutive_check(clflaglist_tmp) #debug=debug)
+                    else:
+                        coflaglist_tmp = clflaglist_tmp
+                    print ("   -> {} flags remaining".format(len(coflaglist_tmp)))
+                    if len(cumflag) == 0:
+                        cumflag = coflaglist_tmp
+                    else:
+                        cumflag.extend(coflaglist_tmp)
+            if debug:
+                print ("   -> cleaned record contains {} flags".format(len(cumflag)))
+            print (" --------------------------------------")
+            stream.flagliststats(cumflag, intensive=True)
+            print (" --------------------------------------")
+            if not debug:
+                for dbel in connectdict:
+                    dbt = connectdict[dbel]
+                    print ("  -- Writing flags to DB {}".format(dbel))
+                    flaglist2db(dbt,cumflag,mode='delete',sensorid='all')
+                print ("   -> cleaned flaglist uploaded to DB")
+                statusmsg[name3] = 'Cleanup: cleaning database successful'
+        except:
+            print ("   -> failure while cleaning up")
+            statusmsg[name3] = 'Cleanup: failure'
 
 
     # schedule with crontab at February 1st 6:00 (analyze yearly) flagging -c /wic.cfg -j archive
@@ -726,9 +729,9 @@ def main(argv):
     print ("SUCCESS")
 
     if not debug:
-        #martaslog = ml(logfile=config.get('logfile'),receiver='telegram')
-        #martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-        #martaslog.msg(statusmsg)
+        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+        martaslog.telegram['config'] = config.get('notificationconfig')
+        martaslog.msg(statusmsg)
         pass
     else:
         print ("Debug selected - statusmsg looks like:")

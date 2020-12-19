@@ -257,10 +257,9 @@ def main(argv):
 
 
     if not debug:
-        #martaslog = ml(logfile=config.get('logfile'),receiver='telegram')
-        #martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-        #martaslog.msg(statusmsg)
-        pass
+        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+        martaslog.telegram['config'] = config.get('notificationconfig')
+        martaslog.msg(statusmsg)
     else:
         print ("Debug selected - statusmsg looks like:")
         print (statusmsg)
