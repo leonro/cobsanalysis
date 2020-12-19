@@ -966,6 +966,7 @@ loggingdirectory       :   /var/log/magpy
 
 # Notifaction (uses martaslog class, one of email, telegram, mqtt, log) 
 notification         :   telegram
+# Configuration for notification type, e.g. /home/cobs/SCRIPTS/telegram_notify.conf
 notificationconfig   :   /myconfpath/mynotificationtype.cfg
 
 """
