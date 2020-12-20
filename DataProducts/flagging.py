@@ -76,7 +76,7 @@ from acquisitionsupport import GetConf2 as GetConf
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
-from analysismethods import DefineLogger, ConnectDatabases, getstringdate
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate, combinelists
 
 
 
@@ -524,16 +524,33 @@ def main(argv):
         if len(filelist) > 0:
             for fi in filelist:
                 fileflaglist = loadflags(fi)
-                instnamel = os.path.basename(fi).split('_')
-                instname = "_".join(instnamel[:3])
+                try:
+                    instnamel = os.path.basename(fi).split('_')
+                    instname = ["_".join(instnamel[:3])]
+                    # Get instnames from fileflaglist
+                except:
+                    instname = []
+                try:
+                    flagdict = [{"starttime" : el[0], "endtime" : el[1], "components" : el[2].split(','), "flagid" : el[3], "comment" : el[4], "sensorid" : el[5], "modificationdate" : el[6]} for el in fileflaglist]
+                    instname2 = [el.get('sensorid') for el in flagdict]
+                    uniqueinstnames = list(set(instname2))
+                    instname = uniqueinstnames
+                    if debug:
+                        print (" - Sensorname(s) extracted from flag file")
+                except:
+                    if debug:
+                        print (" - Sensorname(s) extracted from file name")
+                    pass
                 if len(fileflaglist) > 0:
-                    print(" - Loaded {} flags from file for {}".format(len(fileflaglist),instname))
+                    print(" - Loaded {} flags from file {} for {}".format(len(fileflaglist),fi,instname))
                     # get all flags from DB
-                    dbflaglist = db2flaglist(db,instname)
+                    dbflaglist = []
+                    for inst in instname:
+                        tmpdbflaglist = db2flaglist(db,inst)
+                        dbflaglist = combinelists(dbflaglist,tmpdbflaglist)
                     print(" - {} flags in DB for {}".format(len(dbflaglist),instname))
                     # combine flaglist
-                    if len(dbflaglist) > 0:
-                        fileflaglist.extend(dbflaglist)
+                    fileflaglist = combinelists(fileflaglist,dbflaglist)
                     # clean flaglist - necessary here as dublicates might come from combinations
                     flaglist = DataStream().flaglistclean(fileflaglist)
                     print (" - {} flags remaining after cleaning. Delete {} replicates".format( len(flaglist),len(fileflaglist)-len(flaglist) ))
@@ -553,7 +570,7 @@ def main(argv):
                         os.remove(fi)
                         print (" -> Done")
                     else:
-                        print (" -> debug: will upload new datasets: {}".format(date))
+                        print (" -> debug: will not modify or upload any datasets: {}".format(date))
                     statusmsg[name5] = 'Upload: new flagging data sets uploaded'
                 else:
                     print (" -> Flaglist {} is empty. If pkl file check python version...".format(fi))
