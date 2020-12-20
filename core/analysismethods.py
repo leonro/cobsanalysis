@@ -26,6 +26,14 @@ def DefineLogger(config={}, category="DataProducts", job='anaylsismethods', newn
     return config
 
 
+def combinelists(l1,l2):
+    if len(l1) > 0 and len(l2) > 0:
+        l1.extend(l2)
+    elif not len(l1) > 0 and len(l2) > 0:
+        l1 = l2
+    return l1
+
+
 def active_pid(name):
      # Part of Magpy starting with version ??
     try:
@@ -287,7 +295,7 @@ def DoScalarCorrections(db, scalarstream, scalarsens='', starttimedt=datetime.ut
     if (scalarstream.length()[0]) > 0:
         print ("     -- obtained data - last F = {}".format(scalarstream.ndarray[4][-1]))
         scalarflag = db2flaglist(db,scalarsens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
-        print ("     -- got flags {} from DB stating from {}".format(len(scalarflag),datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S")))
+        print ("     -- got {} flags from DB stating from {}".format(len(scalarflag),datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S")))
         if len(scalarflag) > 0:
             scalarstream = scalarstream.flag(scalarflag)
             scalarstream = scalarstream.remove_flagged()
