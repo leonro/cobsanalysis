@@ -29,3 +29,16 @@ dscovr_mag.header['unit-col-var2'] = "deg"
 dscovrpath = "/srv/archive/external/esa-nasa/dscovr/collected/"
 dscovr_plasma.write(dscovrpath, format_type="PYCDF", filenamebegins="DSCOVR_plasma_")
 dscovr_mag.write(dscovrpath, format_type="PYCDF", filenamebegins="DSCOVR_mag_")
+
+
+"""
+downloaddict = {"dscovr_plasma" :  {"source"="http://services.swpc.noaa.gov/products/solar-wind/plasma-3-day.json", 
+                                    "savename"="DSCOVR_plasma_", 
+                                    "format"="PYCDF", 
+                                    "header"= {"unit-col-var1"="cm^-3", "unit-col-var2"="km/s", "unit-col-var3"="K"} }
+                "dscovr_mag" :  {"source"="http://services.swpc.noaa.gov/products/solar-wind/plasma-3-day.json", 
+                                    "savename"="DSCOVR_plasma_", 
+                                    "format"="PYCDF", 
+                                    "header"= {"unit-col-var1"="cm^-3", "unit-col-var2"="km/s", "unit-col-var3"="K"} } 
+               }
+"""

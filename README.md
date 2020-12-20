@@ -20,6 +20,7 @@ tg\_kval.py                   | Info            | analysis_5min     |           
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_base.py                   | Info            | analysis_weekly   |                |  MARTAS telegram  |                | 
 neic\_download.py             | FileDownloads   | analysis_20min    |                |  MARTAS telegram  |                | 
+dscovr\_download.py           | FileDownloads   | analysis_20min    |                |  MARTAS telegram  |                | 
 mag\_graph.py                 | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 weather\_graph.py             | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 tilt\_graph.py                | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 

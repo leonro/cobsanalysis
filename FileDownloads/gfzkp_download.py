@@ -22,4 +22,6 @@ kp = read(path_or_url='http://www-app3.gfz-potsdam.de/kp_index/qlyymm.tab')
 # Append that data to local list:
 kp.write(kppath,filenamebegins='gfzkp',format_type='PYCDF',dateformat='%Y%m',coverage='month')
 
-print "File written successfully."
+print ("Kp File written successfully.")
+print ("-----------------------------")
+print ("SUCCESS")
