@@ -3,27 +3,22 @@
 from magpy.stream import read
 from magpy.database import * 
 import magpy.opt.cred as mpcred
+from pyproj import Geod
+import getopt
+import pwd
+import socket
 
-dbpasswd = mpcred.lc('cobsdb','passwd')
 
-## New Logging features 
+coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
+coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+sys.path.insert(0, coredir)
 from martas import martaslog as ml
-logpath = '/var/log/magpy/mm-fd-earthquake.log'
-sn = 'SAGITTARIUS' # servername ### Get that automatically??
-statusmsg = {}
-namea = "{}-FileDownload-quakes-AT".format(sn)
-nameb = "{}-FileDownload-quakes-NEIC".format(sn)
+from acquisitionsupport import GetConf2 as GetConf
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate
 
-serverlist = ["138.22.188.195","138.22.188.191"]
-
-currentvaluepath = '/srv/products/data/current.data'
-errorcntAT = 0
-errorcntNE = 0
-uploadcheck = 1
-
-# 1. Download data
-stb = DataStream()
-sta = DataStream()
 
 
 def getcurrentdata(path):
@@ -55,23 +50,94 @@ def writecurrentdata(path,dic):
         file.write(unicode(json.dumps(dic)))
 
 
-for server in serverlist:
-    cont = True
+
+def main(argv):
+    version = '1.0.0'
+    configpath = ''
+    statusmsg = {}
+    debug=False
+    endtime = datetime.utcnow()
+    joblist = ['NEIC','AT']
+    stb = DataStream()
+    sta = DataStream()
+    errorcntAT = 0
+    errorcntNE = 0
+    uploadcheck = 1
+    path = '/tmp/neic_quakes.d' 
+
     try:
-        # Test MARCOS 1
-        print ("Connecting to server {}...".format(server))
-        db = mysql.connect(host=server,user="cobs",passwd=dbpasswd,db="cobsdb")
-        print ("{} ... connected".format(server))
+        opts, args = getopt.getopt(argv,"hc:e:j:p:s:o:D",["config=","endtime=","joblist=","debug="])
+    except getopt.GetoptError:
+        print ('neic_download.py -c <config>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('-------------------------------------')
+            print ('Description:')
+            print ('-- neic_download.py will determine the primary instruments --')
+            print ('-----------------------------------------------------------------')
+            print ('detailed description ..')
+            print ('...')
+            print ('...')
+            print ('-------------------------------------')
+            print ('Usage:')
+            print ('python neic_download.py -c <config>')
+            print ('-------------------------------------')
+            print ('Options:')
+            print ('-c (required) : configuration data path')
+            print ('-e            : endtime, default is now')
+            print ('-j            : joblist: NEIC, AT')
+            print ('-p            : path for neic data')
+            print ('-------------------------------------')
+            print ('Application:')
+            print ('python neic_download.py -c /etc/marcos/analysis.cfg -p /home/cobs/ANALYSIS/Seismo/neic_quakes.d')
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            # delete any / at the end of the string
+            configpath = os.path.abspath(arg)
+        elif opt in ("-e", "--endtime"):
+            # get an endtime
+            endtime = arg.split(',')
+        elif opt in ("-j", "--joblist"):
+            # get an endtime
+            joblist = arg.split(',')
+        elif opt in ("-p", "--path"):
+            path = arg
+        elif opt in ("-D", "--debug"):
+            # delete any / at the end of the string
+            debug = True
+
+    print ("Running flagging version {}".format(version))
+    print ("--------------------------------")
+
+    if not os.path.exists(configpath):
+        print ('Specify a valid path to configuration information')
+        print ('-- check magnetism_products.py -h for more options and requirements')
+        sys.exit()
+
+    print ("1. Read and check validity of configuration data")
+    config = GetConf(configpath)
+
+    print ("2. Activate logging scheme as selected in config")
+    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-flagging.log', debug=debug)
+
+    namea = "{}-quakes-AT".format(config.get('logname'))
+    nameb = "{}-quakes-NEIC".format(config.get('logname'))
+    currentvaluepath = config.get('currentvaluepath')
+
+    print ("3. Connect databases and select first available")
+    try:
+        config = ConnectDatabases(config=config, debug=debug)
+        db = config.get('primaryDB')
+        connectdict = config.get('conncetedDB')
     except:
-        print "... failed"
-        cont = False
+        statusmsg[name1] = 'database failed'
 
-    if cont:
+    (startlong, startlat) = dbcoordinates(db, 'A2')
+    if 'AT' in joblist:
       try:
-
-        (startlong, startlat) = dbcoordinates(db, 'A2')
-
         print ("Getting Austrian data")
+        print ("---------------------")
         statusmsg[namea] = 'Austrian data added'
         if not stb.length()[0] > 0:  # only load it once
             print (" - getting Austrian data from geoweb")
@@ -79,6 +145,8 @@ for server in serverlist:
         stb.header['DataFormat'] = 'NEICCSV'
         stb.header['DataSource'] = 'Austrian Seismological Service'
         stb.header['DataReferences'] = 'http://geoweb.zamg.ac.at/static/event/lastmonth.csv'
+        if debug:
+            print ("  - Found :", stb.length())
 
         dct = stb._get_key_names()
         poslon = KEYLIST.index(dct.get('longitude'))
@@ -101,12 +169,23 @@ for server in serverlist:
         # insert into DATAINFO (DataID, SensorID) VALUES ('QUAKES','QUAKES');
         stb.header['StationID'] = 'SGO'
         stb = stb.extract('f',2,'>=')
-        dbupdateDataInfo(db, 'QUAKES', stb.header)
+        if debug:
+            print ("  - Found :", stb.length())
+        if not debug:
+            dbupdateDataInfo(db, 'QUAKES', stb.header)
         for idx,key in enumerate(KEYLIST):
             if key in NUMKEYLIST:
                 stb.ndarray[idx] = np.asarray([float(elem) if not elem == '' else float(nan) for elem in stb.ndarray[idx]])
-                stb.ndarray[idx] = stb.ndarray[idx].astype(float64)    
-        writeDB(db,stb,tablename='QUAKES',StationID='SGO')
+                stb.ndarray[idx] = stb.ndarray[idx].astype(float64)
+        if not debug:
+            for dbel in connectdict:
+                dbt = connectdict[dbel]
+                print ("  -- Writing AT Quakes to DB {}".format(dbel))
+                writeDB(db,stb,tablename='QUAKES',StationID='SGO')
+        else:
+            print ("   - Debug selected: ")
+            print ("     last line of AT {}".format(stb.length()))
+
         print ("Austrian data has been added")
         print ("----------------------------")
         #statusmsg[namea] = 'Austrian data added'
@@ -117,7 +196,8 @@ for server in serverlist:
         uploadtime = datetime.strftime(datetime.utcnow(),"%Y-%m-%d %H:%M")
         valdict['seismoATdata'] = [uploadtime,'']
         fulldict[u'logging'] = valdict
-        writecurrentdata(currentvaluepath, fulldict)
+        if not debug:
+            writecurrentdata(currentvaluepath, fulldict)
       except:
         errorcntAT += 1
         if errorcntAT > 1:
@@ -132,15 +212,18 @@ for server in serverlist:
             except:
                 message = True
             if message:
+                print ('Austrian data failed')
                 statusmsg[namea] = 'Austrian data failed'
 
+    if 'NEIC' in joblist:
       try:
         print ("Downloading NEIC data")
+        print ("---------------------")
         statusmsg[nameb] = 'NEIC data added'
         if not sta.length()[0] > 0: # only load it once
             print (" - getting NEIC data from usgs")
-            os.system('curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.csv -s > /home/cobs/ANALYSIS/Seismo/neic_quakes.d')
-            sta = read('/home/cobs/ANALYSIS/Seismo/neic_quakes.d')
+            os.system('curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.csv -s > {}'.format(path))
+            sta = read(path)
         sta.header['DataFormat'] = 'NEICCSV'
         #sta.header['DataSource'] = 'US National Earthquake information center'
         #sta.header['DataReferences'] = 'http://earthquake.usgs.gov'
@@ -167,12 +250,22 @@ for server in serverlist:
         # insert into DATAINFO (DataID, SensorID) VALUES ('QUAKES','QUAKES');
         sta.header['StationID'] = 'SGO'
         sta = sta.extract('f',5,'>=')
-        dbupdateDataInfo(db, 'QUAKES', stb.header)
+        if not debug:
+            dbupdateDataInfo(db, 'QUAKES', stb.header)
         for idx,key in enumerate(KEYLIST):
             if key in NUMKEYLIST:
                 sta.ndarray[idx] = np.asarray([float(elem) if not elem == '' else float(nan) for elem in sta.ndarray[idx]])
                 sta.ndarray[idx] = sta.ndarray[idx].astype(float64)
-        writeDB(db,sta,tablename='QUAKES',StationID='SGO')
+
+        if not debug:
+            for dbel in connectdict:
+                dbt = connectdict[dbel]
+                print ("  -- Writing NEIC Quakes to DB {}".format(dbel))
+                writeDB(db,sta,tablename='QUAKES',StationID='SGO')
+        else:
+            print ("   - Debug selected: ")
+            print ("     last line of NEIC {}".format(stb.length()))
+
         print ("NEIC data has been added")
         print ("----------------------------")
         #statusmsg[nameb] = 'NEIC data added'
@@ -183,7 +276,8 @@ for server in serverlist:
         uploadtime = datetime.strftime(datetime.utcnow(),"%Y-%m-%d %H:%M")
         valdict['seismoNEICdata'] = [uploadtime,'']
         fulldict[u'logging'] = valdict
-        writecurrentdata(currentvaluepath, fulldict)
+        if not debug:
+            writecurrentdata(currentvaluepath, fulldict)
       except:
         errorcntNE+=1
         if errorcntNE > 1:
@@ -199,7 +293,21 @@ for server in serverlist:
             if message:
                 statusmsg[nameb] = 'NEIC data failed'
 
-print (statusmsg)
-martaslog = ml(logfile=logpath,receiver='telegram')
-martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-martaslog.msg(statusmsg)
+    print ("------------------------------------------")
+    print ("  neic_download finished")
+    print ("------------------------------------------")
+    print ("SUCCESS")
+
+    if not debug:
+        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+        martaslog.telegram['config'] = config.get('notificationconfig')
+        martaslog.msg(statusmsg)
+        pass
+    else:
+        print ("Debug selected - statusmsg looks like:")
+        print (statusmsg)
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
+
+

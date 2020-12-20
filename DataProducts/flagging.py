@@ -473,11 +473,11 @@ def main(argv):
                        if debug:
                            print ("MARK all: ",  markall)
                        flagls = lastdata.flag_outlier(keys=keys,threshold=threshold,timerange=window,returnflaglist=True,markall=markall)
-                       # now check flaglist---- if more than 10 consecutive flags... then drop it
+                       # now check flaglist---- if more than 20 consecutive flags... then drop them
                        flaglist = consecutive_check(flagls, remove=True)
                        #if len(flagls) > len(flaglist)+1 and sensor.startswith("LEMI036_1"):   #+1 to add some room
                        #    statusmsg[name2] = 'Step1: removed consecutive flags for {}: Found {}, Clean: {}'.format(sensor, len(flagls), len(flaglist))
-                       print ("  - new outlier flags: {}".format(len(flagls)))
+                       print ("  - new outlier flags: {}; after combination: {}".format(len(flagls),len(flaglist)))
                     if lowlimit:
                        print ("  - flagging data below lower limit")
                        flaglow = lastdata.flag_range(keys=keys,below=lowlimit, text='below lower limit {}'.format(lowlimit),flagnum=3)
@@ -493,7 +493,7 @@ def main(argv):
                        else:
                            flaglist.extend(flaghigh)
 
-                    print (" -> RESULT: found {} new flags".format(flaglist))
+                    print (" -> RESULT: found {} new flags".format(len(flaglist)))
 
                     if not debug and len(flaglist) > 0:
                         for dbel in connectdict:

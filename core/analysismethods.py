@@ -287,7 +287,7 @@ def DoScalarCorrections(db, scalarstream, scalarsens='', starttimedt=datetime.ut
     if (scalarstream.length()[0]) > 0:
         print ("     -- obtained data - last F = {}".format(scalarstream.ndarray[4][-1]))
         scalarflag = db2flaglist(db,scalarsens,begin=datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S"))
-        print ("     -- getting flags from DB: {}".format(len(scalarflag)))
+        print ("     -- got flags {} from DB stating from {}".format(len(scalarflag),datetime.strftime(starttimedt,"%Y-%m-%d %H:%M:%S")))
         if len(scalarflag) > 0:
             scalarstream = scalarstream.flag(scalarflag)
             scalarstream = scalarstream.remove_flagged()
