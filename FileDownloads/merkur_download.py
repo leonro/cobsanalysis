@@ -18,6 +18,18 @@ MagPy - Basic Runtime tests including durations
 #               possible issues: MySQL-python problem -> install libmysqlclient-dev on linux, brew mysql install on mac
 # 4.) start python -> the anaconda python, not system!
 
+
+### Alternative with rsync
+# 1. Get data from merkur (once per hour)
+# rsync -avze ssh 'find -type f -iname "CALY.[LH]F[NZE].*" -mtime 10' 
+# 2. Sync to BROKER (depth 2)
+
+# the same for CONA and CSNH
+
+# to log use (as for other rsync features)
+#python3 logfiledates.py -c ../conf/wic.cfg -p /srv/archive/WIC/BGSINDCOIL_1_0001/raw -a 2 -i day
+
+
 from magpy.stream import *
 from magpy.transfer import *
 #from obspy import read as obsread

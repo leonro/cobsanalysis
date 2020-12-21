@@ -9,18 +9,23 @@ The following README contains an overview about all analysis scripts used at the
 
 Script                        | Location        |  Schedule         |  Config        |   Monitor         |  Dependencies  | Comments
 ----------------------------- | --------------- | ----------------- | -------------- | ----------------- | -------------- | --------
-magnetism\_products\_new.py   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-current\_weather\_new.py      | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+magnetism\_products\_new.py   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+current\_weather\_new.py      | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
 getprimary.py                 | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 flagging.py                   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-radon\_project.py             | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+radon\_project.py             | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
 tg\_pha.py                    | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_base.py                   | Info            | analysis_weekly   |                |  MARTAS telegram  |                | 
-neic\_download.py             | FileDownloads   | analysis_20min    |                |  MARTAS telegram  |                | 
-dscovr\_download.py           | FileDownloads   | analysis_20min    |                |  MARTAS telegram  |                | 
+logfiledate.py                | Info            | analysis_weekly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+neic\_download.py             | FileDownloads   |                   |                |  MARTAS telegram  |                | py2 ... py3
+dscovr\_download.py           | FileDownloads   |                   | -              |  MARTAS telegram  |                | py2 ... py3
+gfzkp\_download.py            | FileDownloads   |                   | -              |  MARTAS telegram  |                | py2 ... py3
+merkur\_download.py           | FileDownloads   |                   |                |  MARTAS telegram  |                | replace with rsync
+ace\_download_min.py          | FileDownloads   |                   |                |  MARTAS telegram  |                | 
+ace\_download_daily.py        | FileDownloads   |                   |                |  MARTAS telegram  |                | 
 mag\_graph.py                 | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 weather\_graph.py             | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 tilt\_graph.py                | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
@@ -241,6 +246,36 @@ The folder TitleGraphs contains scripts to generate and assemble graphs for the 
 ### 5.3 tg\_quake.py
 
 ### 5.4 tg\_base.py
+
+### 5.5 logfiledate.py
+
+DESCRIPTION
+   Script to check the creation date of the latest file matching a certain structure
+   in a defined directory
+
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -p path                :   string  :  directory path to be investigated 
+    -s structure           :   string  :  match of filename
+                                          structure like "*.json" or "*A16.txt". Default is "*" 
+    -a age                 :   number  :  tolerated age (integer). Default is 1
+    -i iterate             :   string  :  increment of age (day, hour, minute, second). Default is day 
+    -l logger              :   string  :  name of the logger
+
+APPLICATION
+    Check whether most recent upload happend in the last 24 hours:
+        python3 logfiledates.py -c /etc/marcos/analysis.cfg -p /srv/archive/flags/uploads/ -a 1 -i day')
+    Checking for most recent succsessful AutoDIF analysis:
+        python3 logfiledates.py -c /etc/marcos/analysis.cfg -p /srv/archive/DI/raw/ -a 1 -i day')
+
 
 
 ## 6. Descriptions of PeriodicGraphs scripts
