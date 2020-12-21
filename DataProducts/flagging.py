@@ -749,7 +749,6 @@ def main(argv):
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
         martaslog.telegram['config'] = config.get('notificationconfig')
         martaslog.msg(statusmsg)
-        pass
     else:
         print ("Debug selected - statusmsg looks like:")
         print (statusmsg)
