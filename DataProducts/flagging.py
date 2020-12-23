@@ -86,19 +86,6 @@ from analysismethods import DefineLogger, ConnectDatabases, getstringdate, combi
 
 ## comments: switched from 5 to 6 for LEMI025 and LEMI036 at 01.08.2019
 
-# each input looks like:
-# { SensorNamePart : [timerange, keys, threshold, window, markall, lowlimit, highlimit]
-flagdict = {'LEMI036':[7200,'x,y,z',6,'Default',True,'None','None'],
-            'LEMI025':[7200,'x,y,z',6,'Default',True,'None','None'],
-            'FGE':[7200,'x,y,z',5,'Default',True,'None','None'],
-            'GSM90_14245':[7200,'f',5,'default',False,'None','None'],
-            'GSM90_6':[7200,'f',5,300,False,'None','None'],
-            'GSM90_3':[7200,'f',5,300,False,'None','None'],
-            'GP20S3NSS2':[7200,'f',5,'Default',False,'None','None'],
-            'POS1':[7200,'f',4,100,False,'None','None'],
-            'BM35':[7200,'var3','None','None',False,750,1000]}
-
-
 def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False, critamount=20, flagids=None, debug=False):
     """
     DESCRIPTION:
@@ -271,6 +258,19 @@ def main(argv):
     consecutivethreshold = 100000
     delsensor = 'RCST7_20160114_0001'
     delcomment = 'aof - threshold 5.0 window 43200.0 sec'
+
+    # each input looks like:
+    # { SensorNamePart : [timerange, keys, threshold, window, markall, lowlimit, highlimit]
+    flagdict = {'LEMI036':[7200,'x,y,z',6,'Default',True,'None','None'],
+            'LEMI025':[7200,'x,y,z',6,'Default',True,'None','None'],
+            'FGE':[7200,'x,y,z',5,'Default',True,'None','None'],
+            'GSM90_14245':[7200,'f',5,'default',False,'None','None'],
+            'GSM90_6':[7200,'f',5,300,False,'None','None'],
+            'GSM90_3':[7200,'f',5,300,False,'None','None'],
+            'GP20S3NSS2':[7200,'f',5,'Default',False,'None','None'],
+            'POS1':[7200,'f',4,100,False,'None','None'],
+            'BM35':[7200,'var3','None','None',False,750,1000]}
+
 
     try:
         opts, args = getopt.getopt(argv,"hc:e:j:p:s:o:D",["config=","endtime=","joblist=","path=","sensor=","comment=","debug="])
@@ -565,7 +565,8 @@ def main(argv):
                         for dbel in connectdict:
                             dbt = connectdict[dbel]
                             print ("  -- Writing flags to DB {}".format(dbel))
-                            flaglist2db(db,flaglist,mode='delete',sensorid=instname)
+                            for inst in instname:
+                                flaglist2db(db,flaglist,mode='delete',sensorid=inst)
                         # delete flagfile
                         os.remove(fi)
                         print (" -> Done")

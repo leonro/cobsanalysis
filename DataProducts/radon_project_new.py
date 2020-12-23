@@ -110,8 +110,10 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
     except:
         statusmsg[name] = 'SCA Radon step4 failed'
 
+    return statusmsg
 
-def CreateWebserviceTable():
+
+def CreateWebserviceTable(config={}, statusmsg={}):
 
     # 1. read data
     rawdatapath = config.get('gammarawdata')
@@ -170,6 +172,7 @@ def CreateWebserviceTable():
                 #writeDB(dbw,datastream, tablename=...)
                 print ("  -> GAMMASGO_adjusted written to DB {}".format(dbel))
 
+    return statusmsg
 
 
 def main(argv):
