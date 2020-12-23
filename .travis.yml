@@ -1,0 +1,44 @@
+language: python
+
+jobs:
+  include:
+    - name: "Python 2.7 on Xenial Linux"
+      python: 2.7           # this works for Linux but is ignored on macOS or Windows
+      os: linux
+      before_install:
+        - sudo apt-get -y install gcc gfortran
+        # NASA CDF
+        - wget -r -l1 -np -nd https://cdaweb.gsfc.nasa.gov/pub/software/cdf/dist/latest-release/linux/ -A cdf*-dist-all.tar.gz
+        - tar xf cdf*-dist-all.tar.gz
+        - cd cdf*dist
+        - make OS=linux ENV=gnu all
+        - sudo make INSTALLDIR=/usr/local/cdf install
+        - cd ..
+    - name: "Python 3.7 on Xenial Linux"
+      python: 3.7           # this works for Linux but is ignored on macOS or Windows
+      os: linux
+      before_install:
+        - sudo apt-get -y install gcc gfortran
+        - pip3 install numpy==1.16.5
+    - name: "Python 3.8 on Xenial Linux"
+      python: 3.8           # this works for Linux but is ignored on macOS or Windows
+      os: linux
+      before_install:
+        - sudo apt-get -y install gcc gfortran
+    - name: "Python 3.7.4 on macOS"
+      os: osx
+      osx_image: xcode11.2  # Python 3.7.4 running on macOS 10.14.4
+      language: shell       # 'language: python' is an error on Travis CI macOS
+      before_install:
+        - pip3 install --upgrade pip  # all three OSes agree about 'pip3'
+
+cache: pip
+
+install:
+  - pip install geomagpy
+  - pip install telegram_send
+
+script:
+  - python DataProducts/flagging.py -c ../conf/wic.cfg -D
+  - python DataProducts/getprimary.py -c ../conf/wic.cfg -D
+
