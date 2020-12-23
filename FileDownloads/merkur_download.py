@@ -22,6 +22,8 @@ MagPy - Basic Runtime tests including durations
 ### Alternative with rsync
 # 1. Get data from merkur (once per hour)
 # rsync -avze ssh 'find -type f -iname "CALY.[LH]F[NZE].*" -mtime 10' 
+# rsyn -avze ssh  /srv/archive/WIC/BGSINDCOIL_1_0001/raw
+
 # 2. Sync to BROKER (depth 2)
 
 # the same for CONA and CSNH

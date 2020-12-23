@@ -4,11 +4,117 @@
 # the files up-to-date.
 # Currently running every 15 mins - :07,:22,:37,:52.
 #
-# Created 2015-02-17 by RLB.
+# Created 2015-02-17 by RLB. Updated 2020-12-23 by RL.
 # Adapted from /home/leon/CronScripts/saturn_wikactivity.py
 # Activated as cronjob on saturn 2015-03-02.
 #
 #********************************************************************
+
+from magpy.stream import read
+from magpy.database import * 
+import magpy.opt.cred as mpcred
+from pyproj import Geod
+import getopt
+import pwd
+import socket
+
+
+coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
+coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
+sys.path.insert(0, coredir)
+from martas import martaslog as ml
+from acquisitionsupport import GetConf2 as GetConf
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate
+
+def downloadACEdata():
+
+
+def main(argv):
+    version = '1.0.0'
+    configpath = ''
+    statusmsg = {}
+    debug=False
+    endtime = datetime.utcnow()
+    joblist = ['NEIC','AT']
+    stb = DataStream()
+    sta = DataStream()
+    errorcntAT = 0
+    errorcntNE = 0
+    uploadcheck = 1
+    path = '/tmp/neic_quakes.d' 
+
+    try:
+        opts, args = getopt.getopt(argv,"hc:e:j:p:s:o:D",["config=","endtime=","joblist=","debug="])
+    except getopt.GetoptError:
+        print ('neic_download.py -c <config>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('-------------------------------------')
+            print ('Description:')
+            print ('-- neic_download.py will determine the primary instruments --')
+            print ('-----------------------------------------------------------------')
+            print ('detailed description ..')
+            print ('...')
+            print ('...')
+            print ('-------------------------------------')
+            print ('Usage:')
+            print ('python neic_download.py -c <config>')
+            print ('-------------------------------------')
+            print ('Options:')
+            print ('-c (required) : configuration data path')
+            print ('-e            : endtime, default is now')
+            print ('-j            : joblist: NEIC, AT')
+            print ('-p            : path for neic data')
+            print ('-------------------------------------')
+            print ('Application:')
+            print ('python neic_download.py -c /etc/marcos/analysis.cfg -p /home/cobs/ANALYSIS/Seismo/neic_quakes.d')
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            # delete any / at the end of the string
+            configpath = os.path.abspath(arg)
+        elif opt in ("-e", "--endtime"):
+            # get an endtime
+            endtime = arg.split(',')
+        elif opt in ("-j", "--joblist"):
+            # get an endtime
+            joblist = arg.split(',')
+        elif opt in ("-p", "--path"):
+            path = arg
+        elif opt in ("-D", "--debug"):
+            # delete any / at the end of the string
+            debug = True
+
+    print ("Running flagging version {}".format(version))
+    print ("--------------------------------")
+
+    if not os.path.exists(configpath):
+        print ('Specify a valid path to configuration information')
+        print ('-- check magnetism_products.py -h for more options and requirements')
+        sys.exit()
+
+    print ("1. Read and check validity of configuration data")
+    config = GetConf(configpath)
+
+    print ("2. Activate logging scheme as selected in config")
+    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-flagging.log', debug=debug)
+
+    namea = "{}-quakes-AT".format(config.get('logname'))
+    nameb = "{}-quakes-NEIC".format(config.get('logname'))
+    currentvaluepath = config.get('currentvaluepath')
+
+
+# Download and then sync with cobs
+curl ftp://ftp.swpc.noaa.gov/pub/lists/ace/ace_swepam_1m.txt -s > test.txt
+
+
+
+
+
+
 
 import os, sys, pytz
 from magpy.stream import *
@@ -16,6 +122,8 @@ from magpy.transfer import *
 import magpy.mpplot as mp
 from ace_download_daily import *
 from dateutil.tz import tzutc
+
+
 
 #--------------------------------------------------------------------
 # General
@@ -146,6 +254,5 @@ process_ACE('1m', ['swepam', 'mag'], ['x','y','z','f','t1','t2'], logger_ace)
 #--------------------------------------------------------------------
 
 process_ACE('5m', ['epam', 'sis'], ['x','y'], logger_ace, skipcompression=True)
-
 
 
