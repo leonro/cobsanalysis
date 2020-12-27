@@ -44,15 +44,12 @@ import itertools
 from threading import Thread
 from subprocess import check_output   # used for checking whether send process already finished
 
-coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
-sys.path.insert(0, coredir)
-from martas import martaslog as ml
-from acquisitionsupport import GetConf2 as GetConf
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata
+from martas import martaslog as ml
+from acquisitionsupport import GetConf2 as GetConf
 
 
 def GetPrimaryInstruments(config={}, statusmsg={}, fallback=True, debug=False):
