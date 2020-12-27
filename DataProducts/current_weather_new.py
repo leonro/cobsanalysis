@@ -607,13 +607,21 @@ def WeatherAnalysis(config={},statusmsg={}, endtime=datetime.utcnow(), debug=Fal
 
 
     print (" A. Reading Laser Niederschlag")
-    try:
+    ok = True
+    if ok:
+        #try:
+        if debug:
+            print ("Reading table...")
         lnm = readTable(db, sourcetable="LNM%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
+        if debug:
+            print ("Synop...")
         trans = getLastSynop(lnm, synopdict=synopdict)
+        if debug:
+            print ("Transforming...")
         lnm = tranformLNM(lnm, debug=debug)
         statusmsg[name1a] = 'LNM data finished - data available'
-    except:
-        statusmsg[name1a] = 'LNM data failed'
+    #except:
+    #    statusmsg[name1a] = 'LNM data failed'
 
     print (" B. Reading Ultrasonic data")
     try:

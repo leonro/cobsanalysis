@@ -50,7 +50,7 @@ from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 
 
-def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow()):
+def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow(), debug=False):
     """
     prepare mean tables ready for analysis
     """
@@ -62,22 +62,16 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
 
     try:
         if debug:
-             p2start = datetime.utcnow()
              print ("-----------------------------------")
              print ("Creating DataProducts for GAMMA")
         print ("  Reading SCA Gamma data...")
-        gammasca = read(os.path.join(rawradpath,'COBSEXP_2_*'), starttime=start, endtime=end)
-        print (gammasca.ndarray)
+        gammasca = read(os.path.join(rawdatapath,'COBSEXP_2_*'), starttime=start, endtime=end)
         if not debug:
             gammasca.write(tablepath, filenamebegins='sca-tunnel-1min_',dateformat='%Y',coverage='year', mode='replace',format_type='PYCDF')
         gammasca = gammasca.filter(filter_type='gaussian', resample_period=900 )
         if not debug:
             gammasca.write(tablepath, filenamebegins='sca-tunnel-15min_',dateformat='%Y', coverage='year', mode='replace',format_type='PYCDF')
-        print ("...finished")
-        p2end = datetime.utcnow()
         if debug:
-            print ("-----------------------------------")
-            print ("Finished in {} sec".format(p2end-p2start))
             print ("-----------------------------------")
         statusmsg[name] = 'SCA Radon step2 success'
     except:
@@ -96,7 +90,6 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
         tempsgo = tempsgo.filter()
         if not debug:
             tempsgo.write(tablepath, filenamebegins='temp-sgo-1min_',dateformat='%Y', coverage='year', mode='replace',format_type='PYCDF')
-
         if debug:
             print ("-----------------------------------")
         statusmsg[name] = 'SCA Radon step4 success'
@@ -106,7 +99,7 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
     return statusmsg
 
 
-def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow()):
+def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow(), debug=False):
 
     # 1. read data
     rawdatapath = config.get('gammarawdata')
@@ -120,11 +113,12 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
              print ("-----------------------------------")
              print ("Creating WebService database table")
         print ("  Reading SCA Gamma data...")
-        gammasca = read(os.path.join(rawradpath,'COBSEXP_2_*'), starttime=start, endtime=end)
+        gammasca = read(os.path.join(rawdatapath,'COBSEXP_2_*'), starttime=start, endtime=end)
         print (gammasca._get_key_headers())
 
         print ("  Reading meteo data ...")
         meteo = read(os.path.join(meteopath,'meteo-1min_*'), starttime=start, endtime=end)
+        print (meteo._get_key_headers())
         if meteo.length()[0] > 0:
             print (meteo.length())
             meteo._drop_column('y')
@@ -241,18 +235,14 @@ def main(argv):
     print ("2. Activate logging scheme as selected in config")
     config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-scaradon.log', debug=debug)
 
-    if debug:
-        print (" -> Config contents:")
-        print (config)
-
     starttime = datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
     if 'default' in joblist:
         print ("3. Create standard data table")
-        statusmsg = CreateOldsProductsTables(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
+        statusmsg = CreateOldsProductsTables(config=config, statusmsg=statusmsg, start=starttime, end=endtime, debug=debug)
 
     if 'service' in joblist:
         print ("4. Create Webservice table")
-        statusmsg = CreateWebserviceTable(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
+        statusmsg = CreateWebserviceTable(config=config, statusmsg=statusmsg, start=starttime, end=endtime, debug=debug)
 
 
     if not debug:
