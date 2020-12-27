@@ -64,7 +64,7 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
         if debug:
              p2start = datetime.utcnow()
              print ("-----------------------------------")
-             print ("PART 2:")
+             print ("Creating DataProducts for GAMMA")
         print ("  Reading SCA Gamma data...")
         gammasca = read(os.path.join(rawradpath,'COBSEXP_2_*'), starttime=start, endtime=end)
         print (gammasca.ndarray)
@@ -77,7 +77,7 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
         p2end = datetime.utcnow()
         if debug:
             print ("-----------------------------------")
-            print ("Part2 needs", p2end-p2start)
+            print ("Finished in {} sec".format(p2end-p2start))
             print ("-----------------------------------")
         statusmsg[name] = 'SCA Radon step2 success'
     except:
@@ -89,9 +89,8 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
     try:
         # Temperature from all positions within the SGO
         if debug:
-            p4start = datetime.utcnow()
             print ("-----------------------------------")
-            print ("PART 4:")
+            print ("Extracting RCS tunnel temperature")
         print ("  Loading and filetering RCSG0temp data")
         tempsgo = read(os.path.join(rcsg0path,'*'), starttime=start, endtime=end)
         tempsgo = tempsgo.filter()
@@ -99,9 +98,6 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
             tempsgo.write(tablepath, filenamebegins='temp-sgo-1min_',dateformat='%Y', coverage='year', mode='replace',format_type='PYCDF')
 
         if debug:
-            p4end = datetime.utcnow()
-            print ("-----------------------------------")
-            print ("Part4 needs", p4end-p4start)
             print ("-----------------------------------")
         statusmsg[name] = 'SCA Radon step4 success'
     except:
@@ -110,7 +106,7 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
     return statusmsg
 
 
-def CreateWebserviceTable(config={}, statusmsg={}):
+def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow()):
 
     # 1. read data
     rawdatapath = config.get('gammarawdata')
@@ -121,9 +117,8 @@ def CreateWebserviceTable(config={}, statusmsg={}):
 
     try:
         if debug:
-             p2start = datetime.utcnow()
              print ("-----------------------------------")
-             print ("PART 2:")
+             print ("Creating WebService database table")
         print ("  Reading SCA Gamma data...")
         gammasca = read(os.path.join(rawradpath,'COBSEXP_2_*'), starttime=start, endtime=end)
         print (gammasca._get_key_headers())
@@ -151,23 +146,26 @@ def CreateWebserviceTable(config={}, statusmsg={}):
             #meteo.header['unit-col-var3'] = 'cm'
     except:
         pass
+
     # 2. join with other data from meteo
-    #result = mergeStreams(gammasca,meteo)
+    result = mergeStreams(gammasca,meteo)
     # 3. add new meta information
-    #result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
-    #result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
-    #result.header['SensorGroup'] = 'services'
+    result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
+    result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
+    result.header['SensorGroup'] = 'services'
+    print ("Results", result.length())
 
     # 4. export to DB as GAMMASGO_adjusted_0001_0001 in minute resolution
-    if result.lenght()[0] > 0:
-        if len(connectdict) > 0:
-            for dbel in connectdict:
-                dbw = connectdict[dbel]
-                # check if table exists... if not use:
-                writeDB(dbw,result)
-                # else use
-                #writeDB(dbw,datastream, tablename=...)
-                print ("  -> GAMMASGO_adjusted written to DB {}".format(dbel))
+    if not debug:
+        if result.lenght()[0] > 0:
+            if len(connectdict) > 0:
+                for dbel in connectdict:
+                    dbw = connectdict[dbel]
+                    # check if table exists... if not use:
+                    writeDB(dbw,result)
+                    # else use
+                    #writeDB(dbw,datastream, tablename=...)
+                    print ("  -> GAMMASGO_adjusted written to DB {}".format(dbel))
 
     return statusmsg
 
@@ -254,7 +252,7 @@ def main(argv):
 
     if 'service' in joblist:
         print ("4. Create Webservice table")
-    #statusmsg = CreateWebserviceTable(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
+        statusmsg = CreateWebserviceTable(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
 
 
     if not debug:
