@@ -38,6 +38,7 @@ install:
   - pip install geomagpy
   - pip install telegram_send
   - pip install pyserial   # for acquisitionsupport -> better take out the GetConf methods
+  - pip install twisted   # for acquisitionsupport -> better take out the GetConf methods
 
 script:
   - python DataProducts/flagging.py -c ../conf/wic.cfg -D
