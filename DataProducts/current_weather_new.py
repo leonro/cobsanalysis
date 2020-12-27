@@ -43,15 +43,12 @@ import socket
 import sys  # for sys.version_info()
 
 
-coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
-sys.path.insert(0, coredir)
-from martas import martaslog as ml
-from acquisitionsupport import GetConf2 as GetConf
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, ConnectDatabases, getstringdate
+from martas import martaslog as ml
+from acquisitionsupport import GetConf2 as GetConf
 
 # IMPORT analysismethods
 

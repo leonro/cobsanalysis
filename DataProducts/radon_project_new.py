@@ -42,15 +42,12 @@ import socket
 import itertools
 from threading import Thread
 
-coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
-sys.path.insert(0, coredir)
-from martas import martaslog as ml
-from acquisitionsupport import GetConf2 as GetConf
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, ConnectDatabases
+from martas import martaslog as ml
+from acquisitionsupport import GetConf2 as GetConf
 
 
 def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow()):
@@ -255,7 +252,8 @@ def main(argv):
         print ("3. Create standard data table")
         statusmsg = CreateOldsProductsTables(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
 
-    print ("4. Create Webservice table")
+    if 'service' in joblist:
+        print ("4. Create Webservice table")
     #statusmsg = CreateWebserviceTable(config=config, statusmsg=statusmsg, start=starttime, end=endtime)
 
 
