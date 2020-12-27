@@ -58,7 +58,8 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
     rawdatapath = config.get('gammarawdata')
     rcsg0path = config.get('rcsg0rawdata')
     tablepath = config.get('gammaresults')
-    name = "{}-projectstables".format(config.get('logname'))
+    name1 = "{}-projectradontable".format(config.get('logname'))
+    name2 = "{}-projecttempstable".format(config.get('logname'))
 
     try:
         if debug:
@@ -72,10 +73,11 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
         if not debug:
             gammasca.write(tablepath, filenamebegins='sca-tunnel-15min_',dateformat='%Y', coverage='year', mode='replace',format_type='PYCDF')
         if debug:
+            print ("  -> Done")
             print ("-----------------------------------")
-        statusmsg[name] = 'SCA Radon step2 success'
+        statusmsg[name1] = 'radon tables created'
     except:
-        statusmsg[name] = 'SCA Radon step2 failed'
+        statusmsg[name1] = 'radon tables failed'
 
     """
     Get further additional data 
@@ -91,10 +93,11 @@ def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-ti
         if not debug:
             tempsgo.write(tablepath, filenamebegins='temp-sgo-1min_',dateformat='%Y', coverage='year', mode='replace',format_type='PYCDF')
         if debug:
+            print ("  -> Done")
             print ("-----------------------------------")
-        statusmsg[name] = 'SCA Radon step4 success'
+        statusmsg[name2] = 'radon-temperature tables success'
     except:
-        statusmsg[name] = 'SCA Radon step4 failed'
+        statusmsg[name2] = 'radon-temperature tables failed'
 
     return statusmsg
 

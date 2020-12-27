@@ -29,8 +29,8 @@ APPLICATION
         python weather_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
 
 """
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
@@ -98,17 +98,8 @@ def combinelists(l1,l2):
     return l1
 
 
-def ultraflag(data):
-    print ("    -- getting existing flags ...")
-    start, end = data._find_t_limits()
-    flaglist = db2flaglist(db,data.header.get("SensorID"),begin=start,end=end)
-    print ("      -> found existing flags: {}".format(len(flaglist)))
-    data = data.flag(flaglist)
-    data = data.remove_flagged()
-    return data
 
-
-def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', flagmethod='', starttime='', endtime='', debug=False):
+def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', starttime='', endtime='', debug=False):
     """
     DESCRIPTION:
         read data from database for all sensors matching sourcetabe names and timerange
@@ -123,48 +114,60 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', flagmet
         for sensor in senslist:
             if debug:
                 print ("   -- checking sensor {}".format(sensor))
-            last = dbselect(db,'time',ultra,expert="ORDER BY time DESC LIMIT 1")
+            last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
             ### last2 should be the better alternative
             last2 = dbselect(db,'DataMaxTime','DATAINFO','DataID="{}"'.format(sensor))
             #print (last, starttime, last2)
-            if getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime:
+            if not last2:
+                last2 = last
+            if last and (getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime):
                 sens.append(sensor)
                 if debug:
                     print ("     -> valid data for sensor {}".format(sensor))
+                
                  
         datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
-        for sensor in sens:
-            print ("    -- getting data from {}".format(sensor))
-            try:
-                if source == 'database':
-                    data = readDB(db,sensor,starttime=starttime,endtime=endtime)
-                else:
-                    data = read(os.path.join(path,sensor[:-5],'raw/*'),starttime=starttime,endtime=endtime)
-            except:
-                data = DataStream()
+        if len(sens) > 0:
+            for sensor in sens:
+                print ("    -- getting data from {}".format(sensor))
+                try:
+                    if source == 'database':
+                        datastream = readDB(db,sensor,starttime=starttime,endtime=endtime)
+                    else:
+                        datastream = read(os.path.join(path,sensor[:-5],'raw/*'),starttime=starttime,endtime=endtime)
+                except:
+                    datastream = DataStream()
+                if debug:
+                    print ("      -> got data with range: {}".format(datastream._find_t_limits()))
+                print ("      -> Done")
 
-            print ("      -> got data with range: {}".format(data._find_t_limits()))
-
-            if data.length()[0] > 0:
-                if filtermethod:
-                    data = flagmethod(data)
-                datastream.extend(data.container,data.header,data.ndarray)
-
+    if debug:
+        print ("      -> obtained {}".format(datastream.length()[0]))
+    print ("      -> readTable finished")
     print ("  -----------------------")
 
     return datastream
 
 
-def tranformUltra(datastream):
+def transformUltra(db, datastream, debug=False):
     """
     DESCRIPTION:
         transform utrasonic data to produce a general structure for combination
     """
-    print ("  Transforming ultrasonic data")
-    datastream = datastream.resample(datastream._get_key_headers(),period=60,startperiod=60)
+    if datastream.length()[0] > 0:
+        print ("  Transforming ultrasonic data")
+        print ("    -- getting existing flags ...")
+        start, end = datastream._find_t_limits()
+        flaglist = db2flaglist(db, datastream.header.get("SensorID"),begin=start,end=end)
+        print ("      -> found existing flags: {}".format(len(flaglist)))
+        data = data.flag(flaglist)
+        data = data.remove_flagged()
 
-    datastream._move_column('t2','f')
-    datastream._drop_column('t2')
+        print ("    -- resampling and reordering ...")
+        datastream = datastream.resample(datastream._get_key_headers(),period=60,startperiod=60)
+
+        datastream._move_column('t2','f')
+        datastream._drop_column('t2')
 
     print ("      -> Done")
     return datastream
@@ -194,8 +197,8 @@ def getLastSynop(datastream, synopdict={}):
     except:
         pass
 
+    print ("      -> Done")
     return trans
-
 
 def transformLNM(datastream, debug=False):
     """
@@ -213,7 +216,7 @@ def transformLNM(datastream, debug=False):
         # Test merge to get synop data again
         print ("    -- merging synop code into resampled stream") 
         syn = datastream._get_column('str1')
-        print (syn)
+        print ("    -> Syn column looks like:", syn)
         datastream = datastream._drop_column('var4')
         if len(syn) > 0:
             if debug:
@@ -227,7 +230,7 @@ def transformLNM(datastream, debug=False):
         else:
                 emp = [0]*datastream.length()[0]
                 datastream = datastream._put_column(emp,'var4')
-                print ("    -> no percipitation codes found during the covered time range")
+                print ("    -> no percipitation codes found within the covered time range")
 
         datastream._drop_column('x')
         datastream._move_column('y','t2')
@@ -248,7 +251,7 @@ def transformLNM(datastream, debug=False):
     return datastream
 
 
-def transformBM35(datastream, debug=False):
+def transformBM35(db, datastream, debug=False):
     """
     DESCRIPTION:
         filter and transform bm35 data to produce a general structure for combination
@@ -267,13 +270,9 @@ def transformBM35(datastream, debug=False):
         datastream = datastream.remove_flagged()
         flaglist2 = datastream.flag_range(keys=['var3'],above=1000, text='pressure exceeding value range',flagnum=3)
         flaglist3 = datastream.flag_range(keys=['var3'],below=750, text='pressure below value range',flagnum=3)
-        if len(flaglist2) > 0 and len(flaglist3) > 0:
-            flaglist2.extend(flaglist3)
-        elif not len(flaglist2) > 0 and len(flaglist3) > 0:
-            flaglist2 = flaglist3
+        flaglist2 = combinelists(flaglist2,flaglist3)
         print ("    -- removing flagged data")
         datastream = datastream.flag(flaglist2)
-        datastream = datastream.flag(flaglist3)
         datastream = datastream.remove_flagged()
         print ("    -- filtering to minute")
         datastream = datastream.filter() # minute data
@@ -285,7 +284,7 @@ def transformBM35(datastream, debug=False):
     return datastream, flaglist2
 
 
-def transformRCST7(datastream, debug=False):
+def transformRCST7(db, datastream, debug=False):
     """
     DESCRIPTION:
         filter and transform rcs t7 data to produce a general structure for combination
@@ -342,12 +341,15 @@ def transformRCST7(datastream, debug=False):
         flaglist1 = datastream.flag_outlier(keys=['y'],timerange=timedelta(hours=12),returnflaglist=True)
         flaglist = combinelists(flaglist,flaglist1)
         print ("      -> size of flaglist now {}".format(len(flaglist)))
-        print ("    -- cleanup pressure measurement")
-        flaglist2 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], below=800,text='pressure below value range')
-        flaglist = combinelists(flaglist,flaglist2)
-        flaglist3 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], above=1000,text='pressure exceeding value range')
-        flaglist = combinelists(flaglist,flaglist3)
-        print ("      -> size of flaglist now {}".format(len(flaglist)))
+        print ("    -- cleanup pressure measurement") # not part of rcs any more -> flag only if mean is between 800 and 1000...
+        if not np.isnan(datastream.mean('f')) and 800 < datastream.mean('f') and datastream.mean('f') < 1000:
+            flaglist2 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], below=800,text='pressure below value range')
+            flaglist = combinelists(flaglist,flaglist2)
+            flaglist3 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], above=1000,text='pressure exceeding value range')
+            flaglist = combinelists(flaglist,flaglist3)
+            print ("      -> size of flaglist now {}".format(len(flaglist)))
+        else:
+            print ("      -> no pressure data found")
         print ("    -- cleanup humidity measurement")
         flaglist4 = datastream.flag_range(keys=['t2'], flagnum=3, keystoflag=['t2'], above=100, below=0,text='humidity not valid')
         flaglist = combinelists(flaglist,flaglist4)
@@ -391,7 +393,7 @@ def transformRCST7(datastream, debug=False):
     return filtdatastream, flaglist
 
 
-def transformMETEO(datastream, debug=False):
+def transformMETEO(db, datastream, debug=False):
     """
     DESCRIPTION:
         filter and transform rcs t7 data to produce a general structure for combination
@@ -501,15 +503,19 @@ def CombineStreams(streamlist, debug=False):
     result = DataStream()
     print ("  Joining stream") 
     for st in streamlist:
-        print ("   -> dealing with {}".format(st)) 
+        print ("   -> dealing with {}".format(st.header.get("SensorID"))) 
+        if debug:
+            print ("    coverage before:", st._find_t_limits())
         if not result.length()[0] > 0:
             result = st
         else:
             try:
-                result = joinStreams(result,st)  # eventually extend the stream 
+                result = joinStreams(result,st)  # eventually extend the stream
                 result = mergeStreams(result,st,mode='insert')  # then merge contents 
             except:
                 print ("   -> problem when joining datastream")
+        if debug:
+            print ("    coverage before:", result._find_t_limits())
 
     result.header['col-y'] = 'rain'
     result.header['unit-col-y'] = 'mm/h'
@@ -526,6 +532,9 @@ def CombineStreams(streamlist, debug=False):
     result.header['col-t2'] = 'visibility'
     result.header['unit-col-t2'] = 'm'
 
+    if debug:
+        print (result.ndarray)
+        print (result.length()[0])
     return result
 
 def AddSYNOP(datastream, synopdict={}):
@@ -577,7 +586,7 @@ def ExportData(datastream, config={}):
     return success
 
 
-def WeatherAnalysis(config={},statusmsg={}, endtime=datetime.utcnow(), debug=False):
+def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug=False):
     """
     DESCRIPTION:
         Main method to analyse and combine measurements from various different
@@ -611,47 +620,64 @@ def WeatherAnalysis(config={},statusmsg={}, endtime=datetime.utcnow(), debug=Fal
     if ok:
         #try:
         if debug:
-            print ("Reading table...")
+            print ("   Reading table...")
+        def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', flagmethod='', starttime='', endtime='', debug=False):
         lnm = readTable(db, sourcetable="LNM%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
         if debug:
-            print ("Synop...")
+            print ("   Synop...")
         trans = getLastSynop(lnm, synopdict=synopdict)
         if debug:
-            print ("Transforming...")
-        lnm = tranformLNM(lnm, debug=debug)
-        statusmsg[name1a] = 'LNM data finished - data available'
-    #except:
-    #    statusmsg[name1a] = 'LNM data failed'
+            print ("   Transforming...")
+        print (lnm.length())
+        lnm = transformLNM(lnm, debug=debug)
+        if lnm.length()[0] > 0:
+            statusmsg[name1a] = 'LNM data finished - data available'
+        else:
+            statusmsg[name1a] = 'LNM data finished - but no data available'
+    except:
+        statusmsg[name1a] = 'LNM data failed'
 
     print (" B. Reading Ultrasonic data")
     try:
-        ultra = readTable(db, sourcetable="ULTRASONIC%", source=source,  path=sgopath, flagmethod=ultraflag, starttime='', endtime='', debug=debug)
-        ultra = tranformUltra(ultra, debug=debug)
-        statusmsg[name1b] = 'ULTRA data finished - data available'
+        ultra = readTable(db, sourcetable="ULTRASONIC%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
+        ultra = transformUltra(db, ultra, debug=debug)
+        if ultra.length()[0] > 0:
+            statusmsg[name1b] = 'ULTRA data finished - data available'
+        else:
+            statusmsg[name1b] = 'ULTRA data finished - but no data available'
     except:
         statusmsg[name1b] = 'ULTRA data failed'
 
     print (" C. Reading BM35 data")
     try:
         bm35 = readTable(db, sourcetable="BM35%", source=source, path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
-        bm35, flaglistbm35 = tranformBM35(bm35, debug=debug)
-        statusmsg[name1c] = 'BM35 data finished - data available'
+        bm35, flaglistbm35 = transformBM35(db, bm35, debug=debug)
+        if bm35.length()[0] > 0:
+            statusmsg[name1c] = 'BM35 data finished - data available'
+        else:
+            statusmsg[name1b] = 'BM35 data finished - but no data available'
     except:
         statusmsg[name1c] = 'BM35 data failed'
 
     print (" D. Reading RCST7 data")
     try:
         rcs = readTable(db, sourcetable="RCST7%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
-        rcs, flaglistrcs = tranformRCST7(rcs, debug=debug)
-        statusmsg[name1d] = 'RCST7 data finished - data available'
+        rcs, flaglistrcs = transformRCST7(db, rcs, debug=debug)
+        if rcs.length()[0] > 0:
+            statusmsg[name1d] = 'RCST7 data finished - data available'
+        else:
+            statusmsg[name1d] = 'RCST7 data finished - but no data available'
     except:
         statusmsg[name1d] = 'RCST7 data failed'
 
     print (" E. Reading METEO data (realtime RCS T7 data)")
     try:
         meteo = readTable(db, sourcetable="METEO%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
-        meteo = tranformMETEO(meteo, debug=debug)
-        statusmsg[name1e] = 'METEO data finished - data available'
+        meteo = transformMETEO(db, meteo, debug=debug)
+        if meteo.length()[0] > 0:
+            statusmsg[name1e] = 'METEO data finished - data available'
+        else:
+            statusmsg[name1e] = 'METEO data finished - but no data available'
     except:
         statusmsg[name1e] = 'METEO data failed'
 
@@ -661,12 +687,12 @@ def WeatherAnalysis(config={},statusmsg={}, endtime=datetime.utcnow(), debug=Fal
         print (" - Length Ultra:",ultra.length()[0], ultra._find_t_limits())
         print (" - Length RCS:",rcs.length()[0], rcs._find_t_limits())
         print (" - Length METEO:", meteo.length()[0], meteo._find_t_limits())
-        print (" - Length BM35:", bm3st.length()[0], bm3st._find_t_limits())
+        print (" - Length BM35:", bm35.length()[0], bm35._find_t_limits())
 
 
     print (" F. Check Rain measurements")
     try:
-        diff = CheckRainMeasurements(lnmdatastream, meteodatastream, debug=debug)
+        diff = CheckRainMeasurements(lnm, meteo, debug=debug)
         statusmsg[name1f] = 'Rain analysis finished'
     except:
         statusmsg[name1f] = 'Rain analysis failed'
@@ -1097,7 +1123,7 @@ def main(argv):
 
     print ("4. Weather analysis")
     try:
-        weatherstream, success, statusmsg = WeatherAnalysis(config=config,statusmsg=statusmsg, endtime=endtime, debug=debug)
+        weatherstream, success, statusmsg = WeatherAnalysis(db, config=config,statusmsg=statusmsg, endtime=endtime, debug=debug)
     except:
         statusmsg[name1] = 'database failed'
 
