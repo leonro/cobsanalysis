@@ -124,8 +124,8 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
                 sens.append(sensor)
                 if debug:
                     print ("     -> valid data for sensor {}".format(sensor))
-                
-                 
+
+
         datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
         if len(sens) > 0:
             for sensor in sens:
@@ -204,6 +204,12 @@ def transformLNM(datastream, debug=False):
     """
     DESCRIPTION:
         transform lnm data to produce a general structure for combination
+        # Columns after: 
+        temperature: 'f'
+        synop: 'str1'
+        visibility: 't2'
+        rain: 'y'
+        rain: 'df'
     """
 
     print ("  Transforming LNM data")
@@ -255,6 +261,8 @@ def transformBM35(db, datastream, debug=False):
     """
     DESCRIPTION:
         filter and transform bm35 data to produce a general structure for combination
+        # Columns after: 
+        pressure: 'var5'
     PARAMTER:
         dbupdate : if True then new flags will be written to DB
     """
@@ -291,6 +299,14 @@ def transformRCST7(db, datastream, debug=False):
         # --------------------------------------------------------    
         # RCS - Get data from RCS (no version/revision control in rcs) 
         # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
+        # 
+        # Columns after: 
+        pressure (if existing): 'var5'
+        temperature: 'f'
+        snowheight: 'z'
+        rain: 'y'
+        humidity: 't1'
+
     PARAMTER:
         dbupdate : if True then new flags will be written to DB
     """
@@ -414,10 +430,14 @@ def transformMETEO(db, datastream, debug=False):
         # meteo data is not flagged
         datastream = datastream.remove_flagged()
         print ("    -- Cleanup pressure measurement")
-        flaglist1 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], below=800,text='pressure below value range')
-        flaglist = combinelists(flaglist,flaglist1)
-        flaglist15 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], above=1000,text='pressure exceeding value range')
-        flaglist = combinelists(flaglist,flaglist15)
+        if not np.isnan(datastream.mean('var5')) and 800 < datastream.mean('var5') and datastream.mean('var5') < 1000:
+            flaglist1 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], below=800,text='pressure below value range')
+            flaglist = combinelists(flaglist,flaglist1)
+            flaglist15 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], above=1000,text='pressure exceeding value range')
+            flaglist = combinelists(flaglist,flaglist15)
+        else:
+            print ("      -> no pressure data found")
+            datastream._drop_column('var5')
         print ("    -- Cleanup humidity measurement")
         flaglist2 = datastream.flag_range(keys=['t1'], flagnum=3, keystoflag=['t1'], above=100, below=0)
         flaglist = combinelists(flaglist,flaglist2)
@@ -449,7 +469,7 @@ def transformMETEO(db, datastream, debug=False):
     return datastream
 
 
-def CheckRainMeasurements(lnmdatastream, meteodatastream, debug=False):
+def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, debug=False):
     """
     DESCRIPTION:
         compare rain measurements between LNM and Meteo bucket
@@ -470,6 +490,8 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, debug=False):
     maxt = min([maxlnm,maxmet])
     lnmdata = lnmdatastream.trim(starttime=mint,endtime=maxt)
     meteodata = meteodatastream.trim(starttime=mint,endtime=maxt)
+    if debug:
+    print ("      -> dealing with time range from {} to {}".format(mint,maxt))
     print ("    -- extract rain measurements")
     res = np.asarray([el for el in meteodata._get_column('var1') if not np.isnan(el)])
     res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)][:len(res)])  # limit to the usually shorter rcst7 timeseries
@@ -489,7 +511,7 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, debug=False):
             #data2 = data2._put_column(res2, 't2', columnname='Niederschlag',columnunit='mm/1h')
             #data = mergeStreams(data,data2,keys=['t2'],mode='replace')
     else:
-        print ("    !! sequence too short")
+        print ("    -> no rain in time range or sequence too short")
 
     print ("      -> Done")
     print (" -----------------------")
@@ -517,13 +539,13 @@ def CombineStreams(streamlist, debug=False):
                 result = joinStreams(result,st)  # eventually extend the stream
                 if debug:
                     print ("     - after join: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
-                result = mergeStreams(result,st,mode='insert')  # then merge contents 
+                result = mergeStreams(result,st,mode='replace')  # then merge contents 
                 if debug:
                     print ("     - after merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
             except:
                 print ("   -> problem when joining datastream")
         if debug:
-            print ("    coverage before:", result._find_t_limits())
+            print ("    coverage after:", result._find_t_limits())
 
     result.header['col-y'] = 'rain'
     result.header['unit-col-y'] = 'mm/h'
@@ -547,6 +569,8 @@ def CombineStreams(streamlist, debug=False):
 
 def AddSYNOP(datastream, synopdict={}):
     # Add plain text synop descriptions
+    print (" -----------------------")
+    print (" Adding synop codes")
     syno = datastream._get_column('var4')
     txt= []
     for el in syno:
@@ -557,6 +581,9 @@ def AddSYNOP(datastream, synopdict={}):
             txt.append('')
     txt = np.asarray(txt)
     datastream._put_column(txt,'str2')
+
+    print ("      -> Done")
+    print (" -----------------------")
 
     return datastream
 
@@ -625,16 +652,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
     print (" A. Reading Laser Niederschlag")
     try:
-        if debug:
-            print ("   Reading table...")
-        def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', flagmethod='', starttime='', endtime='', debug=False):
         lnm = readTable(db, sourcetable="LNM%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
-        if debug:
-            print ("   Synop...")
         trans = getLastSynop(lnm, synopdict=synopdict)
-        if debug:
-            print ("   Transforming...")
-        print (lnm.length())
         lnm = transformLNM(lnm, debug=debug)
         if lnm.length()[0] > 0:
             statusmsg[name1a] = 'LNM data finished - data available'
@@ -708,7 +727,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
     print (" F. Check Rain measurements")
     try:
-        diff = CheckRainMeasurements(lnm, meteo, debug=debug)
+        diff = CheckRainMeasurements(lnm, meteo, dayrange=dayrange ,debug=debug)
         statusmsg[name1f] = 'Rain analysis finished'
     except:
         statusmsg[name1f] = 'Rain analysis failed'
@@ -716,7 +735,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
 
     print (" G. Combine measurements")
-    result = CombineStreams([meteo,rcs,lnm,ultra,bm35], debug=debug)
+    result = CombineStreams([ultra, bm35, lnm, meteo, rcs], debug=debug)
 
     print (" H. Add Synop codes")
     result = AddSYNOP(result, synopdict=synopdict)
@@ -820,17 +839,17 @@ def CreateWeatherTable(datastream, config={}, statusmsg={}, debug=False):
     print (" Creating data table for the last 30 min")
     try:
         # Get the last 30 min
-        print ("    -- Coverage:", result._find_t_limits())
-        lastdate = result.ndarray[0][-1]
-        shortextract = result._select_timerange(starttime=num2date(lastdate)-timedelta(minutes=30), endtime=lastdate)
+        print ("    -- Coverage:", datastream._find_t_limits())
+        lastdate = datastream.ndarray[0][-1]
+        shortextract = datastream._select_timerange(starttime=num2date(lastdate)-timedelta(minutes=30), endtime=lastdate)
         poscom = KEYLIST.index('comment')
         posflag = KEYLIST.index('flag')
         shortextract[poscom] = np.asarray([])
         shortextract[posflag] = np.asarray([])
 
-        shortstream = DataStream([],result.header,shortextract)
+        shortstream = DataStream([],datastream.header,shortextract)
         vallst = [0 for key in KEYLIST]
-        for idx,key in enumerate(result._get_key_headers()):
+        for idx,key in enumerate(datastream._get_key_headers()):
             if key in NUMKEYLIST:
                 print ("    -- Dealing with key {}".format(key))
                 # alternative

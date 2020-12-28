@@ -31,11 +31,13 @@ jobs:
       language: shell       # 'language: python' is an error on Travis CI macOS
       before_install:
         - pip3 install --upgrade pip  # all three OSes agree about 'pip3'
+  allow_failures:
+    - os: osx
 
 cache: pip
 
 install:
-  - pip install geomagpy
+  - pip3 install geomagpy || pip install geomagpy 
   - pip install telegram_send
   - pip install pyserial   # for acquisitionsupport -> better take out the GetConf methods
   - pip install twisted   # for acquisitionsupport -> better take out the GetConf methods
