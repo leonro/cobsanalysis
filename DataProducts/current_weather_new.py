@@ -458,9 +458,9 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, debug=False):
         # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
     """
 
-    istwert = -999
     print (" -----------------------")
     print (" Compare rain data from bucket and LNM")
+    istwert = -999
     # now get: filter data to 1 minute
     # extract similar time rangee from both datasets
     print ("    -- get similar time ranges")
@@ -477,7 +477,8 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, debug=False):
     if len(res) > 1440*int(dayrange*0.5) and not np.mean(res) == 0:
         istwert = np.abs((np.mean(res) - np.mean(res2))/np.mean(res))
         sollwert = 0.3
-        print (istwert,sollwert)
+        if debug:
+            print ("Obsevered difference of cumulative percipitioan: {} percent; (accepted difference: {} percent)".format(istwert,sollwert))
         if istwert > 0.3:
             print ("     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print ("     Current Weather: large differences between rain measurements !!") # add this to consistency log
@@ -490,6 +491,7 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, debug=False):
     else:
         print ("    !! sequence too short")
 
+    print ("      -> Done")
     print (" -----------------------")
 
     return istwert
@@ -510,8 +512,14 @@ def CombineStreams(streamlist, debug=False):
             result = st
         else:
             try:
+                if debug:
+                    print ("     - before join/merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
                 result = joinStreams(result,st)  # eventually extend the stream
+                if debug:
+                    print ("     - after join: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
                 result = mergeStreams(result,st,mode='insert')  # then merge contents 
+                if debug:
+                    print ("     - after merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
             except:
                 print ("   -> problem when joining datastream")
         if debug:
@@ -616,9 +624,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
 
     print (" A. Reading Laser Niederschlag")
-    ok = True
-    if ok:
-        #try:
+    try:
         if debug:
             print ("   Reading table...")
         def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', flagmethod='', starttime='', endtime='', debug=False):
@@ -635,6 +641,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         else:
             statusmsg[name1a] = 'LNM data finished - but no data available'
     except:
+        if debug:
+            print ("    -> LNM failed")
         statusmsg[name1a] = 'LNM data failed'
 
     print (" B. Reading Ultrasonic data")
@@ -646,6 +654,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         else:
             statusmsg[name1b] = 'ULTRA data finished - but no data available'
     except:
+        if debug:
+            print ("    -> ULTRA failed")
         statusmsg[name1b] = 'ULTRA data failed'
 
     print (" C. Reading BM35 data")
@@ -657,6 +667,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         else:
             statusmsg[name1b] = 'BM35 data finished - but no data available'
     except:
+        if debug:
+            print ("    -> BM35 failed")
         statusmsg[name1c] = 'BM35 data failed'
 
     print (" D. Reading RCST7 data")
@@ -668,6 +680,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         else:
             statusmsg[name1d] = 'RCST7 data finished - but no data available'
     except:
+        if debug:
+            print ("    -> RCST7 failed")
         statusmsg[name1d] = 'RCST7 data failed'
 
     print (" E. Reading METEO data (realtime RCS T7 data)")
@@ -679,6 +693,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         else:
             statusmsg[name1e] = 'METEO data finished - but no data available'
     except:
+        if debug:
+            print ("    -> METEO failed")
         statusmsg[name1e] = 'METEO data failed'
 
     if debug:
