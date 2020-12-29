@@ -531,6 +531,7 @@ def CombineStreams(streamlist, debug=False):
         print ("   -> dealing with {}".format(st.header.get("SensorID"))) 
         if debug:
             print ("    coverage before:", st._find_t_limits())
+            mp.plot(st)
         if not result.length()[0] > 0:
             result = st
         else:
@@ -674,6 +675,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     meteo = DataStream()
     dayrange = int(config.get('meteorange',3))
     starttime = endtime-timedelta(days=dayrange)
+    diff = 0.0
 
     source='database'
     if starttime < datetime.utcnow()-timedelta(days=30):
@@ -774,6 +776,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
     print (" H. Add Synop codes")
     result = AddSYNOP(result, synopdict=synopdict, debug=debug)
+    if debug:
+        print (result.ndarray)
 
     print (" I. Selecting Bucket or Laser")
     result = RainSource(result, diff=diff, source=config.get('rainsource','bucket'), debug=debug)
