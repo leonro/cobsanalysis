@@ -365,6 +365,7 @@ def transformRCST7(db, datastream, debug=False):
             flaglist = combinelists(flaglist,flaglist3)
             print ("      -> size of flaglist now {}".format(len(flaglist)))
         else:
+            datastream._drop_column('f')
             print ("      -> no pressure data found")
         print ("    -- cleanup humidity measurement")
         flaglist4 = datastream.flag_range(keys=['t2'], flagnum=3, keystoflag=['t2'], above=100, below=0,text='humidity not valid')
@@ -491,7 +492,7 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, debug=Fals
     lnmdata = lnmdatastream.trim(starttime=mint,endtime=maxt)
     meteodata = meteodatastream.trim(starttime=mint,endtime=maxt)
     if debug:
-    print ("      -> dealing with time range from {} to {}".format(mint,maxt))
+        print ("      -> dealing with time range from {} to {}".format(mint,maxt))
     print ("    -- extract rain measurements")
     res = np.asarray([el for el in meteodata._get_column('var1') if not np.isnan(el)])
     res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)][:len(res)])  # limit to the usually shorter rcst7 timeseries
@@ -563,11 +564,12 @@ def CombineStreams(streamlist, debug=False):
     result.header['unit-col-t2'] = 'm'
 
     if debug:
+        mp.plot(result)
         print (result.ndarray)
         print (result.length()[0])
     return result
 
-def AddSYNOP(datastream, synopdict={}):
+def AddSYNOP(datastream, synopdict={}, debug=debug):
     # Add plain text synop descriptions
     print (" -----------------------")
     print (" Adding synop codes")
@@ -583,6 +585,34 @@ def AddSYNOP(datastream, synopdict={}):
     datastream._put_column(txt,'str2')
 
     print ("      -> Done")
+    print (" -----------------------")
+
+    return datastream
+
+
+def RainSource(datastream, diff=0.1, source='bucket', debug=False):
+    """
+    DESCRIPTION
+        Select primary source of percipitation data
+        Three possibilities:
+          1) source "bucket" -> always use rain bucket data
+          2) source "laser" -> always use laser disdrometer
+          3) source "whatever" -> primarly use 'bucket', switch to 'laser' if difference exceeds threshold (e.g 0.3 = 30%)
+        Background of "whatever": In very strong rain events, the bucket cannot measure rain amounts precisly any more  
+    """
+
+    print (" -----------------------")
+    print (" Fixing source of rain measurements")
+    threshold = 0.3
+    if diff > threshold and not source == 'bucket':
+        source = 'laser'
+    if source=='bucket':
+        datastream._drop_column('df')
+    else:  # source=='laser':
+        datastream._move_column('df','y')
+        datastream._drop_column('df')
+
+    print ("      -> Done: using {}".format(source))
     print (" -----------------------")
 
     return datastream
@@ -634,6 +664,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     name1d = "{}-rcs".format(config.get('logname'))
     name1e = "{}-meteo".format(config.get('logname'))
     name1f = "{}-rain".format(config.get('logname'))
+    name1g = "{}-combination".format(config.get('logname'))
+    name1h = "{}-synop".format(config.get('logname'))
     sgopath = config.get('sgopath')
     lnm = DataStream()
     ultra = DataStream()
@@ -733,12 +765,18 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         statusmsg[name1f] = 'Rain analysis failed'
     # diff can be used to eventually switch from rain bucket to lnm
 
-
     print (" G. Combine measurements")
-    result = CombineStreams([ultra, bm35, lnm, meteo, rcs], debug=debug)
+    try:
+        result = CombineStreams([ultra, bm35, lnm, meteo, rcs], debug=debug)
+        statusmsg[name1g] = 'combination of streams successful'
+    except:
+        statusmsg[name1g] = 'combination of streams failed'
 
     print (" H. Add Synop codes")
-    result = AddSYNOP(result, synopdict=synopdict)
+    result = AddSYNOP(result, synopdict=synopdict, debug=debug)
+
+    print (" I. Selecting Bucket or Laser")
+    result = RainSource(result, diff=diff, source=config.get('rainsource','bucket'), debug=debug)
 
     if not debug:
         connectdict = config.get('conncetedDB')
@@ -1157,10 +1195,7 @@ def main(argv):
     # it is possible to save data also directly to the brokers database - better do it elsewhere
 
     print ("4. Weather analysis")
-    try:
-        weatherstream, success, statusmsg = WeatherAnalysis(db, config=config,statusmsg=statusmsg, endtime=endtime, debug=debug)
-    except:
-        statusmsg[name1] = 'database failed'
+    weatherstream, success, statusmsg = WeatherAnalysis(db, config=config,statusmsg=statusmsg, endtime=endtime, debug=debug)
 
     print ("5. Create current data table")
     statusmsg = CreateWeatherTable(weatherstream, config=config, statusmsg=statusmsg, debug=debug)
