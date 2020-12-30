@@ -145,7 +145,12 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
         pass
 
     # 2. join with other data from meteo
-    result = mergeStreams(gammasca,meteo)
+    if gammasca.length()[0] > 0 and meteo.length()[0] > 0:
+        result = mergeStreams(gammasca,meteo)
+    elif gammasca.length()[0] > 0:
+        result = gammasca.copy()
+    else:
+        result = DataStream()
     # 3. add new meta information
     result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
     result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
