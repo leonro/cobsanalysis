@@ -214,29 +214,28 @@ def transformLNM(datastream, debug=False):
 
     print ("  Transforming LNM data")
     if datastream.length()[0] > 0:
+        print ("    -- extracting synop code into resampled stream")
+        data = datastream.copy()
+        syn = data._get_column('str1')
+        syn = np.asarray([float(el) for el in syn])
+        data._drop_column('var4')
+        data._put_column(syn,'var4')
         print ("    -- determine average rain from LNM")
         res2 = datastream.steadyrise('x', timedelta(minutes=60),sensitivitylevel=0.002)
         datastream= datastream._put_column(res2, 'df', columnname='Percipitation',columnunit='mm/1h')
         print ("    -- resampling LNM")
         datastream= datastream.resample(datastream._get_key_headers(),period=60,startperiod=60)
         # Test merge to get synop data again
-        print ("    -- merging synop code into resampled stream") 
-        syn = datastream._get_column('str1')
         print ("    -> Syn column looks like:", syn)
         datastream = datastream._drop_column('var4')
         if len(syn) > 0:
             if debug:
                 print ("      -> found synop codes {}".format(len(syn)))
-                syn = np.asarray([float(el) for el in syn])
-                datastream = datastream._put_column(syn,'var4')
-                #print ("Here")
-                #print (data._get_column('var4'))
-                #print (lnmst.header.get('col-var4'))
-                #datastream = mergeStreams(datastream,data, keys=['var4'])
+            datastream = mergeStreams(datastream,data, keys=['var4'])
         else:
-                emp = [0]*datastream.length()[0]
-                datastream = datastream._put_column(emp,'var4')
-                print ("    -> no percipitation codes found within the covered time range")
+            emp = [0]*datastream.length()[0]
+            datastream = datastream._put_column(emp,'var4')
+            print ("    -> no percipitation codes found within the covered time range")
 
         datastream._drop_column('x')
         datastream._move_column('y','t2')
@@ -251,6 +250,7 @@ def transformLNM(datastream, debug=False):
         datastream._drop_column('dy')
         datastream._drop_column('dz')
         datastream._move_column('df','y')
+        datastream._drop_column('str1')
         #datastream._drop_column('df')  # remove after CheckRain
 
     print ("      -> Done")
@@ -494,8 +494,8 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, debug=Fals
     if debug:
         print ("      -> dealing with time range from {} to {}".format(mint,maxt))
     print ("    -- extract rain measurements")
-    res = np.asarray([el for el in meteodata._get_column('var1') if not np.isnan(el)])
-    res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)][:len(res)])  # limit to the usually shorter rcst7 timeseries
+    res = np.asarray([el for el in meteodata._get_column('y') if not np.isnan(el)])
+    res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)])  # limit to the usually shorter rcst7 timeseries
     print ("      -> cumulative rain t7={} and lnm={}".format(np.sum(res), np.sum(res2)))
     if len(res) > 1440*int(dayrange*0.5) and not np.mean(res) == 0:
         istwert = np.abs((np.mean(res) - np.mean(res2))/np.mean(res))
@@ -539,6 +539,7 @@ def CombineStreams(streamlist, debug=False):
                 if debug:
                     print ("     - before join/merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
                 result = joinStreams(result,st)  # eventually extend the stream
+                result = FloatArray(result)   # remove any unwanted string as occur in lnm
                 if debug:
                     print ("     - after join: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
                 result = mergeStreams(result,st,mode='replace')  # then merge contents 
@@ -570,7 +571,28 @@ def CombineStreams(streamlist, debug=False):
         print (result.length()[0])
     return result
 
-def AddSYNOP(datastream, synopdict={}, debug=debug):
+
+def ObjectArray(datastream):
+    l = np.asarray([np.asarray(el).astype(object) for el in datastream.ndarray])
+    return DataStream([],datastream.header,l)
+
+
+def FloatArray(datastream):
+    newnd = []
+    for ar in datastream.ndarray:
+        n = []
+        for el in ar:
+            try:
+                n.append(float(el))
+            else: 
+                n.append(np.nan)
+        newar = np.asarray(n).astype(float)
+        newnd.append(newar)
+
+    return DataStream([],datastream.header,np.asarray(newnd))
+
+
+def AddSYNOP(datastream, synopdict={}, debug=False):
     # Add plain text synop descriptions
     print (" -----------------------")
     print (" Adding synop codes")
@@ -676,6 +698,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     dayrange = int(config.get('meteorange',3))
     starttime = endtime-timedelta(days=dayrange)
     diff = 0.0
+    succ = False
+    trans = ''
 
     source='database'
     if starttime < datetime.utcnow()-timedelta(days=30):
@@ -697,6 +721,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         if debug:
             print ("    -> LNM failed")
         statusmsg[name1a] = 'LNM data failed'
+    config['lastSynop'] = trans
 
     print (" B. Reading Ultrasonic data")
     try:
@@ -774,13 +799,17 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     except:
         statusmsg[name1g] = 'combination of streams failed'
 
-    print (" H. Add Synop codes")
-    result = AddSYNOP(result, synopdict=synopdict, debug=debug)
-    if debug:
-        print (result.ndarray)
+    print (" H. Add Synop codes and I. Selecting Bucket or Laser")
+    try:
+        result = ObjectArray(result)
+        result = AddSYNOP(result, synopdict=synopdict, debug=debug)
+        result = RainSource(result, diff=diff, source=config.get('rainsource','bucket'), debug=debug)
+        statusmsg[name1h] = 'synop and rain source successful'
+    except:
+        statusmsg[name1h] = 'synop and rain source failed'
 
-    print (" I. Selecting Bucket or Laser")
-    result = RainSource(result, diff=diff, source=config.get('rainsource','bucket'), debug=debug)
+    if debug:
+        mp.plot(result)
 
     if not debug:
         connectdict = config.get('conncetedDB')
@@ -876,6 +905,7 @@ def CreateWeatherTable(datastream, config={}, statusmsg={}, debug=False):
 
     currentvaluepath = config.get('currentvaluepath','')
     name2 = "{}-table".format(config.get('logname'))
+    trans = config.get('lastSynop','')
 
     print (" -----------------------")
     print (" Creating data table for the last 30 min")
@@ -947,8 +977,9 @@ def CreateWeatherTable(datastream, config={}, statusmsg={}, debug=False):
                 print ("Current meteo data written successfully to {}".format(currentvaluepath))
         else:
             print ("     -- debug selected - skipping writing new data to currentvalues")
+            print ("     -- NEW dict looks like:", valdict)
 
-        print ("     -- upload of current.data moved out")
+        print ("     -- upload of current.data moved to rsync")
         statusmsg[name2] = 'Step2: recent data extracted'
     except:
         statusmsg[name2] = 'Step2: current data failed'
@@ -968,21 +999,22 @@ def ShortTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow()
     try:
         print (" !! Please note - plotting will only work from cron or root")
         print (" !! ------------------------------")
-        import pylab
+        #import pylab
         # ############################
         # # Create plots ???? -> move to plot
         # ############################
-        datastream.ndarray[2] = datastream.missingvalue(result.ndarray[2],3600,threshold=0.05,fill='interpolate')
-        datastream.ndarray[3] = datastream.missingvalue(result.ndarray[3],600,threshold=0.05,fill='interpolate')
+        datastream.ndarray[2] = datastream.missingvalue(datastream.ndarray[2],3600,threshold=0.05,fill='interpolate')
+        datastream.ndarray[3] = datastream.missingvalue(datastream.ndarray[3],600,threshold=0.05,fill='interpolate')
 
-        longextract = result._select_timerange(starttime=endtime-timedelta(days=2), endtime=endtime)
+        longextract = datastream._select_timerange(starttime=endtime-timedelta(days=2), endtime=endtime)
 
+        imagepath = config.get('meteoimages')
         #print ("Test", longextract)
-        t = longextract[0]
-        y2 = longextract[2]
-        y3 = longextract[3]
-        y4 = longextract[4]
-        y7 = longextract[7]
+        t = longextract[0]   # time
+        y2 = longextract[2]  # rain
+        y3 = longextract[3]  # schneehoehe
+        y4 = longextract[4]  # temp
+        y7 = longextract[7]  # 
         max1a = 0
         max1b = 0
         max2a = 0
@@ -1005,30 +1037,34 @@ def ShortTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow()
         fig, axarr = plt.subplots(3, sharex=True, figsize=(15,9))
         # first plot (temperature)
         axarr[0].set_ylabel('T [$ \circ$C]')
-        axarr[0].plot_date(t,y4,'-',color='lightgray')
-        axarr[0].fill_between(t,0,y4,where=y4<0,facecolor='blue',alpha=0.5)
-        axarr[0].fill_between(t,0,y4,where=y4>=0,facecolor='red',alpha=0.5)
-        #ax0 = axarr[0].twinx()
-        #ax0.set_ylim([0,100])
-        #ax0.set_ylabel('RH [%]')
-        #ax0.plot_date(longextract[0],longextract[5],'-',color='green')
+        if len(y4) > 0:
+            axarr[0].plot_date(t,y4,'-',color='lightgray')
+            axarr[0].fill_between(t,0,y4,where=y4<0,facecolor='blue',alpha=0.5)
+            axarr[0].fill_between(t,0,y4,where=y4>=0,facecolor='red',alpha=0.5)
         axarr[1].set_ylabel('S [cm]')
         axarr[1].set_ylim([0,max1b])
-        axarr[1].plot_date(longextract[0],longextract[3],'-',color='gray')
-        axarr[1].fill_between(t,0,y3,where=longextract[3]>=0,facecolor='gray',alpha=0.5)
+        if len(y3) > 0:
+            axarr[1].plot_date(longextract[0],longextract[3],'-',color='gray')
+            axarr[1].fill_between(t,0,y3,where=longextract[3]>=0,facecolor='gray',alpha=0.5)
         ax1 = axarr[1].twinx()
         ax1.set_ylabel('N [mm/h]',color='blue')
         ax1.set_ylim([0,max1a])
-        ax1.plot_date(t,y2,'-',color='blue')
-        ax1.fill_between(t,0,y2,where=y2>=0,facecolor='blue',alpha=0.5)
+        if len(y2) > 0:
+            ax1.plot_date(t,y2,'-',color='blue')
+            ax1.fill_between(t,0,y2,where=y2>=0,facecolor='blue',alpha=0.5)
         axarr[2].set_ylabel('Wind [m/s]')
         axarr[2].set_ylim([0,max2a])
-        axarr[2].plot_date(t,y7,'-',color='gray')
-        axarr[2].fill_between(t,0,y7,where=longextract[7]>=0,facecolor='gray',alpha=0.5)
+        if len(y7) > 0:
+            axarr[2].plot_date(t,y7,'-',color='gray')
+            axarr[2].fill_between(t,0,y7,where=longextract[7]>=0,facecolor='gray',alpha=0.5)
         filedate = datetime.strftime(endtime,"%Y-%m-%d")
-        savepath = os.path.join(imagepath,'Meteo_0_'+filedate+'.png')
-        print ("    -- Saving graph locally to {}".format(savepath))
-        pylab.savefig(savepath)
+        if not debug:
+            savepath = os.path.join(imagepath,'Meteo_0_'+filedate+'.png')
+            print ("    -- Saving graph locally to {}".format(savepath))
+            plt.savefig(savepath)
+            plt.close(fig)
+        #else:
+        #    plt.show()
         statusmsg[name3] = 'two day plot finished'
         success=True
     except:
@@ -1054,16 +1090,15 @@ def LongTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow(),
         longterm=read(os.path.join(meteoproductpath,'{}*'.format(meteofilename)), starttime=starttime,endtime=endtime)
         print ("  Please note: long term plot only generated from cron or root")
         print ("  Long term plot", longterm.length(), starttime, endtime)
-        print (t.dtype)
+        longterm = FloatArray(longterm)
         t = longterm.ndarray[0].astype(float64)
-        print (t.dtype)
         y2 = longterm.ndarray[2].astype(float64)  # Rain
         y3 = longterm.ndarray[3].astype(float64)  # Snow
         y4 = longterm.ndarray[4].astype(float64)  # Temp
         y7 = longterm.ndarray[7].astype(float64)
 
-        print ("  LongTerm Parameter", len(t), len(y2), len(y3), len(y4), len(y7))
-        #mp.plot(longterm)
+        if debug:
+            print ("  LongTerm Parameter", len(t), len(y2), len(y3), len(y4), len(y7))
 
         max1a = np.nanmax(y2)
         if max1a < 10 or np.isnan(max1a):
@@ -1085,10 +1120,6 @@ def LongTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow(),
             axarr[0].fill_between(t,0,y4,where=y4>=0,facecolor='red',alpha=0.5)
         except:
             pass
-        #ax0 = axarr[0].twinx()
-        #ax0.set_ylim([0,100])
-        #ax0.set_ylabel('RH [%]')
-        #ax0.plot_date(longextract[0],longextract[5],'-',color='green')
         axarr[1].set_ylabel('S [cm]')
         axarr[1].set_ylim([0,max1b])
         axarr[1].plot_date(t,y3,'-',color='gray')
@@ -1111,8 +1142,12 @@ def LongTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow(),
             axarr[2].fill_between(t,0,y7,where=y7>=0,facecolor='gray',alpha=0.5)
         except:
             pass
-        savepath = os.path.join(imagepath,'Meteo_1.png')
-        pylab.savefig(savepath)
+        if not debug:
+            savepath = os.path.join(imagepath,'Meteo_1.png')
+            plt.savefig(savepath)
+            plt.close(fig)
+        #else:
+        #    plt.show()
         statusmsg[name4] = 'long term plot finished'
         success=True
     except:
@@ -1201,6 +1236,7 @@ def main(argv):
     print ("4. Weather analysis")
     weatherstream, success, statusmsg = WeatherAnalysis(db, config=config,statusmsg=statusmsg, endtime=endtime, debug=debug)
 
+    weatherstream = FloatArray(weatherstream) # convert object to float for fill_between plots
     print ("5. Create current data table")
     statusmsg = CreateWeatherTable(weatherstream, config=config, statusmsg=statusmsg, debug=debug)
 
@@ -1217,6 +1253,7 @@ def main(argv):
     else:
         print ("Debug selected - statusmsg looks like:")
         print (statusmsg)
+    sys.exit(0)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
