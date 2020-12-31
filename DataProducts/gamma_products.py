@@ -110,6 +110,7 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
     result = DataStream()
     rcsg0path = config.get('rcsg0rawdata')
     name = "{}-servicetables".format(config.get('logname'))
+    connectdict = config.get('conncetedDB')
 
     try:
         if debug:
@@ -124,23 +125,20 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
         print (meteo._get_key_headers())
         if meteo.length()[0] > 0:
             print (meteo.length())
-            meteo._drop_column('y')
+            meteo._move_column('y','var3')
+            meteo._drop_column('y') #rain - keep
             meteo._drop_column('t1')
             meteo._drop_column('var4')
-            meteo._move_column('f','t2')
+            meteo._move_column('f','t2')  #temp - keep -> add unit and description
             meteo._drop_column('f')
             #meteo._move_column('f','var2')
             #meteo._drop_column('f')
             #meteo._move_column('x','var3')
             #meteo._drop_column('x')
-            print (meteo.length())
-            print (meteo.header)
-            #meteo.header['col-t2'] = 'T'
-            #meteo.header['unit-col-t2'] = 'deg C'
-            #meteo.header['col-var2'] = 'P'
-            #meteo.header['unit-col-var2'] = 'hPa'
-            #meteo.header['col-var3'] = 'snowheight'
-            #meteo.header['unit-col-var3'] = 'cm'
+            meteo.header['col-t2'] = 'T'
+            meteo.header['unit-col-t2'] = 'deg C'
+            meteo.header['col-var3'] = 'rain'
+            meteo.header['unit-col-var3'] = 'mm/h'
     except:
         pass
 
@@ -159,7 +157,7 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
 
     # 4. export to DB as GAMMASGO_adjusted_0001_0001 in minute resolution
     if not debug:
-        if result.lenght()[0] > 0:
+        if result.length()[0] > 0:
             if len(connectdict) > 0:
                 for dbel in connectdict:
                     dbw = connectdict[dbel]

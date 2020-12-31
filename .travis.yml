@@ -45,4 +45,7 @@ install:
 script:
   - python DataProducts/flagging.py -c ../conf/wic.cfg -D
   - python DataProducts/getprimary.py -c ../conf/wic.cfg -D
+  - python DataProducts/weather_products.py -c ../conf/wic.cfg -D
+  - python DataProducts/gamma_products.py -c ../conf/wic.cfg -D
+  - python DataProducts/magnetism_products.py -c ../conf/wic.cfg -D
 
