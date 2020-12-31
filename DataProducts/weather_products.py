@@ -160,8 +160,8 @@ def transformUltra(db, datastream, debug=False):
         start, end = datastream._find_t_limits()
         flaglist = db2flaglist(db, datastream.header.get("SensorID"),begin=start,end=end)
         print ("      -> found existing flags: {}".format(len(flaglist)))
-        data = data.flag(flaglist)
-        data = data.remove_flagged()
+        datastream = datastream.flag(flaglist)
+        datastream = datastream.remove_flagged()
 
         print ("    -- resampling and reordering ...")
         datastream = datastream.resample(datastream._get_key_headers(),period=60,startperiod=60)
@@ -470,7 +470,7 @@ def transformMETEO(db, datastream, debug=False):
     return datastream
 
 
-def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, debug=False):
+def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, config={}, debug=False):
     """
     DESCRIPTION:
         compare rain measurements between LNM and Meteo bucket
@@ -497,6 +497,8 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, debug=Fals
     res = np.asarray([el for el in meteodata._get_column('y') if not np.isnan(el)])
     res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)])  # limit to the usually shorter rcst7 timeseries
     print ("      -> cumulative rain t7={} and lnm={}".format(np.sum(res), np.sum(res2)))
+    if not len(res) > 0:
+        config['rainsource'] = 'laser' 
     if len(res) > 1440*int(dayrange*0.5) and not np.mean(res) == 0:
         istwert = np.abs((np.mean(res) - np.mean(res2))/np.mean(res))
         sollwert = 0.3
@@ -517,7 +519,7 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, debug=Fals
     print ("      -> Done")
     print (" -----------------------")
 
-    return istwert
+    return istwert, config
 
 
 def CombineStreams(streamlist, debug=False):
@@ -531,7 +533,7 @@ def CombineStreams(streamlist, debug=False):
         print ("   -> dealing with {}".format(st.header.get("SensorID"))) 
         if debug:
             print ("    coverage before:", st._find_t_limits())
-            mp.plot(st)
+            #mp.plot(st)
         if not result.length()[0] > 0:
             result = st
         else:
@@ -584,7 +586,7 @@ def FloatArray(datastream):
         for el in ar:
             try:
                 n.append(float(el))
-            else: 
+            except: 
                 n.append(np.nan)
         newar = np.asarray(n).astype(float)
         newnd.append(newar)
@@ -700,6 +702,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     diff = 0.0
     succ = False
     trans = ''
+    flaglistbm35 = []
+    flaglistrcs = []
 
     source='database'
     if starttime < datetime.utcnow()-timedelta(days=30):
@@ -764,7 +768,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
     print (" E. Reading METEO data (realtime RCS T7 data)")
     try:
-        meteo = readTable(db, sourcetable="METEO%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
+        meteo = readTable(db, sourcetable="METEO_T%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
         meteo = transformMETEO(db, meteo, debug=debug)
         if meteo.length()[0] > 0:
             statusmsg[name1e] = 'METEO data finished - data available'
@@ -786,7 +790,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
 
     print (" F. Check Rain measurements")
     try:
-        diff = CheckRainMeasurements(lnm, meteo, dayrange=dayrange ,debug=debug)
+        diff, config = CheckRainMeasurements(lnm, meteo, dayrange=dayrange, config=config, debug=debug)
         statusmsg[name1f] = 'Rain analysis finished'
     except:
         statusmsg[name1f] = 'Rain analysis failed'
@@ -815,11 +819,12 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         connectdict = config.get('conncetedDB')
         for dbel in connectdict:
             dbw = connectdict.get(dbel)
-            print ("    -- writing flags for sensors {} to DB".format(datastream.header.get('SensorID')))
+            print ("    -- writing flags for BM35 and RCS to DB {}".format(dbel))
             if len(flaglistbm35) > 0:
-                print ("    -- new flags:", len(flaglistbm35))
+                print ("    -- new bm35 flags:", len(flaglistbm35))
                 flaglist2db(dbw,flaglistbm35)
             if len(flaglistrcs) > 0:
+                print ("    -- new RCS flags:", len(flaglistrcs))
                 flaglist2db(dbw,flaglistrcs)
         succ = ExportData(result, config=config)
     else:
@@ -1253,7 +1258,6 @@ def main(argv):
     else:
         print ("Debug selected - statusmsg looks like:")
         print (statusmsg)
-    sys.exit(0)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
