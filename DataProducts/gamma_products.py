@@ -112,19 +112,29 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
     name = "{}-servicetables".format(config.get('logname'))
     connectdict = config.get('conncetedDB')
 
+    statusmsg[name] = 'gamma webservice table successfully created'
+
     try:
         if debug:
-             print ("-----------------------------------")
-             print ("Creating WebService database table")
-        print ("  Reading SCA Gamma data...")
+             print (" -----------------------------------")
+             print (" Creating WebService database table")
+        print ("     -> Reading SCA Gamma data...")
         gammasca = read(os.path.join(rawdatapath,'COBSEXP_2_*'), starttime=start, endtime=end)
-        print (gammasca._get_key_headers())
+        if debug:
+             print (gammasca._get_key_headers())
+        print ("     -> Done")
+    except:
+        statusmsg[name] = 'gamma table failed - critical'
+        gammasca = DataStream()
 
-        print ("  Reading meteo data ...")
+    try:
+        print ("     -> Reading meteo data ...")
         meteo = read(os.path.join(meteopath,'meteo-1min_*'), starttime=start, endtime=end)
-        print (meteo._get_key_headers())
+        if debug:
+            print (meteo._get_key_headers())
         if meteo.length()[0] > 0:
-            print (meteo.length())
+            if debug:
+                print (meteo.length())
             meteo._move_column('y','var3')
             meteo._drop_column('y') #rain - keep
             meteo._drop_column('t1')
@@ -139,8 +149,13 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
             meteo.header['unit-col-t2'] = 'deg C'
             meteo.header['col-var3'] = 'rain'
             meteo.header['unit-col-var3'] = 'mm/h'
+            print ("     -> Done")
+        else:
+            statusmsg[name] = 'no meteo data'
+            print ("     -> Done - no data")
     except:
-        pass
+        statusmsg[name] = 'meteo table failed'
+        meteo = DataStream()
 
     # 2. join with other data from meteo
     if gammasca.length()[0] > 0 and meteo.length()[0] > 0:
@@ -153,7 +168,8 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
     result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
     result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
     result.header['SensorGroup'] = 'services'
-    print ("Results", result.length())
+    if debug:
+        print ("    Results", result.length())
 
     # 4. export to DB as GAMMASGO_adjusted_0001_0001 in minute resolution
     if not debug:

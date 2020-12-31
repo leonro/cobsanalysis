@@ -568,7 +568,7 @@ def CombineStreams(streamlist, debug=False):
     result.header['unit-col-t2'] = 'm'
 
     if debug:
-        mp.plot(result)
+        #mp.plot(result)
         print (result.ndarray)
         print (result.length()[0])
     return result
@@ -813,7 +813,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
         statusmsg[name1h] = 'synop and rain source failed'
 
     if debug:
-        mp.plot(result)
+        #mp.plot(result)
+        pass
 
     if not debug:
         connectdict = config.get('conncetedDB')
