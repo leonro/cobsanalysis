@@ -191,7 +191,10 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
 
 
 def main(argv):
-    version = __version__
+    try:
+        version = __version__
+    except:
+        version = "1.0.0"
     configpath = ''
     statusmsg = {}
     joblist = ['default','service']
