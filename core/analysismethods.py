@@ -409,3 +409,59 @@ def DoBaselineCorrection(db, variostream, config={}, baselinemethod='simple', en
     return variostream, msg
 
 
+def Quakes2Flags(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=None, keylist=[], distancedict={"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] }, debug=False):
+    """
+    DESCRIPTION
+        Creates a flaglist from earthquakes using a distance/strength selector.
+    PARAMETER
+        sensorid : provide the sensorid to be used in the flagging output 
+        keys     : provide the keys to be used in the flagging output 
+        distancedict : extract all earthquakes below magitude and above secondmag at distances below x km
+        e.g.   {"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] }
+
+    """
+
+    flaglist = []
+
+    print ("  - extracting quakes and construct flaglist")
+    db = config.get('primaryDB')
+
+    if debug:
+        print ("  - reading QUAKES table from database for selected time range between {} and {}".format(endtime-timedelta(days=timerange),endtime))
+    stream = readDB(db,'QUAKES',starttime=endtime-timedelta(days=timerange), endtime=endtime)
+    if debug:
+        print ("    -> found {} records".format(stream.length()[0]))
+
+    #distancedict = {"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] } #, "near" : [3,1,50] 
+
+    def ExtractValues(stream, distancelist, debug=False):
+        if debug:
+            print ("    -> extract all earthquakes below {} and above {} at distances below {} km".format(distancelist[0],distancelist[1],distancelist[2]))
+        ext = stream.extract('var5',distancelist[2],'<')
+        ext = ext.extract('f',distancelist[0],'<')
+        ext = ext.extract('f',distancelist[1],'>=')
+        return ext
+
+    st = DataStream()
+    if stream.length()[0] > 0:
+        for selector in distancedict:
+            if debug:
+                print ("  - extracting {} quakes".format(selector))
+            ext = ExtractValues(stream, distancedict[selector], debug=debug)
+            if debug:
+                print ("    -> found {} quakes meeting this criteria".format(ext.length()[0]))
+            if ext.length()[0] > 0:
+                st = appendStreams([st,ext])
+            if debug:
+                print ("    -> new selection length is {}".format(st.length()[0]))
+
+    if st.length()[0] > 0:
+        if debug:
+            print ("  - creating flaglist from the quakelist")
+        flaglist = st.stream2flaglist(comment='f,str3',sensorid=sensorid, userange=False, keystoflag=keylist)
+        print ("  - new flaglist with {} inputs created  - finished".format(len(flaglist)))
+        return flaglist
+    else:
+        print ("  - no quakes found - finished")
+        return flaglist
+

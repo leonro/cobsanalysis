@@ -49,6 +49,7 @@ sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, ConnectDatabases, getstringdate
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+from version import __version__
 
 # IMPORT analysismethods
 
@@ -1164,7 +1165,7 @@ def LongTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow(),
 
 
 def main(argv):
-    version = '1.0.0'
+    version = __version__
     configpath = ''
     statusmsg = {}
     debug=False
@@ -1174,7 +1175,7 @@ def main(argv):
     dayrange = 0
 
     try:
-        opts, args = getopt.getopt(argv,"hc:e:D:P",["config=","endtime=","debug=","plot=",])
+        opts, args = getopt.getopt(argv,"hc:e:r:DP",["config=","endtime=","dayrange=","debug=","plot=",])
     except getopt.GetoptError:
         print ('weather_products.py -c <config>')
         sys.exit(2)
