@@ -48,6 +48,7 @@ sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, ConnectDatabases
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+from version import __version__
 
 
 def CreateOldsProductsTables(config={}, statusmsg={}, start=datetime.utcnow()-timedelta(days=7), end=datetime.utcnow(), debug=False):
@@ -190,7 +191,7 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
 
 
 def main(argv):
-    version = '1.0.0'
+    version = __version__
     configpath = ''
     statusmsg = {}
     joblist = ['default','service']
@@ -199,7 +200,7 @@ def main(argv):
     testplot=False
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:e:D:P",["config=","joblist=","endtime=","debug=","plot=",])
+        opts, args = getopt.getopt(argv,"hc:j:e:DP",["config=","joblist=","endtime=","debug=","plot=",])
     except getopt.GetoptError:
         print ('gamma_products.py -c <config>')
         sys.exit(2)
@@ -240,7 +241,7 @@ def main(argv):
             testplot = True
 
     if debug:
-        print ("Running magnetism_checkadj - debug mode")
+        print ("Running gamma_products version {} - debug mode".format(version))
         print ("---------------------------------------")
 
     if not os.path.exists(configpath):
