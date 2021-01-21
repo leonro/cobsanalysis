@@ -1165,7 +1165,10 @@ def LongTermPlot(datastream, config={}, statusmsg={}, endtime=datetime.utcnow(),
 
 
 def main(argv):
-    version = __version__
+    try:
+        version = __version__
+    except:
+        version = "1.0.0"
     configpath = ''
     statusmsg = {}
     debug=False
