@@ -21,7 +21,7 @@ def DefineLogger(config={}, category="DataProducts", job='anaylsismethods', newn
         if debug:
             print ("    - Saving logs to {}".format(logpath))
     # add name to config dict
-    config['logname'] = name
+    config['logname'] = name.replace('_','')
 
     return config
 

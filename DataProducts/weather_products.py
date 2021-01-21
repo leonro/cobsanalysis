@@ -706,7 +706,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     flaglistrcs = []
 
     source='database'
-    if starttime < datetime.utcnow()-timedelta(days=30):
+    if starttime < datetime.utcnow()-timedelta(days=20):
         print ("     -- Eventually not enough data in database for full coverage")
         print ("       -> Accessing archive files instead")
         source='archive'
@@ -812,9 +812,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     except:
         statusmsg[name1h] = 'synop and rain source failed'
 
-    if debug:
-        #mp.plot(result)
-        pass
+    if debug and config.get('testplot',False):
+        mp.plot(result)
 
     if not debug:
         connectdict = config.get('conncetedDB')
@@ -1171,30 +1170,34 @@ def main(argv):
     debug=False
     endtime = None
     weatherstream = DataStream()
+    testplot = False
+    dayrange = 0
 
     try:
-        opts, args = getopt.getopt(argv,"hc:e:D",["config=","endtime=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:e:D:P",["config=","endtime=","debug=","plot=",])
     except getopt.GetoptError:
-        print ('current_weather.py -c <config>')
+        print ('weather_products.py -c <config>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print ('-------------------------------------')
             print ('Description:')
-            print ('-- current_weather.py will determine the primary instruments --')
+            print ('-- weather_products.py will determine the primary instruments --')
             print ('-----------------------------------------------------------------')
             print ('detailed description ..')
             print ('...')
             print ('...')
             print ('-------------------------------------')
             print ('Usage:')
-            print ('python current_weather.py -c <config>')
+            print ('python weather_products.py -c <config>')
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
+            print ('-e            : endtime - default is now')
+            print ('-r            : range of days')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python current_weather.py -c /etc/marcos/analysis.cfg')
+            print ('python weather_products.py -c /etc/marcos/analysis.cfg')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -1202,9 +1205,19 @@ def main(argv):
         elif opt in ("-e", "--endtime"):
             # get an endtime
             endtime = arg
+        elif opt in ("-r", "--range"):
+            # get a range of days : default from cfg
+            try:
+                dayrange = int(arg)
+            except:
+                print ("  range needs to be an integer")
+                dayrange = 0
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
+        elif opt in ("-P", "--plot"):
+            # delete any / at the end of the string
+            testplot = True
 
     print ("Running current_weather version {}".format(version))
     print ("--------------------------------")
@@ -1228,6 +1241,10 @@ def main(argv):
 
     print ("2. Activate logging scheme as selected in config")
     config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-weather.log', debug=debug)
+    config['testplot'] = testplot
+    if dayrange and dayrange > 0:
+        config['meteorange'] = int(dayrange)
+    
     name1 = "{}-flag".format(config.get('logname'))
     statusmsg[name1] = 'weather analysis successful'
 
