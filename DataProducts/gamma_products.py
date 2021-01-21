@@ -120,6 +120,9 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
              print (" Creating WebService database table")
         print ("     -> Reading SCA Gamma data...")
         gammasca = read(os.path.join(rawdatapath,'COBSEXP_2_*'), starttime=start, endtime=end)
+        if gammasca.length()[0] > 0:
+            gammasca.header['col-t1'] = 'T (tunnel)'
+            gammasca.header['unit-col-t1'] = 'deg C'
         if debug:
              print (gammasca._get_key_headers())
         print ("     -> Done")
@@ -136,16 +139,13 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
             if debug:
                 print (meteo.length())
             meteo._move_column('y','var3')
-            meteo._drop_column('y') #rain - keep
+            meteo._drop_column('y')        #rain - keep
             meteo._drop_column('t1')
             meteo._drop_column('var4')
-            meteo._move_column('f','t2')  #temp - keep -> add unit and description
+            meteo._move_column('f','t2')   #temp - keep -> add unit and description
             meteo._drop_column('f')
-            #meteo._move_column('f','var2')
-            #meteo._drop_column('f')
-            #meteo._move_column('x','var3')
-            #meteo._drop_column('x')
-            meteo.header['col-t2'] = 'T'
+            meteo._drop_column('var2')     # wind direction - remove
+            meteo.header['col-t2'] = 'T (outside)'
             meteo.header['unit-col-t2'] = 'deg C'
             meteo.header['col-var3'] = 'rain'
             meteo.header['unit-col-var3'] = 'mm/h'
@@ -165,11 +165,14 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
     else:
         result = DataStream()
     # 3. add new meta information
+    result.header['StationID'] = 'SGO'
     result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
     result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
     result.header['SensorGroup'] = 'services'
     if debug:
         print ("    Results", result.length())
+    if debug and config.get('testplot',False):
+        mp.plot(result)
 
     # 4. export to DB as GAMMASGO_adjusted_0001_0001 in minute resolution
     if not debug:
@@ -193,9 +196,10 @@ def main(argv):
     joblist = ['default','service']
     debug=False
     endtime = None
+    testplot=False
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:e:D",["config=","joblist=","endtime=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:j:e:D:P",["config=","joblist=","endtime=","debug=","plot=",])
     except getopt.GetoptError:
         print ('gamma_products.py -c <config>')
         sys.exit(2)
@@ -231,6 +235,9 @@ def main(argv):
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
+        elif opt in ("-P", "--plot"):
+            # delete any / at the end of the string
+            testplot = True
 
     if debug:
         print ("Running magnetism_checkadj - debug mode")
@@ -256,6 +263,7 @@ def main(argv):
 
     print ("2. Activate logging scheme as selected in config")
     config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-scaradon.log', debug=debug)
+    config['testplot'] = testplot
 
     starttime = datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
     if 'default' in joblist:

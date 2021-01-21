@@ -713,7 +713,7 @@ def main(argv):
     endtime = None
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:D",["config=","joblist=","endtime=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:j:e:D",["config=","joblist=","endtime=","debug=",])
     except getopt.GetoptError:
         print ('magnetism_products.py -c <config>')
         sys.exit(2)
@@ -877,86 +877,5 @@ loggingdirectory       :   /var/log/magpy
 notification         :   telegram
 # Configuration for notification type, e.g. /home/cobs/SCRIPTS/telegram_notify.conf
 notificationconfig   :   /myconfpath/mynotificationtype.cfg
-"""
-
-"""
-# ################################################
-#             Part 2
-# ################################################
-if part2:
-    #""
-    #Publish adjusted data
-    #- requires an uploadlist for the specific time range
-    #""
-    print ("----------------------------------------------------------------")
-    print ("Part 2: Publish adjusted data")
-    print ("----------------------------------------------------------------")
-    name2 = "{}-step2".format(name)
-    print ("  uploading one second data to ZAMG Server and eventually to GIN")
-    try:
-        for da in uploadlist:
-            #ok = True
-            #if ok:
-            print ("Uploading data for {}".format(da))
-            print ("  -- THREAD for IAGA data to FTP: {}".format(da))
-            if 'submitZAMGFTPasIAGA' in submitlist:
-                # Send second data in background mode
-                Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathsec,'wic'+da+'psec.sec'),'ftppath':'/data/magnetism/wic/variation/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/psec-transfer.log'}).start()
-            if 'submitZAMGFTPasIAGA' in submitlist:
-                # Send minute data in background mode
-                Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathmin,'wic'+da+'pmin.min'),'ftppath':'/data/magnetism/wic/variation/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/pmin-transfer.log'}).start()
-            if 'submitAPPasIAGA' in submitlist and submit2app:
-                # Send second data in background mode
-                print ("Uploading data to art project") 
-                Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(vpathsec,'wic'+da+'psec.sec'),'ftppath':'/all-obs/','myproxy':artaddress,'port':artport,'login':artuser,'passwd':artpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/psec2app-transfer.log'}).start()
-            if 'submitGINasIAGA' in submitlist and submit2gin:
-                print ("Submitting to gin if no other curl job detected: active_pid = ", active_pid('curl'))
-                print ("#################################")
-                if not active_pid('curl'):
-                    print ("  -- Uploading second data to GIN - active now")
-                    uploadsec = ginupload(os.path.join(vpathsec,'wic'+da+'psec.sec'), ginuser, ginpasswd, ginaddress,stdout=True)
-                    print (uploadsec)
-                    print ("  -- Uploading minute data to GIN: {}".format(da))
-                    uploadmin = ginupload(os.path.join(vpathmin,'wic'+da+'pmin.min'), ginuser, ginpasswd, ginaddress,faillog=True,stdout=True)
-                    print (uploadmin)
-                else:
-                    print (" !!!!!!!!!!!!! curl still active sending data in next round")
-        statusmsg[name2] = 'upload successful'
-    except:
-        print (" !!!!!!!!!!!!!!! data upload failed")
-        statusmsg[name2] = 'upload failed'
-if part4 and part3 and runqd:
-    #""
-    #Upload QD data diagrams
-    #""
-    print ("----------------------------------------------------------------")
-    print ("Part 4: upload quasi definitive data")
-    print ("----------------------------------------------------------------")
-    name4 = "{}-step4".format(name)
-    try:
-        #ok = True
-        #if ok:
-        # Upload QD data to WDC
-        print ("Uploading QD data for {}".format(qdlist))
-        for da in qdlist:
-            # Send in background mode
-            print ("Uploading QD data for {}".format(da))
-            print ("  -- THREAD for IAGA qsec data to FTP: {}".format(da))
-            Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(qpathsec,'wic'+da+'qsec.sec'),'ftppath':'/data/magnetism/wic/quasidefinitive/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/qsec-transfer.log'}).start()
-            print ("  -- THREAD for IAGA qmin data to FTP: {}".format(da))
-            Thread(target=ftpdatatransfer, kwargs={'localfile':os.path.join(qpathmin,'wic'+da+'qmin.min'),'ftppath':'/data/magnetism/wic/quasidefinitive/','myproxy':zamgaddress,'port':zamgport,'login':zamguser,'passwd':zamgpasswd,'logfile':'/home/cobs/ANALYSIS/Logs/qmin-transfer.log'}).start()
-            if submit2gin:
-                if not active_pid('curl'):
-                    print ("  -- Uploading second data to GIN - active now")
-                    uploadsec = ginupload(os.path.join(qpathsec,'wic'+da+'qsec.sec'), ginuser, ginpasswd, ginaddress,stdout=False)
-                    print ("  -> Answer: {}".format(uploadsec))
-                print ("  -- Uploading minute data to GIN: {}".format(da))
-                uploadmin = ginupload(os.path.join(qpathmin,'wic'+da+'qmin.min'), ginuser, ginpasswd, ginaddress,stdout=False)
-                #Thread(target=ginupload, kwargs={'localfile':os.path.join(qpathmin,'wic'+da+'qmin.min'),'user':ginuser, 'passwd': ginpasswd, 'address': ginaddress, 'stdout':False}).start()
-                print ("  -> Answer: {}".format(uploadmin))
-        statusmsg[name4] = 'upload of QD successful: {}'.fromat(uploadmin)
-    except:
-        print (" !!!!!!!!!!!!!!! QD data upload failed")
-        statusmsg[name4] = 'upload of QD failed'
 """
 
