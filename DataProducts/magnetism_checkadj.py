@@ -130,7 +130,7 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
         print ("   -> {}".format(variochecklist))
 
     try: # getting means
-       if len(streamlist) > 0:
+        if len(streamlist) > 0:
             # Get the means
             meanstream = stackStreams(streamlist,get='mean',uncert='True')
             mediandx = meanstream.mean('dx',meanfunction='median')
