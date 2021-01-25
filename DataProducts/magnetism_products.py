@@ -183,13 +183,16 @@ def ExportData(datastream, config={}, publevel=2):
     elif int(publevel)==3:
         pubtype = 'quasidefinitive'
         pubshort = 'q'
+        vpathsec = os.path.join(config.get('quasidefinitivepath'),'sec')
+        vpathmin = os.path.join(config.get('quasidefinitivepath'),'min')
+        vpathcdf = os.path.join(config.get('quasidefinitivepath'),'cdf')
     else:
         pubtype = 'variation'
         pubshort = 'v'
 
-    print ("  -> Exporting data ")
+    print ("  -> Exporting {} data ".format(pubtype))
     if 'IAGA' in explist:
-        print ("     -- Saving one second data - IAGA")
+        print ("     -- Saving one second data - IAGA - to {}".format(vpathsec))
         datastream.write(vpathsec,filenamebegins="wic",dateformat="%Y%m%d",filenameends="{}sec.sec".format(pubshort),format_type='IAGA')
         # supported keys of IMAGCDF -> to IMF format
         #supkeys = ['time','x','y','z','f','df']
@@ -458,7 +461,7 @@ def GetQDTimeslot(config={}, debug=False):
     ldate = datetime(qdstart.year, qdstart.month, qdstart.day,qdstarthour)  # 2
     udate = datetime(qdstart.year, qdstart.month, qdstart.day,qdendhour)  # 3
 
-    if ldate<p4start<udate and weekday in [qdweekday,str(qdweekday)]:  # 5
+    if ldate<qdstart<udate and weekday in [qdweekday,str(qdweekday)]:  # 5
         print ("  - Running Quasidefinitve data determinations - checking for new flags")
         runqd = True
     else:
@@ -468,7 +471,7 @@ def GetQDTimeslot(config={}, debug=False):
     return runqd
 
 
-def GetQDFlagcondition(lastQDdate='', debug=False):
+def GetQDFlagcondition(db, lastQDdate='', variosens='', scalarsens='', debug=False):
     """
     DESCRIPTION
         Check whether flags have been updated recently to justify QD analysis
@@ -477,6 +480,9 @@ def GetQDFlagcondition(lastQDdate='', debug=False):
     """
     newQDenddate = ''
     flaglist = []
+    if not variosens or not scalasens:
+        return False, lastQDdate
+
     runqd = True
 
     print ("  -> Checking actuality of flags")
@@ -494,12 +500,19 @@ def GetQDFlagcondition(lastQDdate='', debug=False):
     if len(flaglist) > 0:
         print ("     -- found flags: {}".format(len(flaglist)))
         # checking last input date (modifications dates)
-        moddates = [el[-1] for el in flaglist if el[3] in [0,2,3,'2','3']]
-        print ("     -- last flag modification with ID 2 or 3 at {}".format(max(moddates)))
-        newQDenddate = datetime.strftime(max(moddates)-timedelta(days=7),"%Y-%m-%d")
-        # now get the last flag date and define lastflagdate -7 days as the new QD enddate
-        print ("     -- found new flags -> assuming QD conditions for the week before") 
+        moddates = [el[-1] for el in flaglist if el[3] in [0,2,3,'0','2','3']]
+        if len(moddate) > 0:
+            print ("     -- last flag modification with IDs 0, 2 or 3 at {}".format(max(moddates)))
+            newQDenddate = datetime.strftime(max(moddates)-timedelta(days=7),"%Y-%m-%d")
+            # now get the last flag date and define lastflagdate -7 days as the new QD enddate
+            print ("     -- found new {} flags set by an observer -> assuming QD conditions for the week before".format(len(moddates))
+        else:
+            print ("     -- did not find any new flags with IDs 0, 2 or 3")
+            newQDenddate = lastQDdate
+            runqd = False
     else:
+        print ("     -- did not find any new flags")
+        newQDenddate = lastQDdate
         runqd = False
 
     return runqd, newQDenddate
@@ -549,6 +562,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
     scalarsens = config.get('primaryScalar')
     varioinst = config.get('primaryVarioInst')
     scalarinst = config.get('primaryScalarInst')
+    db = config.get('primaryDB',None)
 
     rotangle = 0.0
     runqd = False
@@ -574,12 +588,13 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
     try:
         runqd = GetQDTimeslot(config=config, debug=debug)
         if runqd:
-            runqd, newQDenddate = GetQDFlagcondition(lastQDdate=lastQDdate, debug=debug)
+            runqd, newQDenddate = GetQDFlagcondition(db, lastQDdate=lastQDdate, variosens=variosens, scalasens=scalarsens, debug=debug)
         if runqd:
             runqd = GetQDDonealready(lastQDdate=lastQDdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
     except:
         statusmsg[name3a] = "suitability-test for quasidefinitive failed"
 
+    name3b = "{}-QDanalysis-performance".format(config.get('logname','Dummy'))
     if runqd:
         print ("  Running QD analysis")
         print ("  ----------------------")
@@ -596,17 +611,20 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             print ("     -- Start: {}".format(qdstarttime))
             print ("     -- End:   {}".format(qdendtime))
 
-            print ("  -> Updating current value file with new QD enddate")
-            # QDenddate should be updated already now with newQDenddate in current.data file to prevent restart of job in next schedule, if running the analysis is not yet finished
-            if os.path.isfile(currentvaluepath):
-                with open(currentvaluepath, 'r') as file:
-                    fulldict = json.load(file)
-                    valdict = fulldict.get('magnetism')
-                    valdict['QD enddate'] = [newQDenddate,'']
-                    fulldict[u'magnetism'] = valdict
-                with open(currentvaluepath, 'w',encoding="utf-8") as file:
-                    file.write(unicode(json.dumps(fulldict))) # use `json.loads` to $
-                    print ("     -- QDenddate has been updated from {} to {}".format(QDenddate,newQDenddate))
+            if not debug:
+                print ("  -> Updating current value file with new QD enddate")
+                # QDenddate should be updated already now with newQDenddate in current.data file to prevent restart of job in next schedule, if running the analysis is not yet finished
+                if os.path.isfile(currentvaluepath):
+                    with open(currentvaluepath, 'r') as file:
+                        fulldict = json.load(file)
+                        valdict = fulldict.get('magnetism')
+                        valdict['QD enddate'] = [newQDenddate,'']
+                        fulldict[u'magnetism'] = valdict
+                    with open(currentvaluepath, 'w',encoding="utf-8") as file:
+                        file.write(unicode(json.dumps(fulldict))) # use `json.loads` to $
+                        print ("     -- QDenddate has been updated from {} to {}".format(QDenddate,newQDenddate))
+            else:
+                print ("  -> Debug selected: Updating current value file with new QD enddate skipped...")
 
             # Running analysis
             # ##############################################
@@ -641,14 +659,14 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             print ("  -> Reading raw scalar data and applying corrections")
             name3e = "{}-QDscalar".format(config.get('logname','Dummy'))
             if not archive:
-                scalar = readDB(db,scalainst,starttime=qdstarttime,endtime=qdendtime)
+                scalar = readDB(db,scalarinst,starttime=qdstarttime,endtime=qdendtime)
             else:
                 print ("     -- getting scalar file archive")
-                scalar = read(os.path.join(archivepath,scalasens,scalainst,'*'),starttime=qdstarttime,endtime=qdendtime)
+                scalar = read(os.path.join(archivepath,scalarsens,scalarinst,'*'),starttime=qdstarttime,endtime=qdendtime)
                 # Get meta info
-                scalar.header = dbfields2dict(db,scalainst)
+                scalar.header = dbfields2dict(db,scalarinst)
             if (scalar.length()[0]) > 0:
-                scalar = DoScalarCorrections(db, scalar, scalarsens=config.get('primaryScalar'), starttimedt=qdstarttime)
+                scalar = DoScalarCorrections(db, scalar, scalarsens=scalarsens, starttimedt=qdstarttime)
                 statusmsg[name3e] = 'scalar data loaded'
             else:
                 print ("  -> Did not find scalar data - aborting")
@@ -681,16 +699,20 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             else:
                 print ("Debug selected: export disabled")
 
-            print ("  -> Updating current data")
-            if os.path.isfile(currentvaluepath):
-                with open(currentvaluepath, 'r') as file:
-                    fulldict = json.load(file)
-                    valdict = fulldict.get('magnetism')
-                    valdict['QD analysis date'] = [date,'']
-                    fulldict[u'magnetism'] = valdict
-                with open(currentvaluepath, 'w',encoding="utf-8") as file:
-                    file.write(unicode(json.dumps(fulldict)))
-                    print ("    -- last QD analysis date has been updated from {} to {}".format(lastQDdate,date))
+            if not debug:
+                print ("  -> Updating current data")
+                if os.path.isfile(currentvaluepath):
+                    with open(currentvaluepath, 'r') as file:
+                        fulldict = json.load(file)
+                        valdict = fulldict.get('magnetism')
+                        valdict['QD analysis date'] = [date,'']
+                        fulldict[u'magnetism'] = valdict
+                    with open(currentvaluepath, 'w',encoding="utf-8") as file:
+                        file.write(unicode(json.dumps(fulldict)))
+                        print ("    -- last QD analysis date has been updated from {} to {}".format(lastQDdate,date))
+            else:
+                print ("Debug selected: current data remains unchanged")
+
             nameqd = "{}-quasidefinitive".format(config.get('logname','Dummy'))
             statusmsg[name3b] = "QD data between {} and {} calculated and published (parameter: rotangle={})".format(qdstarttime, qdendtime, rotangle)
         except:
