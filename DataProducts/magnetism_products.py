@@ -471,7 +471,7 @@ def GetQDTimeslot(config={}, debug=False):
     return runqd
 
 
-def GetQDFlagcondition(db, lastQDdate='', variosens='', scalarsens='', debug=False):
+def GetQDFlagcondition(db, lastQDdate='', variosens='', scalasens='', debug=False):
     """
     DESCRIPTION
         Check whether flags have been updated recently to justify QD analysis
@@ -501,11 +501,11 @@ def GetQDFlagcondition(db, lastQDdate='', variosens='', scalarsens='', debug=Fal
         print ("     -- found flags: {}".format(len(flaglist)))
         # checking last input date (modifications dates)
         moddates = [el[-1] for el in flaglist if el[3] in [0,2,3,'0','2','3']]
-        if len(moddate) > 0:
+        if len(moddates) > 0:
             print ("     -- last flag modification with IDs 0, 2 or 3 at {}".format(max(moddates)))
             newQDenddate = datetime.strftime(max(moddates)-timedelta(days=7),"%Y-%m-%d")
             # now get the last flag date and define lastflagdate -7 days as the new QD enddate
-            print ("     -- found new {} flags set by an observer -> assuming QD conditions for the week before".format(len(moddates))
+            print ("     -- found new {} flags set by an observer -> assuming QD conditions for the week before".format(len(moddates)))
         else:
             print ("     -- did not find any new flags with IDs 0, 2 or 3")
             newQDenddate = lastQDdate
