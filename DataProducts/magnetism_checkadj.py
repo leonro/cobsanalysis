@@ -88,6 +88,7 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
     db = config.get('primaryDB',None)
     primpier = config.get('primarypier')
     daystodeal = config.get('daystodeal')
+    currentvaluepath = config.get('currentvaluepath')
     streamlist = []
     variochecklist = []
 
@@ -101,10 +102,9 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
                 variomin = vario.filter()
                 print ("    -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
                 streamlist.append(variomin)
-                variochecklist= variochecklist.append(varioinst)
+                variochecklist.append(varioinst)
                 if variosens == config.get('primaryVario'):
                     # Calculate dif
-                    print ("HERE")
                     (dec,inc,f) = GetDirections(variomin)
                     print ("    -> Obtained Declination={}, Inclination={} and F={}".format(dec,inc,f))
                     if not debug:
@@ -119,7 +119,7 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
                                 fulldict[u'magnetism'] = valdict
                             with open(currentvaluepath, 'w',encoding="utf-8") as file:
                                 file.write(unicode(json.dumps(fulldict)))
-                                print ("Magnetic directions have been updated to {}".format(lastQDdate,date))
+                                print ("Magnetic directions have been updated")
             else:
                 print ("    -> No data for {}".format(varioinst))
     except:
@@ -136,7 +136,7 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             mediandx = meanstream.mean('dx',meanfunction='median')
             mediandy = meanstream.mean('dy',meanfunction='median')
             mediandz = meanstream.mean('dz',meanfunction='median')
-            print ("Medians", mediandx,mediandy,mediandz)
+            print ("Median differences between variometers (in x,y,z):", mediandx,mediandy,mediandz)
             maxmedian = max([mediandx,mediandy,mediandz])
             if maxmedian > 0.2:
                 msg = "variometer check - significant differences between instruments exceeding 0.2 nT - please check"
@@ -197,9 +197,8 @@ def CompareFieldStrength(config={}, endtime=datetime.utcnow(), debug=False):
     except:
         msg = "scalar check - general error"
 
-    if debug:
-        print ("   -> The total median difference between all sensors is:")
-        print ("   -> {}".format(mediandf))
+    print ("   -> The total median difference between all sensors is:")
+    print ("   -> {}".format(mediandf))
 
     return msg
 
