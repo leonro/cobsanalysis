@@ -50,6 +50,7 @@ sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+from version import __version__
 
 def active_pid(name):
      # Part of Magpy starting with version ??
@@ -714,7 +715,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
                 print ("Debug selected: current data remains unchanged")
 
             nameqd = "{}-quasidefinitive".format(config.get('logname','Dummy'))
-            statusmsg[name3b] = "QD data between {} and {} calculated and published (parameter: rotangle={})".format(qdstarttime, qdendtime, rotangle)
+            statusmsg[name3b] = "QD data between {} and {} calculated and published".format(qdstarttime, qdendtime)
         except:
             statusmsg[name3b] = "quasidefinitive calculation performed but failed - check current.data before redoing"
 
@@ -728,7 +729,10 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
 
 
 def main(argv):
-    version = '1.0.0'
+    try:
+        version = __version__
+    except:
+        version = "1.0.0"
     configpath = ''
     statusmsg = {}
     debug=False
@@ -774,7 +778,7 @@ def main(argv):
             debug = True
 
     if debug:
-        print ("Running ")
+        print ("Running version {}".format(version))
 
     if not os.path.exists(configpath):
         print ('Specify a valid path to configuration information')
