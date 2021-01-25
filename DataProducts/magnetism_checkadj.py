@@ -50,80 +50,11 @@ sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+from version import __version__
 
 
-def GetPrimaryInstruments(config={}, statusmsg={}, fallback=True, debug=False):
 
-    print ("----------------------------------------------------------------")
-    print ("Part 0: get primary instruments")
-    print ("----------------------------------------------------------------")
-    currentvaluepath = config.get('currentvaluepath')
-    name1a = "{}-PrimaryInstrumentSelection".format(config.get('logname','Dummy'))
-
-    varioinst = ''
-    scalainst = ''
-    variosens = ''
-    scalasens = ''
-    try:
-        if os.path.isfile(currentvaluepath):
-            with open(currentvaluepath, 'r') as file:
-                fulldict = json.load(file)
-                valdict = fulldict.get('magnetism')
-            try:
-                varioinst = valdict.get('primary vario','')[0]
-                variosens = "_".join(varioinst.split('_')[:-1])
-            except:
-                varioinst = ''
-            try:
-                scalainst = valdict.get('primary scalar','')[0]
-                scalasens = "_".join(scalainst.split('_')[:-1])
-            except:
-                scalainst = ''
-            try:
-                lastQDdate = valdict.get('QD analysis date','')[0]  # format 2019-11-22
-            except:
-                lastQDdate = ''
-            try:
-                QDenddate = valdict.get('QD enddate','')[0]  # format 2019-11-22
-            except:
-                QDenddate = ''
-            try:
-                lastdec = valdict.get('Declination','')[0]  # format 2019-11-22
-                lastinc = valdict.get('Incliniation','')[0]  # format 2019-11-22
-                lastf = valdict.get('Fieldstrength','')[0]  # format 2019-11-22
-            except:
-                lastdec = ''
-                lastinc = ''
-                lastf = ''
-
-        if not varioinst == "":
-            print ("Found {} as primary variometer and {} as scalar instrument".format(varioinst,scalainst))
-            print ("Current Values: Declination={}, Inclination={}, Intensity={}".format(lastdec, lastinc, lastf))
-        elif fallback:
-            varioinst = config.get('variometerinstruments')[0]
-            scalarinst = config.get('scalarinstruments')[0]
-            variosens = "_".join(varioinst.split('_')[:-1])
-            scalasens = "_".join(scalainst.split('_')[:-1])
-            statusmsg[name1a] = 'primary instrument could not be assigned automatically - using first in list'
-        else:
-            statusmsg[name1a] = 'primary instrument could not be assigned - found none'
-    except:
-        statusmsg[name1a] = 'primary instrument assignment failed'
-        print (" !!!!!! primary data read failed")
-
-    config['primaryVario'] = variosens
-    config['primaryScalar'] = scalasens
-    config['primaryVarioInst'] = varioinst
-    config['primaryScalarInst'] = scalainst
-    config['lastQDdate'] = lastQDdate
-    config['QDenddate'] = QDenddate
-    config['Dec'] = lastdec
-    config['Inc'] = lastinc
-    config['FieldStrength'] = lastf
-
-    return config, statusmsg
-
-def GetDirections(datastream):
+def GetDirections(datastream, debug=False):
     """
     DESCRIPTION:
         Calculate last hourly mean declination, inclination and F
@@ -131,12 +62,15 @@ def GetDirections(datastream):
     dec = float(nan)
     inc = float(nan)
     f = float(nan)
-    hourly = datastream.filter(filter_type='linear', resample_period=3600)
+    hourly = datastream.filter(filter_width=timedelta(minutes=60), resampleoffset=timedelta(minutes=30), filter_type='flat', missingdata='iaga')
     if hourly.length()[0] > 0:
+        hourly = hourly.hdz2xyz()
         hourly = hourly.xyz2idf()
-        dec = hourly.get_column('y')[-1]
-        inc = hourly.get_column('x')[-1]
-        f = hourly.get_column('f')[-1]
+        dec = hourly._get_column('y')[-1]
+        inc = hourly._get_column('x')[-1]
+        f = hourly._get_column('z')[-1]
+        if debug:
+            print ("     -- got dec={} deg , inc={} deg and f={} nT at {}".format(dec,inc,f, num2date(hourly._get_column('time')[-1]))) 
     return (dec, inc, f)
 
 def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
@@ -148,9 +82,6 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
     """
     if debug:
         p1start = datetime.utcnow()
-        print ("----------------------------------------------------------------")
-        print ("Part 1a: Create adjusted one minute data from all instruments")
-        print ("----------------------------------------------------------------")
 
     msg = "variometer check performed successfully - everything ok"
     variolist = config.get('variometerinstruments')
@@ -160,8 +91,8 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
     streamlist = []
     variochecklist = []
 
-    #try: # assigning streamlist
-    for varioinst in variolist:
+    try: # assigning streamlist
+        for varioinst in variolist:
             variosens = "_".join(varioinst.split('_')[:-1])
             vario = readDB(db,varioinst,starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
             if vario.length()[0] > 0 and db:
@@ -170,6 +101,7 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
                 variomin = vario.filter()
                 print ("    -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
                 streamlist.append(variomin)
+                variochecklist= variochecklist.append(varioinst)
                 if variosens == config.get('primaryVario'):
                     # Calculate dif
                     print ("HERE")
@@ -190,18 +122,15 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
                                 print ("Magnetic directions have been updated to {}".format(lastQDdate,date))
             else:
                 print ("    -> No data for {}".format(varioinst))
-    #except:
-    #    msg = "variometer check - selection of variometers failed"
+    except:
+        msg = "variometer check - selection of variometers failed"
 
     if debug:
         print ("   -> The following variometer sensors are checked:")
         print ("   -> {}".format(variochecklist))
-        print ("----------------------------------------------------------------")
-        print ("Part 1b: Compare adjusted one minute data")
-        print ("----------------------------------------------------------------")
 
-    #try: # getting means
-    if len(streamlist) > 0:
+    try: # getting means
+       if len(streamlist) > 0:
             # Get the means
             meanstream = stackStreams(streamlist,get='mean',uncert='True')
             mediandx = meanstream.mean('dx',meanfunction='median')
@@ -210,12 +139,12 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             print ("Medians", mediandx,mediandy,mediandz)
             maxmedian = max([mediandx,mediandy,mediandz])
             if maxmedian > 0.2:
-                statusmsg[namecheck1] = "variometer check - significant differences between instruments exceeding 0.2 nT - please check"
-    else:
-        print ("No variometer data found")
-        msg = "variometer check failed - no data found for any variometer"
-    #except:
-    #    msg = "variometer check - calculation of means failed"
+                msg = "variometer check - significant differences between instruments exceeding 0.2 nT - please check"
+        else:
+            print ("No variometer data found")
+            msg = "variometer check failed - no data found for any variometer"
+    except:
+        msg = "variometer check - calculation of means failed"
 
     return msg
 
@@ -225,9 +154,7 @@ def CompareFieldStrength(config={}, endtime=datetime.utcnow(), debug=False):
         compare field strengths and check scalar data
     """
     if debug:
-        print ("----------------------------------------------------------------")
-        print ("Part 2a: Check scalar data")
-        print ("----------------------------------------------------------------")
+        print (" - Checking scalar data")
 
     msg = "scalar data check performed successfully - everything ok"
 
@@ -239,48 +166,48 @@ def CompareFieldStrength(config={}, endtime=datetime.utcnow(), debug=False):
     scalarchecklist = []
     streamlist = []
 
-    #try:
-    for scalainst in scalalist:
+    try:
+        for scalainst in scalalist:
             scalasens = "_".join(scalainst.split('_')[:-1])
             print ("    -- getting scaladata, flags and offsets: {}".format(scalainst))
             if not scalainst == '':
                 scalar = readDB(db,scalainst,starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
             if (scalar.length()[0]) > 0:
-                scalar = DoScalarCorrections(db, scalar, scalarsens=scalarsens, starttimedt=endtime-timedelta(days=daystodeal), debug=debug)
+                scalar = DoScalarCorrections(db, scalar, scalarsens=scalasens, starttimedt=endtime-timedelta(days=daystodeal), debug=debug)
                 scalarmin = scalar.filter()
                 streamlist.append(scalarmin)
-                scalarchecklist.append(scalarsens)
-    #except:
-    #    msg = "scalar check - selection of sensors failed"
+                scalarchecklist.append(scalasens)
+    except:
+        msg = "scalar check - selection of sensors failed"
 
     if debug:
         print ("   -> The following scalar sensors are checked:")
         print ("   -> {}".format(scalarchecklist))
-        print ("----------------------------------------------------------------")
-        print ("Part 2b: Compare scalar one minute data")
-        print ("----------------------------------------------------------------")
 
-    #try:
-    if len(streamlist) > 0:
+    try:
+        if len(streamlist) > 0:
             # Get the means
             meanstream = stackStreams(streamlist,get='mean',uncert='True')
             mediandf = meanstream.mean('df',meanfunction='median')
             if mediandf > 0.3:
                 msg = "scalar check - large differences between instruments - please check"
-    else:
+        else:
             print ("    -> No scalar data found")
             msg = "scalar check failed - no data found for any sensor"
-    #except:
-    #    msg = "scalar check - general error"
+    except:
+        msg = "scalar check - general error"
 
     if debug:
         print ("   -> The total median difference between all sensors is:")
-        print ("   -> {}".format(medianf))
+        print ("   -> {}".format(mediandf))
 
     return msg
 
 def main(argv):
-    version = '1.0.0'
+    try:
+        version = __version__
+    except:
+        version = "1.0.0"
     configpath = ''
     statusmsg = {}
     joblist = ['vario','scalar']
@@ -326,7 +253,7 @@ def main(argv):
             debug = True
 
     if debug:
-        print ("Running magnetism_checkadj - debug mode")
+        print ("Running magnetism_checkadj version {} - debug mode".format(version))
         print ("---------------------------------------")
 
     if not os.path.exists(configpath):
