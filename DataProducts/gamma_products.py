@@ -182,9 +182,15 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
                 for dbel in connectdict:
                     dbw = connectdict[dbel]
                     # check if table exists... if not use:
-                    writeDB(dbw,result)
+                    name3 = "{}-toDB-{}".format(config.get('logname'),dbel)
+                    statusmsg[name3] = 'gamma table successfully written to DB'
+                    try:
+                        writeDB(dbw,result)
+                    except:
+                        statusmsg[name3] = 'gamma table could not be written to DB - disk full?'
                     # else use
                     #writeDB(dbw,datastream, tablename=...)
+
                     print ("  -> GAMMASGO_adjusted written to DB {}".format(dbel))
 
     return statusmsg
