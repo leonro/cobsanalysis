@@ -107,7 +107,9 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
                     # Calculate dif
                     (dec,inc,f) = GetDirections(variomin)
                     print ("    -> Obtained Declination={}, Inclination={} and F={}".format(dec,inc,f))
-                    if not debug:
+                    if np.isnan(dec):
+                        msg = "variometer check - got NaN for declination - please check"
+                    if not debug and not np.isnan(dec):
                         # eventually update average D, I and F values in currentvalue
                         if os.path.isfile(currentvaluepath):
                             with open(currentvaluepath, 'r') as file:

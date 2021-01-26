@@ -502,7 +502,12 @@ def main(argv):
                                 lastdata.flagliststats(prevflaglist, intensive=True)
                             else:
                                 print ("  - no flags so far for this sensor")
-                            flaglist2db(dbt,flaglist)
+                            name3 = "{}-toDB-{}".format(config.get('logname'),dbel)
+                            statusmsg[name3] = 'flags successfully written to DB'
+                            try:
+                                flaglist2db(dbt,flaglist)
+                            except:
+                                statusmsg[name3] = 'flags could not be written to DB - disk full?'
                             aftflaglist = db2flaglist(dbt,sensorid)
                             lastdata.flagliststats(aftflaglist, intensive=True)
       except:
