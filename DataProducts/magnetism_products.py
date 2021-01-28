@@ -564,6 +564,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
     varioinst = config.get('primaryVarioInst')
     scalarinst = config.get('primaryScalarInst')
     db = config.get('primaryDB',None)
+    date=datetime.strftime(datetime.utcnow(),"%Y-%m-%d")
 
     rotangle = 0.0
     runqd = False
@@ -613,7 +614,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             print ("     -- End:   {}".format(qdendtime))
 
             if not debug:
-                print ("  -> Updating current value file with new QD enddate")
+                print ("  -> Updating current value file with new QD enddate {}".format(newQDenddate))
                 # QDenddate should be updated already now with newQDenddate in current.data file to prevent restart of job in next schedule, if running the analysis is not yet finished
                 if os.path.isfile(currentvaluepath):
                     with open(currentvaluepath, 'r') as file:
@@ -622,7 +623,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
                         valdict['QD enddate'] = [newQDenddate,'']
                         fulldict[u'magnetism'] = valdict
                     with open(currentvaluepath, 'w',encoding="utf-8") as file:
-                        file.write(unicode(json.dumps(fulldict))) # use `json.loads` to $
+                        file.write(unicode(json.dumps(fulldict))) # use `json.loads` to 
                         print ("     -- QDenddate has been updated from {} to {}".format(QDenddate,newQDenddate))
             else:
                 print ("  -> Debug selected: Updating current value file with new QD enddate skipped...")
@@ -694,7 +695,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             statusmsg[name3h] = 'export of adjusted data successful'
             if not debug:
                 try:
-                    qdmin = ExportData(qddata, config={}, publevel=3)
+                    qdmin = ExportData(qddata, config=config, publevel=3)
                 except:
                     statusmsg[name3h] = 'export of adjusted data failed'
             else:
