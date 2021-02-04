@@ -160,8 +160,14 @@ def GetPrimaryInstruments(config={}, statusmsg={}, fallback=True, debug=False):
     scalainst = ''
     variosens = ''
     scalasens = ''
+    lastdec = ''
+    lastinc = ''
+    lastf = ''
+    lastQDdate = ''
+    QDenddate = ''
+
     try:
-        if os.path.isfile(currentvaluepath):
+        if currentvaluepath and os.path.isfile(currentvaluepath):
             with open(currentvaluepath, 'r') as file:
                 fulldict = json.load(file)
                 valdict = fulldict.get('magnetism')
@@ -191,13 +197,17 @@ def GetPrimaryInstruments(config={}, statusmsg={}, fallback=True, debug=False):
                 lastdec = ''
                 lastinc = ''
                 lastf = ''
+        else:
+            print ("No current value path found - using first vario and scalar as primary")
+            varioinst = ''
 
         if not varioinst == "":
             print ("Found {} as primary variometer and {} as scalar instrument".format(varioinst,scalainst))
             print ("Current Values: Declination={}, Inclination={}, Intensity={}".format(lastdec, lastinc, lastf))
         elif fallback:
             varioinst = config.get('variometerinstruments')[0]
-            scalarinst = config.get('scalarinstruments')[0]
+            scalainst = config.get('scalarinstruments')[0]
+            print ("Using fallback:  {} as primary variometer and {} as scalar instrument".format(varioinst,scalainst))
             variosens = "_".join(varioinst.split('_')[:-1])
             scalasens = "_".join(scalainst.split('_')[:-1])
             statusmsg[name1a] = 'primary instrument could not be assigned automatically - using first in list'

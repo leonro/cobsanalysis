@@ -9,12 +9,13 @@ The following README contains an overview about all analysis scripts used at the
 
 Script                        | Location        |  Schedule         |  Config        |   Monitor         |  Dependencies  | Comments
 ----------------------------- | --------------- | ----------------- | -------------- | ----------------- | -------------- | --------
-magnetism\_products\_new.py   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
-current\_weather\_new.py      | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+magnetism\_products.py        | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+weather\_products.py          | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 getprimary.py                 | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 flagging.py                   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-radon\_project.py             | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
-magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+gamma\_products.py            | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+baseline\_generator.py        | DataProducts    | to daily          | gam.cfg/swz.cfg |  MARTAS telegram  |                | py2 and py3
 tg\_pha.py                    | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
@@ -28,6 +29,7 @@ ace\_download_min.py          | FileDownloads   |                   |           
 ace\_download_daily.py        | FileDownloads   |                   |                |  MARTAS telegram  |                | 
 mag\_graph.py                 | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 weather\_graph.py             | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
+general\_graph.py             | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | py2 and py3
 tilt\_graph.py                | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
 supergrad\_graph.py           | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
 gamma\_graph.py               | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
@@ -133,6 +135,8 @@ PREREQUISITES
 
 PARAMETERS
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -j joblist             :   string  :  comma separated list like adjusted,quasidefinitive,addon
+    -l loggername          :   string  :  name for the loggerfile
     -e endtime             :   date    :  date until analysis is performed
                                           default "datetime.utcnow()"
 
@@ -226,6 +230,34 @@ APPLICATION
         python magnetism_checkadj.py -c /etc/marcos/analysis.cfg -e 2020-11-22
 
 
+### 3.7 baseline\_generator.py
+
+
+DESCRIPTION
+   Create a BLV file from expected field values D,I,F. If no field values are provided
+   then IGRF values will be obtained for the StationLocation from the obscode provided in
+   the confguration file. Make sure that no current.data path is defined for stations.
+   The application will calculate basevalues for the primary variometer as definied in
+   the configuration and create a BLV outfile within the defined dipath (conf).
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -v vector              :   int     :  only provided for testing, obtaining IGRF value otherwise
+    -t time                :   string  :  default is 1. of month, at least after the fifth day (so that data should be present) 
+
+APPLICATION
+    Runtime:
+        python3 baseline_generator.py -c ../conf/gam.cfg
+    Testing:
+        python3 baseline_generator.py -c ../conf/gam.cfg -t 2018-08-08T07:41:00 -v 64.33397725500629,4.302646668706179,48621.993688723036 -D
+
 ## 4. Descriptions of TitleGraphs scripts
 
 The folder TitleGraphs contains scripts to generate and assemble graphs for the homepage, particualry graphs with mixtures from fotos and real time data. 
@@ -279,6 +311,35 @@ APPLICATION
 
 
 ## 6. Descriptions of PeriodicGraphs scripts
+
+### 6.1 general\_graph.py
+
+DESCRIPTION
+   Creates plots for a specific sensor.
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -r range               :   int     :  default  2 (days)
+    -s sensor              :   string  :  sensor or dataid
+    -k keys                :   string  :  comma separated list of keys to be plotted
+    -f flags               :   string  :  flags from other lists e.g. quakes, coil, etc
+    -y style               :   string  :  plot style
+    -l loggername          :   string  :  loggername e.g. mm-pp-tilt.log
+    -e endtime             :   string  :  endtime (plots from endtime-range to endtime)
+
+APPLICATION
+    PERMANENTLY with cron:
+        python webpage_graph.py -c /etc/marcos/analysis.cfg
+    SensorID:
+        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001 -D
+    DataID:
+        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001_0001 -D
+
 
 ### 6.1 tilt\_graph.py
 

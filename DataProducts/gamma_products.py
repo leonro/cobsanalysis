@@ -169,7 +169,12 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
     result.header['StationID'] = 'SGO'
     result.header['SensorID'] = 'GAMMASGO_adjusted_0001'
     result.header['DataID'] = 'GAMMASGO_adjusted_0001_0001'
+    result.header['SensorElements'] = 'Counts,Temp,OutsideTemp,Voltage,rain' 
+    result.header['SensorKeys'] = 'x,t1,t2,var1,var3'
     result.header['SensorGroup'] = 'services'
+    result.header['SensorName'] = 'GAMMASGO'
+    result.header['SensorType'] = 'Radiometry'
+
     if debug:
         print ("    Results", result.length())
     if debug and config.get('testplot',False):

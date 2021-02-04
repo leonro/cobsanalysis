@@ -206,13 +206,13 @@ def ExportData(datastream, config={}, publevel=2):
         print ("     -- Saving one second data - Database")
         oldDataID = datastream.header['DataID']
         oldSensorID = datastream.header['SensorID']
-        datastream.header['DataID'] = "WIC_{}_0001_0001".format(pubtype)
-        datastream.header['SensorID'] = "WIC_{}_0001".format(pubtype)
+        datastream.header['DataID'] = "WIC_{}sec_0001_0001".format(pubtype)
+        datastream.header['SensorID'] = "WIC_{}sec_0001".format(pubtype)
         # save
         for dbel in connectdict:
             db = connectdict[dbel]
             print ("     -- Writing {} data to DB {}".format(pubtype,dbel))
-            writeDB(db,datastream,tablename="WIC_{}_0001_0001".format(pubtype))
+            writeDB(db,datastream,tablename="WIC_{}sec_0001_0001".format(pubtype))
         datastream.header['DataID'] = oldDataID
         datastream.header['SensorID'] = oldSensorID
     if 'IAGA' in explist:
@@ -222,8 +222,8 @@ def ExportData(datastream, config={}, publevel=2):
         #mp.plot(prelimmin)
     if 'DBmin' in explist:
         print ("     -- Saving one minute {} data to database".format(pubtype))
-        prelimmin.header['DataID'] = "WIC_{}_0001_0002".format(pubtype)
-        prelimmin.header['SensorID'] = "WIC_{}_0001".format(pubtype)
+        prelimmin.header['DataID'] = "WIC_{}min_0001_0001".format(pubtype)
+        prelimmin.header['SensorID'] = "WIC_{}min_0001".format(pubtype)
         variocol = np.asarray([varioinst for el in prelimmin.ndarray[0]])
         scalacol = np.asarray([scalainst for el in prelimmin.ndarray[0]])
         prelimmin = prelimmin._put_column(variocol, 'str1')
@@ -231,7 +231,7 @@ def ExportData(datastream, config={}, publevel=2):
         for dbel in connectdict:
             db = connectdict[dbel]
             print ("     -- Writing {} data to DB {}".format(pubtype,dbel))
-            writeDB(db,prelimmin,tablename="WIC_{}_0001_0002".format(pubtype))
+            writeDB(db,prelimmin,tablename="WIC_{}min_0001_0001".format(pubtype))
 
     return prelimmin
 
@@ -296,7 +296,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     else:
         print ("No scalar instrument - aborting")
         statusmsg[name1c] = 'no scalar instrument specified - aborting'
-        sys.exit()
+        #sys.exit()
 
     print ("  Baseline correction for pier {}".format(primpier))
     print ("  ----------------------")
@@ -738,6 +738,8 @@ def main(argv):
     statusmsg = {}
     debug=False
     endtime = None
+    joblist = ["adjusted", "quasidefinitive", "addon"]
+    newloggername = 'mm-dp-magnetism.log'
 
     try:
         opts, args = getopt.getopt(argv,"hc:j:e:D",["config=","joblist=","endtime=","debug=",])
@@ -759,32 +761,44 @@ def main(argv):
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
-            print ('-j            : adjusted, quasidefinitive,upload,plots')
+            print ('-j            : adjusted, quasidefinitive,addon')
+            print ('              : adjusted -> calculated adjusted data with constant')
+            print ('              :          baseline approximation')
+            print ('              : quasidefinitive -> calculated data with spline')
+            print ('              :          baseline and only if observer flags are present')
+            print ('              : addon -> requires adjusted, create diagtram and k values')
+            print ('-l            : loggername')
             print ('-e            : endtime')
             print ('-------------------------------------')
             print ('Application:')
             print ('python magnetism_products.py -c /etc/marcos/analysis.cfg')
+            print ('python magnetism_products.py -c /etc/marcos/analysisGAM.cfg -j adjusted -l mm-dp-magnetism-GAM')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
             configpath = os.path.abspath(arg)
         elif opt in ("-j", "--joblist"):
-            # get a list of jobs (adjusted, quasidefinitive,upload,plots)
+            # get a list of jobs e.g. "adjusted, quasidefinitive, addon"
             joblist = arg.split(',')
         elif opt in ("-e", "--endtime"):
-            # get a list of jobs (adjusted, quasidefinitive,upload,plots)
+            # define an endtime for the current analysis - default is now
             endtime = arg
+        elif opt in ("-l", "--loggername"):
+            # define an endtime for the current analysis - default is now
+            newloggername = arg
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
 
-    if debug:
-        print ("Running version {}".format(version))
+    print ("Running magpy_products version {}".format(version))
 
     if not os.path.exists(configpath):
         print ('Specify a valid path to configuration information')
         print ('-- check magnetism_products.py -h for more options and requirements')
         sys.exit()
+
+    if "addon" in joblist and not "adjusted" in joblist:
+        print ("joblist input 'addon' requires 'adjusted' as well - therefore skipping 'addon' option" )    
 
     if endtime:
         try:
@@ -795,49 +809,42 @@ def main(argv):
     else:
         endtime = datetime.utcnow()
 
-    if debug:
-        print ("1. Read and check validity of configuration data")
+    print ("1. Read and check validity of configuration data")
     config = GetConf(configpath)
     success = ValidityCheckConfig(config)
 
     #if not success:
     #    sys.exit(1)
     # #############################################################
-    if debug:
-        print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-magnetism.log', debug=debug)
+    print ("2. Activate logging scheme as selected in config")
+    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname=newloggername, debug=debug)
 
     if debug:
         print (" -> Config contents:")
         print (config)
 
-    if debug:
-        print ("3. Check all paths and eventually remount directories")
+    print ("3. Check all paths and eventually remount directories")
     success,statusmsg = ValidityCheckDirectories(config=config, statusmsg=statusmsg, debug=debug)
 
-    if debug:
-        print ("4. Loading current.data and getting primary instruments")
+    print ("4. Loading current.data and getting primary instruments")
     config, statusmsg = GetPrimaryInstruments(config=config, statusmsg=statusmsg, debug=debug)
 
-    if debug:
-        print ("5. Connect to databases")
+    print ("5. Connect to databases")
     config = ConnectDatabases(config=config, debug=debug)
 
-    if debug:
+    if "adjusted" in joblist:
         print ("6. Obtain adjusted data")
-    mindata,statusmsg = AdjustedData(config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
+        mindata,statusmsg = AdjustedData(config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
 
-    if mindata.length()[0]>0:
-        if debug:
+        if mindata.length()[0]>0 and "addon" in joblist:
             print ("8. Diagrams")
-        suc,statusmsg = CreateDiagram(mindata, config=config,statusmsg=statusmsg, endtime=endtime)
-        if debug:
+            suc,statusmsg = CreateDiagram(mindata, config=config,statusmsg=statusmsg, endtime=endtime)
             print ("9. K Values")
-        suc,statusmsg = KValues(mindata, config=config,statusmsg=statusmsg)
+            suc,statusmsg = KValues(mindata, config=config,statusmsg=statusmsg)
 
-    if debug:
+    if "quasidefinitive" in joblist:
         print ("10. Obtain quasidefinitive data")
-    statusmsg = QuasidefinitiveData(config=config, statusmsg=statusmsg, debug=debug)
+        statusmsg = QuasidefinitiveData(config=config, statusmsg=statusmsg, debug=debug)
 
 
     if not debug:
