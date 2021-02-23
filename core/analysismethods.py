@@ -272,7 +272,10 @@ def DoVarioCorrections(db, variostream, variosens='', starttimedt=datetime.utcno
         try:
             rotdict = string2dict(rotstring,typ='listofdict')[0]
         except:
-            rotdict = string2dict(rotstring,typ='listofdict')
+            try:
+                rotdict = string2dict(rotstring,typ='listofdict')
+            except:
+                rotdict = {}
         #print ("     -> rotation dict: {}".format(rotdict))
         try:
             lastrot = sorted(rotdict)[-1]
@@ -285,8 +288,16 @@ def DoVarioCorrections(db, variostream, variosens='', starttimedt=datetime.utcno
         print ('     -- applying rotation: alpha={} determined in {}'.format(rotangle,lastrot))
         #convert latlong
         print ("     -- concerting lat and long to epsg 4326")
-        variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'] = convertGeoCoordinate(variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'],'epsg:31253','epsg:4326')
+        try:
+            variostream.header = dbfields2dict(db,variostream.header.get('DataID'))
+            epsg = variostream.header.get('DataLocationReference','GK34, epsg:31253')
+            epsg = epsg.split(',')[1].replace(' ','').lower()
+            print ("        -> found epsg code {}".format(epsg))
+        except:
+            epsg = 'epsg:31253'
+        variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'] = convertGeoCoordinate(variostream.header['DataAcquisitionLongitude'],variostream.header['DataAcquisitionLatitude'],epsg,'epsg:4326')
         variostream.header['DataLocationReference'] = 'WGS84, EPSG:4326'
+        print ("   -> Vario correction done")
 
     return variostream
 

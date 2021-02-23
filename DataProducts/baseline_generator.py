@@ -186,8 +186,7 @@ def GetDeltas(config={}, settime=datetime.utcnow(), fieldvector=[0,0,0], debug=F
     print ("   -> check sensor")
     sensorid, revision = CheckSensorID(sensorid, revision, debug=debug)
 
-    print ("   -> read datastream")
-    print (sensorid)
+    print ("   -> read datastream for {}".format(sensorid))
     stream = ReadDatastream(config=config, endtime=endtime, timerange=1, sensorid=sensorid, revision=revision, debug=debug)
 
     if stream.length()[0] > 0 and db:
@@ -273,7 +272,7 @@ def main(argv):
     DIFsource="UserValue"
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:v:t:D",["config=","joblist=","vector=","time=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:v:t:l:D",["config=","vector=","time=","loggername=","debug=",])
     except getopt.GetoptError:
         print ('baseline_generator.py -c <config>')
         sys.exit(2)
@@ -338,7 +337,7 @@ def main(argv):
         d = settime.day
         if settime.day < 5:
             m = (settime-timedelta(days=10)).month
-        settime = datetime(y,m,d,3)
+        settime = datetime(y,m,1,3)
         print ("   Current analysis date will be {}".format(settime))
 
 

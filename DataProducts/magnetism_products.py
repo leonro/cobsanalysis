@@ -424,11 +424,11 @@ def CreateDiagram(datastream,config={},statusmsg={}, endtime=datetime.utcnow(), 
             pnd = datastream._select_timerange(starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
             pst = DataStream([LineStruct()],datastream.header,pnd)
             pst = pst.xyz2hdz()
-            #mp.plotStreams([pst],[['x','y','z','f']], gridcolor='#316931',fill=['x','z','f'],confinex=True, fullday=True, opacity=0.7, plottitle='Geomagnetic variation (until %s)' % (datetime.utcnow().date()),noshow=True)
+            mp.plotStreams([pst],[['x','y','z','f']], gridcolor='#316931',fill=['x','z','f'],confinex=True, fullday=True, opacity=0.7, plottitle='Geomagnetic variation (until %s)' % (datetime.utcnow().date()),noshow=True)
             print ("     -- Saving diagram to products folder")
 
             pltsavepath = os.path.join(figpath,"magvar_{}.png".format(date))
-            #plt.savefig(pltsavepath)
+            plt.savefig(pltsavepath)
             statusmsg[name5] = 'creating and saving graph successful'
             print ("      -> Done")
     except:

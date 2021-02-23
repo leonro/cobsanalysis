@@ -553,6 +553,7 @@ def CombineStreams(streamlist, debug=False):
         if debug:
             print ("    coverage after:", result._find_t_limits())
 
+    result.header = {}
     result.header['col-y'] = 'rain'
     result.header['unit-col-y'] = 'mm/h'
     result.header['col-z'] = 'snow'
@@ -561,12 +562,19 @@ def CombineStreams(streamlist, debug=False):
     result.header['unit-col-f'] = 'deg C'
     result.header['col-t1'] = 'rh'
     result.header['unit-col-t1'] = 'percent'
+    result.header['col-t2'] = 'visibility'
+    result.header['unit-col-t2'] = 'm'
+    result.header['col-var1'] = 'windspeed'
+    result.header['unit-col-var1'] = 'm/s'
+    result.header['col-var2'] = 'winddirection'
+    result.header['unit-col-var2'] = 'deg'
     result.header['col-var4'] = 'synop'
     result.header['unit-col-var4'] = '4680'
     result.header['col-var5'] = 'P'
     result.header['unit-col-var5'] = 'hPa'
-    result.header['col-t2'] = 'visibility'
-    result.header['unit-col-t2'] = 'm'
+    result.header['StationID'] = 'SGO'
+    result.header['SensorID'] = 'METEOSGO_adjusted_0001'
+    result.header['DataID'] = 'METEOSGO_adjusted_0001_0001'
 
     if debug:
         #mp.plot(result)
@@ -661,11 +669,12 @@ def ExportData(datastream, config={}):
             for dbel in connectdict:
                 dbw = connectdict[dbel]
                 ## Set some important header infos
+                datastream.header['StationID'] = 'SGO'
                 datastream.header['SensorID'] = 'METEOSGO_adjusted_0001'
                 datastream.header['DataID'] = 'METEOSGO_adjusted_0001_0001'
                 datastream.header['SensorGroup'] = 'services'
                 # check if table exists... if not use:
-                writeDB(dbw,datastream)
+                writeDB(dbw,datastream,tablename='METEOSGO_adjusted_0001_0001')
                 # else use
                 #writeDB(dbw,datastream, tablename=...)
                 print ("  -> METEOSGO_adjusted written to DB {}".format(dbel))
