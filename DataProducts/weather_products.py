@@ -652,7 +652,7 @@ def RainSource(datastream, diff=0.1, source='bucket', debug=False):
     return datastream
 
 
-def ExportData(datastream, config={}):
+def ExportData(datastream, onlyarchive=False, config={}):
 
     meteofilename = 'meteo-1min_'
     connectdict = config.get('conncetedDB')
@@ -665,7 +665,7 @@ def ExportData(datastream, config={}):
             datastream.write(meteoproductpath,filenamebegins=meteofilename,dateformat='%Y',coverage='year', mode='replace',format_type='PYCDF')
             print ("  -> METEO_adjusted written to File")
 
-        if len(connectdict) > 0:
+        if len(connectdict) > 0 and not onlyarchive:
             for dbel in connectdict:
                 dbw = connectdict[dbel]
                 ## Set some important header infos
@@ -686,7 +686,7 @@ def ExportData(datastream, config={}):
     return success
 
 
-def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug=False):
+def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), source='database', onlyarchive=False, debug=False):
     """
     DESCRIPTION:
         Main method to analyse and combine measurements from various different
@@ -715,7 +715,6 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     flaglistbm35 = []
     flaglistrcs = []
 
-    source='database'
     if starttime < datetime.utcnow()-timedelta(days=20):
         print ("     -- Eventually not enough data in database for full coverage")
         print ("       -> Accessing archive files instead")
@@ -839,7 +838,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
             if len(flaglistrcs) > 0:
                 print ("    -- new RCS flags:", len(flaglistrcs))
                 flaglist2db(dbw,flaglistrcs)
-        succ = ExportData(result, config=config)
+        succ = ExportData(result, onlyarchive=onlyarchive, config=config)
     else:
         print (" Debug selected - not exporting")
 
@@ -1188,9 +1187,11 @@ def main(argv):
     weatherstream = DataStream()
     testplot = False
     dayrange = 0
+    source = 'database'
+    onlyarchive=False
 
     try:
-        opts, args = getopt.getopt(argv,"hc:e:r:DP",["config=","endtime=","dayrange=","debug=","plot=",])
+        opts, args = getopt.getopt(argv,"hc:e:r:aDP",["config=","endtime=","dayrange=","createarchive=","debug=","plot=",])
     except getopt.GetoptError:
         print ('weather_products.py -c <config>')
         sys.exit(2)
@@ -1211,6 +1212,7 @@ def main(argv):
             print ('-c (required) : configuration data path')
             print ('-e            : endtime - default is now')
             print ('-r            : range of days')
+            print ('-a            : create archive data - no plots, no DB inputs, no...')
             print ('-------------------------------------')
             print ('Application:')
             print ('python weather_products.py -c /etc/marcos/analysis.cfg')
@@ -1231,6 +1233,10 @@ def main(argv):
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
+        elif opt in ("-a", "--createarchive"):
+            # delete any / at the end of the string
+            source = 'archive'
+            onlyarchive = True
         elif opt in ("-P", "--plot"):
             # delete any / at the end of the string
             testplot = True
@@ -1273,25 +1279,30 @@ def main(argv):
     # it is possible to save data also directly to the brokers database - better do it elsewhere
 
     print ("4. Weather analysis")
-    weatherstream, success, statusmsg = WeatherAnalysis(db, config=config,statusmsg=statusmsg, endtime=endtime, debug=debug)
+    weatherstream, success, statusmsg = WeatherAnalysis(db, config=config,statusmsg=statusmsg, endtime=endtime, source=source, onlyarchive=onlyarchive, debug=debug)
 
-    weatherstream = FloatArray(weatherstream) # convert object to float for fill_between plots
-    print ("5. Create current data table")
-    statusmsg = CreateWeatherTable(weatherstream, config=config, statusmsg=statusmsg, debug=debug)
+    if not source=='archive':
+        weatherstream = FloatArray(weatherstream) # convert object to float for fill_between plots
+        print ("5. Create current data table")
+        statusmsg = CreateWeatherTable(weatherstream, config=config, statusmsg=statusmsg, debug=debug)
 
-    print ("6. Create short term plots")
-    statusmsg = ShortTermPlot(weatherstream, config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
+        print ("6. Create short term plots")
+        statusmsg = ShortTermPlot(weatherstream, config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
 
-    print ("7. Create long term plots")
-    statusmsg = LongTermPlot(weatherstream, config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
+        print ("7. Create long term plots")
+        statusmsg = LongTermPlot(weatherstream, config=config, statusmsg=statusmsg, endtime=endtime, debug=debug)
 
-    if not debug:
-        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
-        martaslog.telegram['config'] = config.get('notificationconfig')
-        martaslog.msg(statusmsg)
+        if not debug:
+            martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+            martaslog.telegram['config'] = config.get('notificationconfig')
+            martaslog.msg(statusmsg)
+        else:
+            print ("Debug selected - statusmsg looks like:")
+            print (statusmsg)
+
     else:
-        print ("Debug selected - statusmsg looks like:")
-        print (statusmsg)
+        print (" -> create archive selected: skipping plots and statusmessages")
+
 
 if __name__ == "__main__":
    main(sys.argv[1:])
