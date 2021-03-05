@@ -725,7 +725,10 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), debug
     print (" A. Reading Laser Niederschlag")
     try:
         lnm = readTable(db, sourcetable="LNM%", source=source,  path=sgopath, starttime=starttime, endtime=endtime, debug=debug)
-        trans = getLastSynop(lnm, synopdict=synopdict)
+        try:
+            trans = getLastSynop(lnm, synopdict=synopdict)
+        except:
+            pass
         lnm = transformLNM(lnm, debug=debug)
         if lnm.length()[0] > 0:
             statusmsg[name1a] = 'LNM data finished - data available'
