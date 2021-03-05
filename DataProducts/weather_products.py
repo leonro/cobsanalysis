@@ -104,6 +104,8 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
     """
     DESCRIPTION:
         read data from database for all sensors matching sourcetabe names and timerange
+        If archive is selected as source, then the database is searched for all sensors and
+        the archive directory is scanned for all related raw files in related subdirectores
     """
     print ("  -----------------------")
     print ("  Reading source tables like {}".format(sourcetable))
@@ -113,18 +115,21 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
         senslist = dbselect(db, 'DataID', 'DATAINFO',search)
         sens=[]
         for sensor in senslist:
-            if debug:
-                print ("   -- checking sensor {}".format(sensor))
-            last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
-            ### last2 should be the better alternative
-            last2 = dbselect(db,'DataMaxTime','DATAINFO','DataID="{}"'.format(sensor))
-            #print (last, starttime, last2)
-            if not last2:
-                last2 = last
-            if last and (getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime):
-                sens.append(sensor)
+            if source == 'database':
                 if debug:
-                    print ("     -> valid data for sensor {}".format(sensor))
+                    print ("   -- checking sensor {}".format(sensor))
+                last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
+                ### last2 should be the better alternative
+                last2 = dbselect(db,'DataMaxTime','DATAINFO','DataID="{}"'.format(sensor))
+                #print (last, starttime, last2)
+                if not last2:
+                    last2 = last
+                if last and (getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime):
+                    sens.append(sensor)
+                    if debug:
+                        print ("     -> valid data for sensor {}".format(sensor))
+            else:
+                sens.append(sensor)
 
 
         datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
