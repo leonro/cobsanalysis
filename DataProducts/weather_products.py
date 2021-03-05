@@ -25,8 +25,10 @@ APPLICATION
     PERMANENTLY with cron:
         python weather_products.py -c /etc/marcos/analysis.cfg
     REDO analysis for a time range:
-        (startime is defined by endtime - daystodeal as given in the config file 
+        (startime is defined by endtime - daystodeal as given in the config file
         python weather_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
+    RECREATE archive files:
+        python3 weather_products.py -c ~/CONF/wic.cfg -e 2020-05-18 -r 20 -a
 
 """
 from magpy.stream import *
@@ -140,7 +142,13 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
                     if source == 'database':
                         datastream = readDB(db,sensor,starttime=starttime,endtime=endtime)
                     else:
-                        datastream = read(os.path.join(path,sensor[:-5],'raw/*'),starttime=starttime,endtime=endtime)
+                        raw = 'raw'
+                        if sensor.startswith('BM35'):
+                            raw = sensor[:-5]+'_0002'
+                        print ("    -- reading from {}".format(os.path.join(path,sensor[:-5],raw)))
+                        if debug:
+                            print ("       starttime: {}, endtime: {}".format(starttime,endtime))
+                        datastream = read(os.path.join(path,sensor[:-5],raw,'*'),starttime=starttime,endtime=endtime)
                 except:
                     datastream = DataStream()
                 if debug:
@@ -1271,7 +1279,7 @@ def main(argv):
     config['testplot'] = testplot
     if dayrange and dayrange > 0:
         config['meteorange'] = int(dayrange)
-    
+
     name1 = "{}-flag".format(config.get('logname'))
     statusmsg[name1] = 'weather analysis successful'
 
