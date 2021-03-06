@@ -844,11 +844,12 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), sourc
         connectdict = config.get('conncetedDB')
         for dbel in connectdict:
             dbw = connectdict.get(dbel)
-            print ("    -- writing flags for BM35 and RCS to DB {}".format(dbel))
-            if len(flaglistbm35) > 0:
+            if not onlyarchive:
+                print ("    -- writing flags for BM35 and RCS to DB {}".format(dbel))
+            if len(flaglistbm35) > 0 and not onlyarchive:
                 print ("    -- new bm35 flags:", len(flaglistbm35))
                 flaglist2db(dbw,flaglistbm35)
-            if len(flaglistrcs) > 0:
+            if len(flaglistrcs) > 0 and not onlyarchive:
                 print ("    -- new RCS flags:", len(flaglistrcs))
                 flaglist2db(dbw,flaglistrcs)
         succ = ExportData(result, onlyarchive=onlyarchive, config=config)
