@@ -21,7 +21,7 @@ PARAMETERS
 
 APPLICATION
     Runtime:
-        python3 baseline_generator.py -c ../conf/gam.cfg
+        python3 baseline_generator.py -c ../conf/gam.cfg -o Figrf:-147
     Reconctruct baseline file:
         python3 baseline_generator.py -c ~/CONF/swz.cfg -t 2020-09-01T03:00:00
     Testing:
@@ -272,9 +272,11 @@ def main(argv):
     fieldvector = None
     newloggername = 'mm-dp-gams.log'
     DIFsource="UserValue"
+    off = ''
+    offset = {}
 
     try:
-        opts, args = getopt.getopt(argv,"hc:v:t:l:D",["config=","vector=","time=","loggername=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:v:t:o:l:D",["config=","vector=","time=","offset=","loggername=","debug=",])
     except getopt.GetoptError:
         print ('baseline_generator.py -c <config>')
         sys.exit(2)
@@ -296,6 +298,7 @@ def main(argv):
             print ('-v            : define a vector (absolute field values for this time)')
             print ('              :  - if not provided, IGRF data will be used')
             print ('-t            : time')
+            print ('-o            : offset  - e.g. -o Flocal:-15.51,Figrf:100,D:0.00001')
             print ('-l            : loggername')
             print ('-------------------------------------')
             print ('Application:')
@@ -312,6 +315,9 @@ def main(argv):
         elif opt in ("-t", "--time"):
             # define a point in time for the current analysis
             settime = arg
+        elif opt in ("-o", "--offset"):
+            # define a point in time for the current analysis
+            off = arg
         elif opt in ("-l", "--loggername"):
             # define an endtime for the current analysis - default is now
             newloggername = arg
@@ -325,6 +331,16 @@ def main(argv):
         print ('Specify a valid path to configuration information')
         print ('-- check magnetism_products.py -h for more options and requirements')
         sys.exit()
+
+    if off:
+        try:
+            offlist = off.split(',')
+            for el in offlist:
+                keyvalue = el.split(':')
+                if len(keyvalue) == 2:
+                    offset[keyvalue[0]] = float(keyvalue[1])
+        except:
+            offset = {}
 
     if settime:
         try:
@@ -361,7 +377,7 @@ def main(argv):
     name5 = "{}-getIDF".format(config.get('logname'))
     if not fieldvector:
         try:
-            fieldvector, DIFsource = GetDIF(config=config, settime=settime, offset={"Flocal":-1.51}, debug=debug)  # return [I,D,F]
+            fieldvector, DIFsource = GetDIF(config=config, settime=settime, offset=offset, debug=debug)  # return [I,D,F]
             statusmsg[name5] = 'field vector obtained from IGRF model'
         except:
             statusmsg[name5] = 'field vector could not be obtained from IGRF model'
