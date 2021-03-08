@@ -22,6 +22,8 @@ PARAMETERS
 APPLICATION
     Runtime:
         python3 baseline_generator.py -c ../conf/gam.cfg
+    Reconctruct baseline file:
+        python3 baseline_generator.py -c ~/CONF/swz.cfg -t 2020-09-01T03:00:00
     Testing:
         python3 baseline_generator.py -c ../conf/gam.cfg -t 2018-08-08T07:41:00 -v 64.33397725500629,4.302646668706179,48621.993688723036 -D
 
