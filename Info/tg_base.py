@@ -2,14 +2,14 @@
 # coding=utf-8
 
 """
-MagPy - Weekly baseline/value information  
+MagPy - Weekly baseline/value information
 """
 from __future__ import print_function
 from __future__ import unicode_literals
 
-# Define packges to be used (local refers to test environment) 
+# Define packges to be used (local refers to test environment)
 # ------------------------------------------------------------
-from magpy.stream import *   
+from magpy.stream import *
 from magpy.database import *
 import magpy.mpplot as mp
 import magpy.opt.cred as mpcred
@@ -18,7 +18,7 @@ import telegram_send
 from os import listdir
 from os.path import isfile, join
 
-# Connect to database 
+# Connect to database
 # ------------------------------------------------------------
 dbpasswd = mpcred.lc('cobsdb','passwd')
 try:
@@ -77,7 +77,7 @@ try:
     absresult = absresult._drop_nans('dz')
     func = absresult.fit(['dx','dy','dz'],fitfunc='spline', knotstep=0.3)
     mp.plot(absresult,['dx','dy','dz'],symbollist=['o','o','o'],padding=[2.5,0.005,2.5],function=func,plottitle="{}: {} and {}".format(pier,lst[0][:-5],lst[1][:-5]),outfile=os.path.join(plotdir,'basegraph.png'))
-    caption = "{}: Basevalues and adopted baseline".format(datetime.strftime(endtime,"%Y-%m-%d")) 
+    caption = "{}: Basevalues and adopted baseline".format(datetime.strftime(endtime,"%Y-%m-%d"))
 except:
     caption = "Not enough data points for creating new baseline graph"
     pass
