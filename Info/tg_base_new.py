@@ -35,32 +35,39 @@ from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 
 
-def CreateBLVPlot(db, blvdata, starttime,endtime, plotdir):
+def CreateBLVPlot(db, blvname, blvdata, starttime,endtime, plotdir, plttitle, debug=False):
+    print (" Loading absolute data...")
     absresult = read(blvdata,starttime=starttime,endtime=endtime)
+    print (" -> {} data points".format(absresult.length()[0]))
     try:
         blvflagname = blvname.replace("comp","").replace(".txt","")
         flags = db2flaglist(db,blvflagname)
-        print (len(flags))
+        print ("  Obtained {} flags".format(len(flags)))
         if len(flags) > 0:
             absresult = absresult.flag(flags)
             absresult = absresult.remove_flagged()
     except:
-        print ("flagging failed")
+        print ("  flagging failed")
     try:
         absresult = absresult._drop_nans('dx')
         absresult = absresult._drop_nans('dy')
         absresult = absresult._drop_nans('dz')
+        print (" -> {} data points".format(absresult.length()[0]))
         func = absresult.fit(['dx','dy','dz'],fitfunc='spline', knotstep=0.3)
-        mp.plot(absresult,['dx','dy','dz'],symbollist=['o','o','o'],padding=[2.5,0.005,2.5],function=func,plottitle="{}: {} and {}".format(pier,lst[0][:-5],lst[1][:-5]),outfile=os.path.join(plotdir,'basegraph.png'))
+        print (" Saving to {}".format(plotdir))
+        if not debug:
+            mp.plot(absresult,['dx','dy','dz'],symbollist=['o','o','o'],padding=[2.5,0.005,2.5],function=func,plottitle=plttitle,outfile=os.path.join(plotdir,'basegraph.png'))
         caption = "{}: Basevalues and adopted baseline".format(datetime.strftime(endtime,"%Y-%m-%d"))
     except:
         caption = "Not enough data points for creating new baseline graph"
-        pass
+    if debug:
+        print ("Caption:" , caption)
+
 
     return caption
 
 
-def GetFailed(analyzepath):
+def GetFailed(analyzepath,debug=False):
     onlyfiles = [f for f in listdir(analyzepath) if isfile(join(analyzepath, f))]
     print ("FAILED ANALYSES: {}".format(onlyfiles))
     failedmsg = ''
@@ -156,16 +163,15 @@ def main(argv):
         statusmsg[name1] = 'database failed'
 
 
-
     # SOME DEFINITIONS:
     datapath = config.get('dipath')
-    dipath = os.path.join(config.get('dipath'),'..')    
+    dipath = os.path.join(config.get('dipath'),'..')
     analyzepath = os.path.join(dipath,'analyze')
     pier = config.get('primarypier')
     plotdir = config.get('magfigurepath')
 
     #priminst = '/home/cobs/ANALYSIS/Logs/primaryinst.pkl'
-    #plotdir = '/home/cobs/ANALYSIS/Info/plots'
+    plotdir = '/home/cobs/ANALYSIS/Info/plots'
     caption = ''
 
 
@@ -185,19 +191,20 @@ def main(argv):
 
     # 3. Read BLV fiel and create BLV plot for the last year
     # ###########################
-    caption = CreateBLVPlot(db, blvdata, starttime,endtime, plotdir)
+    plttitle = "{}: {} and {}".format(pier,variosens,scalarsens)
+    caption = CreateBLVPlot(db, blvname, blvdata, starttime,endtime, plotdir, plttitle, debug=debug)
 
     # 4. read file list of *.txt files remaining in DI/analyse
     # ###########################
-    failedmsg = GetFailed(analyzepath)
+    failedmsg = GetFailed(analyzepath,debug=debug)
 
     # 5. send all info to telegramchannel
     # ###########################
     if not debug:
         with open(os.path.join(plotdir,'basegraph.png'), "rb") as f:
-            telegram_send.send(images=[f],captions=[caption],conf=channelconf,parse_mode="markdown")
+            telegram_send.send(images=[f],captions=[caption],conf=channelconfig,parse_mode="markdown")
         if not failedmsg == '':
-            telegram_send.send(messages=[failedmsg],conf=channelconf,parse_mode="markdown")
+            telegram_send.send(messages=[failedmsg],conf=channelconfig,parse_mode="markdown")
     else:
         print ("Debug selected")
 
@@ -216,5 +223,3 @@ def main(argv):
 
 if __name__ == "__main__":
    main(sys.argv[1:])
-
-
