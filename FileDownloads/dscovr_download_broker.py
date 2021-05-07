@@ -26,7 +26,7 @@ dscovr_mag.header['unit-col-var1'] = "deg"
 dscovr_mag.header['unit-col-var2'] = "deg"
 
 # Write data to archive:
-dscovrpath = "/srv/archive/external/esa-nasa/dscovr/collected/"
+dscovrpath = "/home/cobs/SPACE/incoming/DSCOVR/collected/"
 dscovr_plasma.write(dscovrpath, format_type="PYCDF", filenamebegins="DSCOVR_plasma_")
 dscovr_mag.write(dscovrpath, format_type="PYCDF", filenamebegins="DSCOVR_mag_")
 
