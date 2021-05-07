@@ -20,7 +20,6 @@ import socket
 
 
 coredir = os.path.abspath(os.path.join('/home/cobs/MARTAS', 'core'))
-coredir = os.path.abspath(os.path.join('/home/leon/Software/MARTAS', 'core'))
 sys.path.insert(0, coredir)
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
