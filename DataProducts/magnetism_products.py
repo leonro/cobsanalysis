@@ -307,6 +307,9 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     statusmsg[name1d] = msg
     if not msg == 'baseline correction successful':
         success = False
+        # New update - if baseline fails then k will be wrong - better just stop
+        # and return empty
+        return DataStream(), statusmsg
 
     print ("  Combining all data sets")
     print ("  ----------------------")
