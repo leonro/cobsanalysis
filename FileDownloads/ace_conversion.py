@@ -8,12 +8,13 @@
 # Adapted from /home/leon/CronScripts/saturn_wikactivity.py
 # Activated as cronjob on saturn 2015-03-02.
 #
+# rewritten by leon (2021-05-07)
 #********************************************************************
 
 from magpy.stream import read
-from magpy.database import * 
+from magpy.database import *
 import magpy.opt.cred as mpcred
-from pyproj import Geod
+#from pyproj import Geod
 import getopt
 import pwd
 import socket
@@ -40,25 +41,30 @@ def merge_ACE(streama, streamb, keys):
     return streama
 
 
-def process_ACE(datum, ace_P, ace_types, merge_variables, logger_ace, skipcompression=False, localpath='', debug=False):
+def process_ACE(datum, ace_P, ace_types, merge_variables, skipcompression=False, localpath='', debug=False):
     """
     Processes new data and adds it to old stream.
-    
+
     INPUT:
     ace_P:             (str) String describing data type: '1m' or '5m'
     ace_types   :       (list) List of type for type, e.g. ["swepam" and "mag"]
     marge_variables:    (list) Variables to merge from type 2 into 1, e.g.:
                         ['x','y','z','f','t1','t2']
     """
-    
+
     print("Processing {} data for {} ...".format(ace_P,datum))
     newday = False
-    
+
     # Read current data
+    if debug:
+        print (" Accessing {}".format(os.path.join(localpath,'raw','{}_ace_{}_{}.txt'.format(datum, ace_types[0], ace_P))))
     ace_stream1 = read(os.path.join(localpath,'raw','{}_ace_{}_{}.txt'.format(datum, ace_types[0], ace_P)))
     ace_stream2 = read(os.path.join(localpath,'raw','{}_ace_{}_{}.txt'.format(datum, ace_types[1], ace_P)))
     if not ace_stream1.length()[0] > 0 and not ace_stream2.length()[0] > 0:
         print (" No ACE data found - aborting")
+    else:
+        print ("{}: got {} datapoints".format(ace_types[0],ace_stream1.length()[0]))
+        print ("{}: got {} datapoints".format(ace_types[1],ace_stream2.length()[0]))
 
     lastval = num2date(ace_stream1.ndarray[0][-1])
     today = datetime.strftime(lastval, "%Y-%m-%d")
@@ -85,29 +91,36 @@ def process_ACE(datum, ace_P, ace_types, merge_variables, logger_ace, skipcompre
             lastfile = False
 
     # Merging streams wrt time with no interpolation:
-    ace_data = merge_ACE(ace_stream1, ace_stream2, merge_variables)
+    #ace_data = merge_ACE(ace_stream1, ace_stream2, merge_variables)
+    ace_data = mergeStreams(ace_stream1, ace_stream2, keys=merge_variables)
+
+
+    print (ace_data.length()[0])
 
     if lastfile:
          append == True
          for key in merge_variables+['var1','var2','var3']:
              keyind = KEYLIST.index(key)
              if len(ace_last.ndarray[keyind]) == 0:
-                 print keyind, len(ace_last.ndarray[keyind])
+                 if debug:
+                     print (keyind, len(ace_last.ndarray[keyind]))
                  print("Error in data - not appending.")
                  append == False
          if append:
              ace_data = appendStreams([ace_last, ace_data])
-             
+
+    print (ace_data.length())
+
     if not debug:
       if newday == True:
-        logger_ace.info("Created new %s file. Writing last data to yesterday." % ace_P)
+        print ("Created new {} file. Writing last data to yesterday.".format(ace_P))
         ace_data.write(os.path.join(localpath,'collected'),filenamebegins="ace_%s_" % ace_P,
                 format_type='PYCDF', skipcompression=skipcompression)
       else:
         ace_data = ace_data.trim(starttime=today+"T00:00:00")
         ace_data.write(os.path.join(localpath,'collected'),filenamebegins="ace_%s_" % ace_P,
                 format_type='PYCDF', skipcompression=skipcompression) # XXX
-
+    return True
 
 def main(argv):
     version = '1.0.0'
@@ -116,6 +129,8 @@ def main(argv):
     debug=False
     stime = None
     etime = datetime.utcnow()
+    endtime = ''
+    starttime = ''
     path = '/srv/archive/external/esa-nasa/ace'
 
     try:
@@ -185,23 +200,25 @@ def main(argv):
     if endtime:
         # parse date to etime
         pass
-    
+
     if not stime:
-        datelist = [datetime.strftime(etime,"%Y%m%d")] 
+        datelist = [datetime.strftime(etime,"%Y%m%d")]
     else:
         # time range given... determine list
+        print (" Not implemented so far")
+        pass
 
     for datum in datelist:
         print ("Analyzing {}...".format(datum))
         #--------------------------------------------------------------------
         # PROCESS 1-MIN DATA
         #--------------------------------------------------------------------
-        process_ACE(datum, '1m', ['swepam', 'mag'], ['x','y','z','f','t1','t2'], logger_ace, localpath=path, debug=debug)
+        process_ACE(datum, '1m', ['swepam', 'mag'], ['x','y','z','f','t1','t2'], localpath=path, debug=debug)
 
         #--------------------------------------------------------------------
         # PROCESS 5-MIN DATA
         #--------------------------------------------------------------------
-        process_ACE(datum, '5m', ['epam', 'sis'], ['x','y'], logger_ace, skipcompression=True, localpath=path, debug=debug)
+        process_ACE(datum, '5m', ['epam', 'sis'], ['x','y'], skipcompression=True, localpath=path, debug=debug)
 
 
     statusmsg[name] = 'successfully finished'
@@ -219,5 +236,5 @@ def main(argv):
         print ("Debug selected - statusmsg looks like:")
         print (statusmsg)
 
-
-
+if __name__ == "__main__":
+   main(sys.argv[1:])

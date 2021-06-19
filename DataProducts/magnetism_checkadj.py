@@ -94,11 +94,19 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
 
     try: # assigning streamlist
         for varioinst in variolist:
+            print (" Testing variometer: {}".format(varioinst))
+            print (" --------------------------------")
             variosens = "_".join(varioinst.split('_')[:-1])
             vario = readDB(db,varioinst,starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
+            t1,t2 = vario._find_t_limits()
+            print (" Coverage from {} to {}".format(t1,t2))
             if vario.length()[0] > 0 and db:
                 vario = DoVarioCorrections(db, vario, variosens=variosens, starttimedt=endtime-timedelta(days=daystodeal))
-                vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='full',endtime=endtime)
+                pvario = config.get('primaryVario') # TODO DoBaseLine read primary instruments basevalues
+                print (pvario)
+                config['primaryVario'] = variosens
+                vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple',endtime=endtime)
+                config['primaryVario'] = pvario
                 variomin = vario.filter()
                 print ("    -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
                 streamlist.append(variomin)
@@ -132,9 +140,12 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
         print ("   -> {}".format(variochecklist))
 
     try: # getting means
-        if len(streamlist) > 0:
+        if len(streamlist) > 1:
             # Get the means
+            print (streamlist[0].ndarray[1][0])
+            print (streamlist[1].ndarray[1][0])
             meanstream = stackStreams(streamlist,get='mean',uncert='True')
+            #mp.plot(meanstream)
             mediandx = meanstream.mean('dx',meanfunction='median')
             mediandy = meanstream.mean('dy',meanfunction='median')
             mediandz = meanstream.mean('dz',meanfunction='median')
@@ -142,6 +153,9 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             maxmedian = max([mediandx,mediandy,mediandz])
             if maxmedian > 0.2:
                 msg = "variometer check - significant differences between instruments exceeding 0.2 nT - please check"
+        elif len(streamlist) > 0:
+            print ("Only one data set found")
+            msg = "variometer check failed - only one data set available"
         else:
             print ("No variometer data found")
             msg = "variometer check failed - no data found for any variometer"
