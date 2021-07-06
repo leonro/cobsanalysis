@@ -10,6 +10,6 @@ TLOG="$ANALYSIS/Logs/monthly.log"
 
 
 ###  Project applications
-python /home/cobs/ANALYSIS/Projects/geoelectric/wenner_sgo/GeoelekTimeSeries.py > $TLOG 2>&1
-python /home/cobs/ANALYSIS/Projects/ionit/iono_analysis.py > $TLOG 2>&1
+#python /home/cobs/ANALYSIS/Projects/geoelectric/wenner_sgo/GeoelekTimeSeries.py > $TLOG 2>&1
+#python /home/cobs/ANALYSIS/Projects/ionit/iono_analysis.py > $TLOG 2>&1
 # Still missing - spectral...
