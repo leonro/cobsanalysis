@@ -36,7 +36,7 @@ from acquisitionsupport import GetConf2 as GetConf
 
 
 def CreateBLVPlot(db, blvname, blvdata, starttime,endtime, plotdir, plttitle, debug=False):
-    print (" Loading absolute data...")
+    print (" Loading absolute data: {}".format(blvdata))
     absresult = read(blvdata,starttime=starttime,endtime=endtime)
     print (" -> {} data points".format(absresult.length()[0]))
     try:
@@ -67,7 +67,7 @@ def CreateBLVPlot(db, blvname, blvdata, starttime,endtime, plotdir, plttitle, de
     return caption
 
 
-def GetFailed(analyzepath,debug=False):
+def GetFailed(analyzepath,endtime,debug=False):
     onlyfiles = [f for f in listdir(analyzepath) if isfile(join(analyzepath, f))]
     print ("FAILED ANALYSES: {}".format(onlyfiles))
     failedmsg = ''
@@ -196,7 +196,7 @@ def main(argv):
 
     # 4. read file list of *.txt files remaining in DI/analyse
     # ###########################
-    failedmsg = GetFailed(analyzepath,debug=debug)
+    failedmsg = GetFailed(analyzepath, endtime, debug=debug)
 
     # 5. send all info to telegramchannel
     # ###########################
