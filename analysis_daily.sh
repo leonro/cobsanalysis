@@ -28,8 +28,12 @@ $PYTHONPATH /home/cobs/ANALYSIS/Projects/gamma/gamma.py -p /srv/projects/gamma/ 
 
 $DATE >> $TLOG
 
-$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/magnetism_checkadj.py
+$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/magnetism_checkadj.py -c /home/cobs/CONF/wic.cfg
 
 $DATE >> $TLOG
 
-$PYTHONPATH /home/cobs/ANALYSIS/FileUploads/file_upload_qd.py >> $TLOG
+#$PYTHONPATH /home/cobs/ANALYSIS/FileUploads/file_upload_qd.py >> $TLOG
+
+$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/flagging.py -c /home/cobs/CONF/wic.cfg -j upload,clean -p /srv/archive/flags/uploads/  >> $TLOG
+
+$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/logfiledates.py -c /home/cobs/CONF/wic.cfg -p /srv/archive/WIC/DI/raw/ -s "*A16_WIC.txt" -a 2 -i day -l autodif >> $TLOG
