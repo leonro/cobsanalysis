@@ -116,6 +116,7 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
         search = 'SensorID LIKE "{}"'.format(sourcetable)
         senslist = dbselect(db, 'DataID', 'DATAINFO',search)
         sens=[]
+        sens2=[]
         for sensor in senslist:
             if source == 'database':
                 if debug:
@@ -127,11 +128,15 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
                 if not last2:
                     last2 = last
                 if last and (getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime):
-                    sens.append(sensor)
+                    #sens.append(sensor)
+                    sens2.append([sensor,getstringdate(last[0])])
                     if debug:
                         print ("     -> valid data for sensor {}".format(sensor))
             else:
                 sens.append(sensor)
+
+        # sort sens2 so that the one with the latest record is last
+        sens = [el[0] for el in sorted(sens2, key=lambda x: x[1])]
 
 
         datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
@@ -665,6 +670,36 @@ def RainSource(datastream, diff=0.1, source='bucket', debug=False):
     return datastream
 
 
+def dbtableexists(db,tablename):
+    """
+    DESCRIPTION
+        check whether a table existis or not
+    VARIABLES:
+        db   :    a link to a mysql database
+        tablename  :  the table to be searched (%tablename%)
+                      e.g.  MyTable  wil find MyTable, NOTMyTable, OhItsMyTableIndeed
+    RETURNS
+        True : if one or more table with %tablename% are existing
+        False : if tablename is NOT found in database db
+    APPLICATION
+        db = mysql.connect(...)
+        return dbtableexists(db,'MyTable') 
+    """
+    n = 0
+    sql = "SHOW TABLES LIKE '%{}%'".format(tablename)
+
+    cursor = db.cursor()
+    try:
+        n = cursor.execute(sql)
+    except:
+        pass
+    if n > 0:
+        return True
+    else:
+        return False
+
+
+
 def ExportData(datastream, onlyarchive=False, config={}):
 
     meteofilename = 'meteo-1min_'
@@ -687,9 +722,12 @@ def ExportData(datastream, onlyarchive=False, config={}):
                 datastream.header['DataID'] = 'METEOSGO_adjusted_0001_0001'
                 datastream.header['SensorGroup'] = 'services'
                 # check if table exists... if not use:
-                writeDB(dbw,datastream,tablename='METEOSGO_adjusted_0001_0001')
-                # else use
-                #writeDB(dbw,datastream, tablename=...)
+                tablename='METEOSGO_adjusted_0001_0001'
+                if dbtableexists(dbw,tablename):
+                    writeDB(dbw,datastream,tablename=tablename)
+                else:
+                    # Here the basic header info in DATAINFO and SENSORS will be created
+                    writeDB(dbw,datastream)
                 print ("  -> METEOSGO_adjusted written to DB {}".format(dbel))
         success = True
     except:

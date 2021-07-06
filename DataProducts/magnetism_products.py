@@ -87,6 +87,16 @@ def ValidityCheckDirectories(config={},statusmsg={}, debug=False):
     qpath = config.get('quasidefinitivepath')
     figpath = config.get('magfigurepath')
     dipath = config.get('dipath')
+    dbcreds = config.get('dbcredentials')
+    if not isinstance(dbcreds,list):
+        dbcreds = [dbcreds]
+    try:
+        # Asuming dbpasswf is also good for mounting
+        dbcred = dbcreds[0] # only primary
+        dbpasswd = mpcred.lc(dbcred,'passwd')
+    except:
+        dbpasswd=''
+
 
     def umount(path,pwd):
         """usage: umount("/srv/archive")"""
