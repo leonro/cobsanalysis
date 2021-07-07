@@ -38,6 +38,7 @@ from acquisitionsupport import GetConf2 as GetConf
 def CreateBLVPlot(db, blvname, blvdata, starttime,endtime, plotdir, plttitle, debug=False):
     print (" Loading absolute data: {}".format(blvdata))
     absresult = read(blvdata,starttime=starttime,endtime=endtime)
+    absresult = absresult.remove_flagged()
     print (" -> {} data points".format(absresult.length()[0]))
     try:
         blvflagname = blvname.replace("comp","").replace(".txt","")
