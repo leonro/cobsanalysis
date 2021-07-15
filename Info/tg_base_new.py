@@ -53,7 +53,7 @@ def CreateBLVPlot(db, blvname, blvdata, starttime,endtime, plotdir, plttitle, de
         absresult = absresult._drop_nans('dx')
         absresult = absresult._drop_nans('dy')
         absresult = absresult._drop_nans('dz')
-        print (" -> {} data points".format(absresult.length()[0]))
+        print (" -> {} valid data points".format(absresult.length()[0]))
         func = absresult.fit(['dx','dy','dz'],fitfunc='spline', knotstep=0.3)
         print (" Saving to {}".format(plotdir))
         if not debug:
@@ -169,10 +169,9 @@ def main(argv):
     dipath = os.path.join(config.get('dipath'),'..')
     analyzepath = os.path.join(dipath,'analyze')
     pier = config.get('primarypier')
-    plotdir = config.get('magfigurepath')
+    if config.get('temporarygraphs'):
+        plotdir = config.get('temporarygraphs')
 
-    #priminst = '/home/cobs/ANALYSIS/Logs/primaryinst.pkl'
-    plotdir = '/home/cobs/ANALYSIS/Info/plots'
     caption = ''
 
 

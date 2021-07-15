@@ -340,6 +340,7 @@ def main(argv):
                 if len(keyvalue) == 2:
                     offset[keyvalue[0]] = float(keyvalue[1])
         except:
+            print ("Offset could not be extracted - error with encoding ?")
             offset = {}
 
     if settime:
