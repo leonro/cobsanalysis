@@ -70,9 +70,14 @@ PREREQUISITES
 PARAMETERS
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
 
+OUTPUT
+    writes to current data into the data file 'current data' as defined in 
+    the configuration file
+
 APPLICATION
     PERMANENTLY with cron:
         python getprimary.py -c /etc/marcos/analysis.cfg
+
 
 ### 3.2 flagging.py
 
@@ -103,6 +108,10 @@ Option | Name | Type |  Description
 -p | path        |   string  |  upload - path to upload directory
 -s | sensor      |   string  |  delete - sensor of which data is deleted
 -o | comment     |   string  |  delete - flag comment for data sets to be deleted
+
+OUTPUT
+    write flags - to database etc
+
 
 APPLICATION
     PERMANENT with cron:
@@ -137,8 +146,10 @@ PARAMETERS
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
     -j joblist             :   string  :  comma separated list like adjusted,quasidefinitive,addon
     -l loggername          :   string  :  name for the loggerfile
-    -e endtime             :   date    :  date until analysis is performed
-                                          default "datetime.utcnow()"
+    -e endtime             :   date    :  date until analysis is performed, default "datetime.utcnow()"
+
+OUTPUT
+
 
 APPLICATION
     PERMANENTLY with cron:
