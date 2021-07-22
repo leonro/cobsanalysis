@@ -130,6 +130,13 @@ def main(argv):
     except:
         statusmsg[name1] = 'database failed'
 
+    proxy = ''
+    prox = config.get('proxy','')
+    proxport = config.get('proxyport')
+    if prox:
+        proxy = "--proxy http://{}:{}".format(prox,proxport)
+    
+
     (startlong, startlat) = dbcoordinates(db, 'A2')
     if 'AT' in joblist:
       try:
@@ -183,7 +190,7 @@ def main(argv):
             print ("   - Debug selected: ")
             print ("     last line of AT {}".format(stb.length()))
 
-        print ("Austrian data has been added")
+        print (" -> Austrian data has been added to all databases")
         print ("----------------------------")
         #statusmsg[namea] = 'Austrian data added'
         errorcntAT = 0
@@ -194,7 +201,12 @@ def main(argv):
         valdict['seismoATdata'] = [uploadtime,'']
         fulldict[u'logging'] = valdict
         if not debug:
+            print (" Writing update time to current data")
             writecurrentdata(currentvaluepath, fulldict)
+            print (" -> Updating time has been written to current data")
+            print ("----------------------------")
+        print (" DONE")
+        print ("----------------------------")
       except:
         errorcntAT += 1
         if errorcntAT > 1:
@@ -219,7 +231,7 @@ def main(argv):
         statusmsg[nameb] = 'NEIC data added'
         if not sta.length()[0] > 0: # only load it once
             print (" - getting NEIC data from usgs")
-            os.system('curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.csv -s > {}'.format(path))
+            os.system('curl https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.csv {}-s > {}'.format(proxy,path))
             sta = read(path)
         sta.header['DataFormat'] = 'NEICCSV'
         #sta.header['DataSource'] = 'US National Earthquake information center'
