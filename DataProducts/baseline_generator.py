@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding=utf-8
+#-*- coding: utf-8 -*-
 
 """
 DESCRIPTION
@@ -68,6 +68,7 @@ def GetDIF(config={}, settime=datetime.utcnow(), offset=None,  debug=False):
     print (" Getting Reference DIF values for your location from IGRF and F record")
     offsets = {"D" : 0.0, "I": 0.0, "Figrf" : 0.0, "Flocal" : 0.0 }
     if offset:
+        print ("offset provided", offset)
         for off in offset:
             if off in offsets:
                 offsets[off] = offset.get(off)
@@ -164,7 +165,7 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=N
         print (" Reading from archive files ...")
         path = os.path.join(config.get('archivepath'),sensorid,dataid,'*')
         print (path)
-        stream = read(path, starttime=starttime, endtime=endtime) 
+        stream = read(path, starttime=starttime, endtime=endtime)
     else:
         print (" Reading from database ...")
         stream = readDB(db,dataid,starttime=starttime, endtime=endtime)
@@ -201,8 +202,8 @@ def GetDeltas(config={}, settime=datetime.utcnow(), fieldvector=[0,0,0], debug=F
     Dv = stream.ndarray[2][idx]
     Zv = stream.ndarray[3][idx]
     absvector = IDF2HDZ(fieldvector)
-    dH = absvector[0]-Hv 
-    dD = absvector[1]-Dv 
+    dH = absvector[0]-Hv
+    dD = absvector[1]-Dv
     dZ = absvector[2]-Zv
     if debug:
         print ("   -> obtained the following basevalues:")
@@ -335,13 +336,18 @@ def main(argv):
     if off:
         try:
             offlist = off.split(',')
+            print ("OFFSETS", offlist)
             for el in offlist:
                 keyvalue = el.split(':')
+                print (keyvalue, len(keyvalue))
                 if len(keyvalue) == 2:
-                    offset[keyvalue[0]] = float(keyvalue[1])
+                    key = keyvalue[0]
+                    val = keyvalue[1].replace('\U00002013', '-') # take care of unicode dash in negative numbers
+                    offset[key] = float(val)
         except:
-            print ("Offset could not be extracted - error with encoding ?")
+            print ("Error with offset identification - check encoding")
             offset = {}
+    print ("Got offset", offset)
 
     if settime:
         try:
