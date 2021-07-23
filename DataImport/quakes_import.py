@@ -29,8 +29,8 @@ def getcurrentdata(path):
     >>> fulldict[u'magnetism'] = valdict
     >>> writecurrentdata(path, fulldict) 
     """
-    if os.path.isfile(currentvaluepath):
-        with open(currentvaluepath, 'r') as file:
+    if os.path.isfile(path):
+        with open(path, 'r') as file:
             fulldict = json.load(file)
         return fulldict
     else:
@@ -43,9 +43,27 @@ def writecurrentdata(path,dic):
     >>> see getcurrentdata
     >>>
     """
-    with open(currentvaluepath, 'w',encoding="utf-8") as file:
+    with open(path, 'w',encoding="utf-8") as file:
         file.write(unicode(json.dumps(dic)))
 
+def fix_datastream_for_db(datastream):
+    """
+    DESCRIPTION
+       Reads a data stream and converts all coulumns in data types necessary for writing to DB
+       Please note: this method will drop non-ascii characters from strings which will change
+       names of locations.
+    IMPORTANT
+       this method changes the supplied datastream
+    """
+    # 1. convert values forl NUMERICAL columns
+    for idx,key in enumerate(KEYLIST):
+        if key in NUMKEYLIST:
+            datastream.ndarray[idx] = np.asarray([float(elem) if not elem == '' else float(nan) for elem in datastream.ndarray[idx]])
+            datastream.ndarray[idx] = datastream.ndarray[idx].astype(float64)
+        else:
+            datastream.ndarray[idx] = np.asarray([str(el).encode().decode('ascii', 'ignore') for el in datastream.ndarray[idx]])
+            datastream.ndarray[idx] = datastream.ndarray[idx].astype(object)
+    return datastream
 
 
 def main(argv):
@@ -129,13 +147,14 @@ def main(argv):
         connectdict = config.get('conncetedDB')
     except:
         statusmsg[name1] = 'database failed'
+    print (" -> connected databases: {}".format(connectdict))
 
     proxy = ''
     prox = config.get('proxy','')
     proxport = config.get('proxyport')
     if prox:
-        proxy = "--proxy http://{}:{}".format(prox,proxport)
-    
+        proxy = "--proxy http://{}:{} ".format(prox,proxport)
+
 
     (startlong, startlat) = dbcoordinates(db, 'A2')
     if 'AT' in joblist:
@@ -177,21 +196,22 @@ def main(argv):
             print ("  - Found :", stb.length())
         if not debug:
             dbupdateDataInfo(db, 'QUAKES', stb.header)
-        for idx,key in enumerate(KEYLIST):
-            if key in NUMKEYLIST:
-                stb.ndarray[idx] = np.asarray([float(elem) if not elem == '' else float(nan) for elem in stb.ndarray[idx]])
-                stb.ndarray[idx] = stb.ndarray[idx].astype(float64)
+
+        stb = fix_datastream_for_db(stb)
+
         if not debug:
             for dbel in connectdict:
                 dbt = connectdict[dbel]
                 print ("  -- Writing AT Quakes to DB {}".format(dbel))
-                writeDB(db,stb,tablename='QUAKES',StationID='SGO')
+                writeDB(dbt,stb,tablename='QUAKES',StationID='SGO')
+                print ("     -> Done")
         else:
             print ("   - Debug selected: ")
             print ("     last line of AT {}".format(stb.length()))
 
         print (" -> Austrian data has been added to all databases")
         print ("----------------------------")
+        print (" Now writing last AT update into current value") 
         #statusmsg[namea] = 'Austrian data added'
         errorcntAT = 0
         # update upload time in current data file
@@ -225,7 +245,7 @@ def main(argv):
                 statusmsg[namea] = 'Austrian data failed'
 
     if 'NEIC' in joblist:
-      try:
+        #try:
         print ("Downloading NEIC data")
         print ("---------------------")
         statusmsg[nameb] = 'NEIC data added'
@@ -259,24 +279,25 @@ def main(argv):
         # insert into DATAINFO (DataID, SensorID) VALUES ('QUAKES','QUAKES');
         sta.header['StationID'] = 'SGO'
         sta = sta.extract('f',5,'>=')
+        print (" got {} quakes above magnitude 5".format(sta.length()[0]))
         if not debug:
-            dbupdateDataInfo(db, 'QUAKES', stb.header)
-        for idx,key in enumerate(KEYLIST):
-            if key in NUMKEYLIST:
-                sta.ndarray[idx] = np.asarray([float(elem) if not elem == '' else float(nan) for elem in sta.ndarray[idx]])
-                sta.ndarray[idx] = sta.ndarray[idx].astype(float64)
+            dbupdateDataInfo(db, 'QUAKES', sta.header)
+
+        sta = fix_datastream_for_db(sta)
 
         if not debug:
             for dbel in connectdict:
                 dbt = connectdict[dbel]
                 print ("  -- Writing NEIC Quakes to DB {}".format(dbel))
-                writeDB(db,sta,tablename='QUAKES',StationID='SGO')
+                writeDB(dbt,sta,tablename='QUAKES',StationID='SGO')
+                print ("    -> done")
         else:
             print ("   - Debug selected: ")
             print ("     last line of NEIC {}".format(stb.length()))
 
         print ("NEIC data has been added")
         print ("----------------------------")
+        print (" Now writing last NEIC update into current value")
         #statusmsg[nameb] = 'NEIC data added'
         errorcntNE = 0
         # update upload time in current data file
@@ -287,6 +308,7 @@ def main(argv):
         fulldict[u'logging'] = valdict
         if not debug:
             writecurrentdata(currentvaluepath, fulldict)
+        """
       except:
         print ("  error encountered")
         errorcntNE+=1
@@ -302,7 +324,7 @@ def main(argv):
                 message = True
             if message:
                 statusmsg[nameb] = 'NEIC data failed'
-
+        """
     print ("------------------------------------------")
     print ("  neic_download finished")
     print ("------------------------------------------")
