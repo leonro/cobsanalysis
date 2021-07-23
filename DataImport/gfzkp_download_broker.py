@@ -13,7 +13,7 @@ import sys
 from magpy.stream import *
 from magpy.transfer import *
 
-kppath = '/home/cobs/SPACE/incoming/gfz/kp'
+kppath = '/home/cobs/SPACE/incoming/GFZ/kp'
 
 # READ GFZ KP DATA:
 # -----------------

@@ -30,6 +30,9 @@ dscovrpath = "/home/cobs/SPACE/incoming/DSCOVR/collected/"
 dscovr_plasma.write(dscovrpath, format_type="PYCDF", filenamebegins="DSCOVR_plasma_")
 dscovr_mag.write(dscovrpath, format_type="PYCDF", filenamebegins="DSCOVR_mag_")
 
+print ("DSCOVR data written successfully.")
+print ("-----------------------------")
+print ("SUCCESS")
 
 """
 downloaddict = {"dscovr_plasma" :  {"source"="http://services.swpc.noaa.gov/products/solar-wind/plasma-3-day.json", 

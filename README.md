@@ -363,8 +363,48 @@ APPLICATION
 ### 6.5 current\_weatherchanges.py
 
 
-## 7. Descriptions of FileDownloads scripts
+## 7. Descriptions of DataImport scripts
 
-### 7.1 neic\_download.py
+### 7.1 gfzkp\_download\_broker.py
+
+Reads Kp activity indicies from Geoforschungszentrum Potsdam (GFZ) using MagPy and stores this data as CDF files.
+
+IMPORTANT:
+This script is running on the data broker. CDF files are then transferred to primary and secondary servers using "file_download" routines running on the specific server.
+
+MONITORING:
+This output of the script should be written to a log file. Using "monitor.py" from MARTAS, the log file can be tested for SUCCESS messages.
+
+### 7.2 dscovr\_download\_broker.py
+
+IMPORTANT:
+This script is running on the data broker. CDF files are then transferred to primary and secondary servers using "file_download" routines running on the specific server.
+
+MONITORING:
+This output of the script should be written to a log file. Using "monitor.py" from MARTAS, the log file can be tested for SUCCESS messages.
+
+
+### 7.3 quakes\_import.py
+
+Please note: This script needs to access the internet (and not the BROKER)
+
+DESCRIPTION
+   Downloads Earthquake data from two online sources:
+      AT: austrian seismological service
+      NEIC: National earthquake information center (US)
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -p path                :   string  :  path where to temporarly save the neic raw data
+
+APPLICATION
+    PERMANENTLY with cron:
+        python3 python quakes_import.py -c /home/user/CONF/wic.cfg -p /srv/archive/external/neic/neic_quakes.d
+
 
 

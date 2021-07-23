@@ -18,6 +18,26 @@ from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
 
 
+"""
+DESCRIPTION
+   Downloads Earthquake data from two online sources:
+      AT: austrian seismological service
+      NEIC: National earthquake information center (US)
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -p path                :   string  :  path where to temporarly save the neic raw data
+
+APPLICATION
+    PERMANENTLY with cron:
+        python3 python quakes_import.py -c /home/user/CONF/wic.cfg -p /srv/archive/external/neic/neic_quakes.d
+"""
+
 def getcurrentdata(path):
     """
     usage: getcurrentdata(currentvaluepath)
@@ -83,20 +103,20 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"hc:e:j:p:s:o:D",["config=","endtime=","joblist=","debug="])
     except getopt.GetoptError:
-        print ('neic_download.py -c <config>')
+        print ('quakes_import.py -c <config>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print ('-------------------------------------')
             print ('Description:')
-            print ('-- neic_download.py will determine the primary instruments --')
+            print ('-- quakes_import.py will determine the primary instruments --')
             print ('-----------------------------------------------------------------')
             print ('detailed description ..')
             print ('...')
             print ('...')
             print ('-------------------------------------')
             print ('Usage:')
-            print ('python neic_download.py -c <config>')
+            print ('python quakes_import.py -c <config>')
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
@@ -105,7 +125,7 @@ def main(argv):
             print ('-p            : path for neic data')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python neic_download.py -c /etc/marcos/analysis.cfg -p /home/cobs/ANALYSIS/Seismo/neic_quakes.d')
+            print ('python quakes_import.py -c /etc/marcos/analysis.cfg -p /home/cobs/ANALYSIS/Seismo/neic_quakes.d')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -326,7 +346,7 @@ def main(argv):
                 statusmsg[nameb] = 'NEIC data failed'
         """
     print ("------------------------------------------")
-    print ("  neic_download finished")
+    print ("  quakes_import finished")
     print ("------------------------------------------")
     print ("SUCCESS")
 
