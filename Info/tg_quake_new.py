@@ -43,8 +43,8 @@ def get_quakes(db, limit=200, debug=False):
         if lastquakes and len(lastquakes) > 0:
             print (" -> last one from {}".format(lastquakes[0][0]))
     return lastquakes
-    
-def select_relevant_quakes(lastquakes, criteria={}, debug=False):    
+
+def select_relevant_quakes(lastquakes, criteria={}, debug=False):
     print ("Now select all relevant quakes")
     print ("------------------------------")
     print ("Please note:")
@@ -71,7 +71,7 @@ def select_relevant_quakes(lastquakes, criteria={}, debug=False):
     """
 
 
-    criteria = {'cond1' :  {'radius':50},
+    criteria = {'cond1' :  {'radius':100},
                 'cond2' : {'magn':2.99, 'lat':[46.35,49.03], 'long':[9.52,17.18]},
                 'cond3' : {'magn':4.9, 'radius':500},
                 'cond4' : {'magn':5.9, 'radius':1500},
@@ -84,52 +84,65 @@ def select_relevant_quakes(lastquakes, criteria={}, debug=False):
         magn = float(quake[4])
         typus = quake[6]
         criteriamet = False
-        condmetlist = []
+        conditionssum = []
         for cond in criteria:
-            print (cond)
-            print (criteria.get(cond))
+            condmetlist = []
+            if debug:
+                print ("Testing condition", cond)
+                print (criteria.get(cond))
             condition = criteria.get(cond)
-            crad = condition.get('radius',99999)
+            #print (" -> amount of individual criteria: {}".format(len(condition)))
+            crad = condition.get('radius',1)
+            #print ("Test",rad,crad)
             if rad < crad:
                 condmetlist.append(cond)
-            clati = condition.get('lat',[-90,90])
+            clati = condition.get('lat',[1000,1200])
             if lati >= clati[0] and lati <= clati[1]:
                 condmetlist.append(cond)
-            clongi = condition.get('lon',[-180,360])
+            clongi = condition.get('lon',[998,999])
             if longi >= clongi[0] and longi <= clongi[1]:
                 condmetlist.append(cond)
-            cmagn = condition.get('magn',0)
+            #print (" condmetlist looks like", condmetlist)
+            cmagn = condition.get('magn',999)
+            #print ("Test magn",magn,cmagn)
             if magn > cmagn:
                 condmetlist.append(cond)
-            ctypus = condition.get('type','all')
+            #print (" condmetlist looks like", condmetlist)
+            ctypus = condition.get('type','none')
             if typus.find(ctypus) >= 0 or ctypus == 'all':
                 condmetlist.append(cond)
-        condmetlist = list(set(condmetlist))
+            if debug:
+                print (" condmetlist looks like", condmetlist)
+            if len(condmetlist) == len(condition):
+                if debug:
+                    print (" -> all requested conditions for {} met".format(cond))
+                conditionssum.append(cond)
+        conditionssum = list(set(conditionssum))
         if debug:
             print ( " Testing quake: {}".format(quake))
-            print ( "  -> Conditions met: {}".format(condmetlist))
-        if len(condmetlist) > 0:
-            criteriamet = False
+            print ( "  -> Conditions met: {}".format(conditionssum))
+        if len(conditionssum) > 0:
+            criteriamet = True
         return criteriamet
-            
-                        
+
     for quake in lastquakes:
         if _test_criteria(quake,criteria, debug=debug):
             relevantquakes.append(quake)
 
     if debug:
-        print (" Found {} relevant (for COBS instrumentation) earthquakes".format(len(relevantquakes))
+        print (" Found {} relevant (for COBS instrumentation) earthquakes".format(len(relevantquakes)))
+    #sys.exit()
     return relevantquakes
-    
+
 
 def new_quakes(relquakes, memorypath='',debug=False):
 
-    # continue only if list length > 0 
-    if len(relevantquakes) > 0:
+    # continue only if list length > 0
+    if len(relquakes) > 0:
         print ("Now get last record from temporary folder")
         try:
             lq = np.load(memorypath)
-            ind, tmp = np.where(np.asarray(relevantquakes)==lq[0])
+            ind, tmp = np.where(np.asarray(relquakes)==lq[0])
             ind = ind[0]
         except:
             ind = 1
@@ -141,7 +154,7 @@ def new_quakes(relquakes, memorypath='',debug=False):
 
 
 def send_quake_message(relevantquakes, tgconfig='path/to/tg.cdf', memorypath='', debug=False):
-    
+
     for quake in relevantquakes:
         print ("Creating message:")
         quakemsg = "{} at *{}* UTC\n".format(quake[0].split()[0],quake[0].split()[1])
@@ -191,8 +204,7 @@ def write_current_data(relevantquakes,currentvaluepath,debug=False):
             with open(currentvaluepath, 'w',encoding="utf-8") as file:
                 file.write(unicode(json.dumps(fulldict))) # use `json.loads` to do the reverse
                 print ("Current quake data written successfully to {}".format(currentvaluepath))
-    
-    
+
 
 
 def main(argv):
@@ -277,7 +289,7 @@ def main(argv):
     currentvaluepath = config.get('currentvaluepath')
     if not channelconfig:
         channelconfig = config.get('notificationconfig')
-            
+
     # 3. get quakes:
     # ###########################
     msg = 'problem with basic list generation'
