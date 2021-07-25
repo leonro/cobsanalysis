@@ -106,7 +106,8 @@ def select_relevant_quakes(lastquakes, criteria={}, debug=False):
                 condmetlist.append(cond)
         condmetlist = list(set(condmetlist))
         if debug:
-            print ( " Conditions met: {}".format(condmetlist))
+            print ( " Testing quake: {}".format(quake))
+            print ( "  -> Conditions met: {}".format(condmetlist))
         if len(condmetlist) > 0:
             criteriamet = False
         return criteriamet
@@ -116,6 +117,8 @@ def select_relevant_quakes(lastquakes, criteria={}, debug=False):
         if _test_criteria(quake,criteria, debug=debug):
             relevantquakes.append(quake)
 
+    if debug:
+        print (" Found {} relevant (for COBS instrumentation) earthquakes".format(len(relevantquakes))
     return relevantquakes
     
 
