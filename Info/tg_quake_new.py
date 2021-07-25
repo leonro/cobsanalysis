@@ -137,6 +137,8 @@ def select_relevant_quakes(lastquakes, criteria={}, debug=False):
 
 def new_quakes(relquakes, memorypath='',debug=False):
 
+    print (" relevant quakes", len(relquakes))
+
     # continue only if list length > 0
     if len(relquakes) > 0:
         print ("Now get last record from temporary folder")
@@ -145,11 +147,13 @@ def new_quakes(relquakes, memorypath='',debug=False):
             ind, tmp = np.where(np.asarray(relquakes)==lq[0])
             ind = ind[0]
         except:
-            ind = 1
+            ind = len(relquakes)
 
     if ind > 0:
         print ("Found new earthquakes")
         relevantquakes = relquakes[:ind]
+    print (" after checking memory", len(relevantquakes))
+
     return relevantquakes
 
 
@@ -172,7 +176,7 @@ def send_quake_message(relevantquakes, tgconfig='path/to/tg.cdf', memorypath='',
         if not debug:
             print ("Sending message to Telegram")
             telegram_send.send(messages=[quakemsg+"\n"+maplink],conf=tgconf,parse_mode="markdown")
-            np.save('/tmp/lastquake', relevantquakes[0])
+            np.save(memorypath, quake)
         else:
             print (" DEBUG selected - not sending and saving anything")
 
