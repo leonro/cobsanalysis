@@ -22,4 +22,5 @@ Logs/.magpyanalysismonitor.pkl
 Logs/primaryinst.pkl
 Logs/weekly.log
 Seismo/neic_quakes.d
+old/*
 

@@ -269,9 +269,12 @@ def main(argv):
         statusmsg[name1] = 'database failed'
 
     # SOME DEFINITIONS:
-    memorypath = '/tmp/lastquake.npy'
-    currentvaluepath = '/srv/products/data/current.data' # is in config
-    
+    temporarypath = config.get('temporarydata')
+    memorypath = os.path.join(temporarypath,'lastquake.npy')
+    currentvaluepath = config.get('currentvaluepath')
+    if not channelconfig:
+        channelconfig = config.get('notificationconfig')
+            
     # 3. get quakes:
     # ###########################
     try:

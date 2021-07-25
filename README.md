@@ -19,14 +19,12 @@ baseline\_generator.py        | DataProducts    | to daily          | gam.cfg/sw
 tg\_pha.py                    | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
-tg\_base.py                   | Info            | analysis_weekly   |                |  MARTAS telegram  |                | 
+tg\_base.py                   | Info            | analysis_weekly   | CONF/wic.cfg   |  MARTAS telegram  |                | py3 
 logfiledate.py                | Info            | analysis_weekly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
-neic\_download.py             | FileDownloads   |                   |                |  MARTAS telegram  |                | py2 ... py3
-dscovr\_download.py           | FileDownloads   |                   | -              |  MARTAS telegram  |                | py2 ... py3
-gfzkp\_download.py            | FileDownloads   |                   | -              |  MARTAS telegram  |                | py2 ... py3
-merkur\_download.py           | FileDownloads   |                   |                |  MARTAS telegram  |                | replace with rsync
-ace\_download_min.py          | FileDownloads   |                   |                |  MARTAS telegram  |                | 
-ace\_download_daily.py        | FileDownloads   |                   |                |  MARTAS telegram  |                | 
+quakes\_import.py             | DataImport      |                   | CONF/wic.cfg   |  MARTAS telegram  |                | py3
+dscovr\_download\_broker.py   | DataImport      |                   | -              |  Logfile monitor  |                | running on broker
+gfzkp\_download\_broker.py    | DataImport      |                   | -              |  Logfile monitor  |                | running on broker
+ace\_conversion.py            | DataImport      |                   |                |  MARTAS telegram  |                | 
 mag\_graph.py                 | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 weather\_graph.py             | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
 general\_graph.py             | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | py2 and py3
