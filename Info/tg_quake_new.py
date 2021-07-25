@@ -98,8 +98,8 @@ def select_relevant_quakes(lastquakes, criteria={}, debug=False):
             clongi = condition.get('lon',[-180,360])
             if longi >= clongi[0] and longi <= clongi[1]:
                 condmetlist.append(cond)
-            cmag = condition.get('magn',0)
-            if mag > cmag:
+            cmagn = condition.get('magn',0)
+            if magn > cmagn:
                 condmetlist.append(cond)
             ctypus = condition.get('type','all')
             if typus.find(ctypus) >= 0 or ctypus == 'all':
@@ -224,7 +224,7 @@ def main(argv):
             print ('-t (required) : telegram channel configuration')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python tg_base.py -c /etc/marcos/analysis.cfg -t /etc/marcos/telegram.cfg')
+            print ('python tg_base.py -c /etc/marcos/wic.cfg -t /etc/marcos/telegram.cfg')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -277,12 +277,15 @@ def main(argv):
             
     # 3. get quakes:
     # ###########################
+    msg = 'problem with basic list generation'
     try:
-        lastquakes = get_quakes(db, debug=debug):
+        lastquakes = get_quakes(db, debug=debug)
+        msg = 'problem with selecting relavant quakes'
         relevantquakes = select_relevant_quakes(lastquakes, criteria={}, debug=debug)
+        msg = 'problem with new quakes'
         relevantquakes = new_quakes(relevantquakes, memorypath=memorypath, debug=debug)
     except:
-        statusmsg[name1] = 'problem with list generation'
+        statusmsg[name1] = msg
         relevantquakes = []
 
     # 4. sending notification:
