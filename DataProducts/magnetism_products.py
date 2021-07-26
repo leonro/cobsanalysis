@@ -47,7 +47,7 @@ from subprocess import check_output   # used for checking whether send process a
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
-from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata
+from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata, load_current_data_sub
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
@@ -392,25 +392,21 @@ def KValues(datastream,config={},statusmsg={}, debug=False):
             # Update K value in current value path
             print ("     -- updating current data contents")
             if os.path.isfile(currentvaluepath):
-                with open(currentvaluepath, 'r') as file:
-                    fulldict = json.load(file)
-                    valdict = fulldict.get('magnetism')
-                    ## set k values and k time
-                    valdict['k'] = [kval,'']
-                    valdict['k-time'] = [kvaltime,'']
-                    fulldict[u'magnetism'] = valdict
+                fulldict, valdict = load_current_data_sub(currentvaluepath, 'magnetism')
+                ## set k values and k time
+                valdict['k'] = [int(kval),'']
+                valdict['k-time'] = [kvaltime,'']
+                fulldict[u'magnetism'] = valdict
+                print ("       reading done, now writing")
                 with open(currentvaluepath, 'w',encoding="utf-8") as file:
                     file.write(unicode(json.dumps(fulldict)))
                 print ("     -- K value has been updated to {}".format(kval))
-            try:
-                if not debug:
-                    print ("     -- now writing kvals to database")
-                    for dbel in connectdict:
-                        db = connectdict[dbel]
-                        print ("     -- Writing k values to DB {}".format(dbel))
-                        writeDB(db,kvals,tablename="WIC_k_0001_0001")
-            except:
-                pass
+            if not debug:
+                print ("     -- now writing kvals to database")
+                for dbel in connectdict:
+                    db = connectdict[dbel]
+                    print ("     -- Writing k values to DB {}".format(dbel))
+                    writeDB(db,kvals,tablename="WIC_k_0001_0001")
         statusmsg[name5b] = 'determinig k successfull'
     except:
         statusmsg[name5b] = 'determinig k failed'
