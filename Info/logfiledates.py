@@ -4,6 +4,8 @@
 """
 Script to check the creation date of the latest file matching a certain structure
 in a defined directory
+
+TODO - is replaced by the monitor.py MARTAS script using the 'datafile' job.
 """ 
 
 from magpy.stream import *

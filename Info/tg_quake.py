@@ -328,32 +328,32 @@ def main(argv):
     # 3. get quakes:
     # ###########################
     msg = 'problem with basic list generation'
-    #try:
-    lastquakes = get_quakes(db, debug=debug)
-    msg = 'problem with selecting relavant quakes'
-    relevantquakes = select_relevant_quakes(lastquakes, criteria={}, debug=debug)
-    msg = 'problem with new quakes'
-    relevantquakes = new_quakes(relevantquakes, memorypath=memorypath, debug=debug)
-    #except:
-    #    statusmsg[name1] = msg
-    #    relevantquakes = []
+    try:
+        lastquakes = get_quakes(db, debug=debug)
+        msg = 'problem with selecting relavant quakes'
+        relevantquakes = select_relevant_quakes(lastquakes, criteria={}, debug=debug)
+        msg = 'problem with new quakes'
+        relevantquakes = new_quakes(relevantquakes, memorypath=memorypath, debug=debug)
+    except:
+        statusmsg[name1] = msg
+        relevantquakes = []
 
     # 4. sending notification:
     # ###########################
-    #try:
-    if len(relevantquakes) > 0:
+    try:
+        if len(relevantquakes) > 0:
             send_quake_message(relevantquakes, tgconfig=channelconfig, memorypath=memorypath, debug=debug)
-    #except:
-    #    statusmsg[name1] = 'problem sending notification'
-    #    continueeval = False
+    except:
+        statusmsg[name1] = 'problem sending notification'
+        continueeval = False
 
     # 5. writing current data
     # ###########################
-    #try:
-    if len(relevantquakes) > 0 and currentvaluepath and continueeval and not debug:
+    try:
+        if len(relevantquakes) > 0 and currentvaluepath and continueeval and not debug:
             write_current_data(relevantquakes,currentvaluepath,debug=debug)
-    #except:
-    #    statusmsg[name1] = 'problem writing current data'
+    except:
+        statusmsg[name1] = 'problem writing current data'
 
     print ("tg_quake successfully finished")
 
