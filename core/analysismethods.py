@@ -73,6 +73,26 @@ def writecurrentdata(path,dic):
         file.write(unicode(json.dumps(dic)))
 
 
+def load_current_data_sub(currentvaluepath, group):
+    """
+    Loads a speciffic group of  current data json
+    """
+    valdict = {}
+    fulldict = {}
+    if os.path.isfile(currentvaluepath):
+        # read log if exists and exentually update changed information
+        # return changes
+        with open(currentvaluepath, 'r') as file:
+            fulldict = json.load(file)
+            valdict = fulldict.get(group)
+    if not valdict:
+        valdict = {}
+    if not fulldict:
+        fulldict = {}
+
+    return fulldict, valdict
+
+
 def getstringdate(strdate):
     dbdateformat1 = "%Y-%m-%d %H:%M:%S.%f"
     dbdateformat2 = "%Y-%m-%d %H:%M:%S"

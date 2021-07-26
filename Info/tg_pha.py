@@ -2,21 +2,27 @@
 # coding=utf-8
 
 """
-MagPy - Basic Runtime tests including durations  
+MagPy - Basic Runtime tests including durations
 """
 from __future__ import print_function
 from __future__ import unicode_literals
 
-# Define packges to be used (local refers to test environment) 
+# Define packges to be used (local refers to test environment)
 # ------------------------------------------------------------
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 import magpy.opt.cred as mpcred
 from scipy.interpolate import interp1d
 import telegram_send
 # Get new data from API
-import urllib, json
+import json
+from urllib import request as urlrequest
+
+import sys
+import getopt
+import pwd
+import socket
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
@@ -26,20 +32,12 @@ from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 
 
-phamem = '/home/cobs/ANALYSIS/Logs/tg_pha.json'
-#phamem = '/tmp/tg_pha.json'  # tmp will be deletet if Pc is restarted
-
-
-'msghead':'*Erdnahes Objekt (z.B. Asteroid)*','msgnew':'Neues', 'msgupdate':'Update zu','msgfuture':'Nähert sich der Erde am','msgpast':'Näherte sich der Erde am','msgdist':'in einem Abstand von','msgsize':'Durchmesser','msgref':'Daten des'
-
-
-
-languagedict = {'deutsch': {'msghead':'*Erdnahes Objekt (z.B. Asteroid)*','msgnew':'Neues', 
+languagedict = {'deutsch': {'msghead':'*Erdnahes Objekt (z.B. Asteroid)*','msgnew':'Neues',
                             'msgupdate':'Update zu','msgfuture':'Nähert sich der Erde am',
                             'msgpast':'Näherte sich der Erde am','msgdist':'in einem Abstand von',
                             'msgsize':'Durchmesser','msgref':'Daten des','channeltype':'telegram',
                             'channelconfig':'/etc/martas/telegram.cfg'},
-                'english': {'msghead':'*Near Earth Objekt*','msgnew':'New', 
+                'english': {'msghead':'*Near Earth Objekt*','msgnew':'New',
                             'msgupdate':'Update to','msgfuture':'Approaching earth on',
                             'msgpast':'Approached earth on','msgdist':'within',
                             'msgsize':'Size','msgref':'Based on','channeltype':'telegram',
@@ -69,56 +67,64 @@ def getsize(h):
     return sizerange
 
 def download_PHA_jpl(url,proxy=None, debug = False):
-    datemax = datetime.strftime((datetime.now()+timedelta(days=730)),"%Y-%m-%d")
-    #datemax = "2018-08-31"
-    print ("Checking data until:", datemax)
-    url = "https://ssd-api.jpl.nasa.gov/cad.api?dist-max=1LD&date-min=1900-01-01&date-max={}&sort=date".format(datemax)
-    proxies = {'https': 'http://138.22.173.44:3128'}
-    response = urllib.urlopen(url,proxies=proxies)
+    data = {}
+    field = []
+    alldata = []
+    req = urlrequest.Request(url)
+    req.set_proxy(proxy, 'http')
+    response = urlrequest.urlopen(req)
     data = json.loads(response.read())
     field = data.get(u'fields')
     alldata = data.get(u'data')
-
     print ("Database containing {} datasets".format(len(alldata)))
+
     return alldata, field, data
 
-def get_PHA_mem(phamem, data, debug = False):
+def get_PHA_mem(phamem, data, field, debug=False):
     # Check existig data on disk
     try:
-        with open(phamem) as json_file:  
+        with open(phamem) as json_file:
              existdata = json.load(json_file)
         existalldata = existdata['data']
         #print (existdata['fields'].index('des'))
         #print (field.index('des'))
         existname = [elem[field.index('des')] for elem in existalldata]
-        print ("Existing data loaded ...")
+        print ("Existing data loaded (N= {})".format(len(existalldata)))
         #print ("Names: {}".format(existname))
     except:
+        print ("No PHA memory data existing so far...")
         existdata = data
         existalldata = []
         existname = []
     return existalldata, existname, existdata
 
 
-def check_new_PHA(alldata,existalldata, languagedict={}, exceptlist=[], debug = False):
+def check_new_PHA(alldata, existalldata, field, existname, languagedict={}, exceptlist=[], pastrange=2, debug=False):
     print ("Checking for new objects ...")
     for language in languagedict:
-        print (language)
+        print ("Dealing with language: ", language)
         langdic = languagedict[language]
         channelconf = langdic.get('channelconfig')
-        print (channelconfig)
-        
-        for elem in alldata:
-            aname = elem[field.index('des')]
-            # add a mail repetion two weeks before
-            if not elem in existalldata and not elem[0] in exceptlist:
-                print ("Found new data set")
-                # Add new data to list
-                existalldata.append(elem)
-                # Creating new message if approach date is in the future:
-                approachdate = datetime.strptime(elem[field.index('cd')],"%Y-%b-%d %H:%M") #TDB
-                print ("Got approachdate", approachdate)
-                if approachdate >= datetime.utcnow()-timedelta(days=2):  # ~30 secs diff between UTC and TDB
+        print (" - selected channel:", channelconf)
+
+    for elem in alldata:
+        aname = elem[field.index('des')]
+        # add a mail repetion two weeks before
+        if not elem in existalldata and not elem[0] in exceptlist:
+            print ("Found new data set")
+            print ("------------------")
+            # Add new data to list
+            existalldata.append(elem)
+            # Creating new message if approach date is in the future:
+            approachdate = datetime.strptime(elem[field.index('cd')],"%Y-%b-%d %H:%M") #TDB
+            print (" Got approachdate", approachdate)
+            if approachdate >= datetime.utcnow()-timedelta(days=pastrange):  # ~30 secs diff between UTC and TDB
+                for language in languagedict:
+                    print ("Creating message for language: ", language)
+                    langdic = languagedict[language]
+                    channelconf = langdic.get('channelconfig')
+                    print (" - selected channel:", channelconf)
+
                     msg = langdic.get('msghead')
                     msg += "\n"
                     # Create message
@@ -127,8 +133,6 @@ def check_new_PHA(alldata,existalldata, languagedict={}, exceptlist=[], debug = 
                     else:
                         msg += "{} [NEO](https://cneos.jpl.nasa.gov/ca/): *{}*\n".format(langdic.get('msgnew'), elem[field.index('des')])
                     msg += "(NEO = Near Earth object)\n"
-
-                    msg += "Approaching earth on\n*{} UTC*\n".format(elem[field.index('cd')])
                     if approachdate >= datetime.utcnow():
                         msg += "{}\n*{} UTC*\n".format(langdic.get('msgfuture'),elem[field.index('cd')])
                     else:
@@ -147,14 +151,20 @@ def check_new_PHA(alldata,existalldata, languagedict={}, exceptlist=[], debug = 
                     else:
                         print (" Debug selected - not sending anything. Message would look like:")
                         print (msg)
-                        print (" Break command issued - only first language")
-                        break
 
 
 def write_memory(phamem,data,debug=False):
-    with open(phamem, 'wb') as outfile:
-        json.dump(data, outfile,encoding="utf-8")
-
+    print ("Writing memory ...")
+    pyvers = sys.version_info.major
+    wopt = 'w'
+    if pyvers < 3:
+        wopt = 'wb'
+    with open(phamem, wopt) as outfile:
+        if pyvers < 3:
+            json.dump(data, outfile,encoding='utf-8')
+        else:
+            json.dump(data, outfile)
+    print (" -> done")
 
 
 def main(argv):
@@ -163,11 +173,16 @@ def main(argv):
     statusmsg = {}
     debug=False
     channelconfig=''
-    alldata, field, data = [],[],[]
-    existalldata, existname, existdata = [],[],[]
+    pastrange = 2
+    alldata, field, data = [],[],{}
+    existalldata, existname, existdata = [],[],{}
 
     exceptlist = ["2020 SO"]
     # 2020 SO is not unique, two times the same name...
+
+    datemax = datetime.strftime((datetime.now()+timedelta(days=730)),"%Y-%m-%d")
+    print ("Checking data until:", datemax)
+    url = "https://ssd-api.jpl.nasa.gov/cad.api?dist-max=1LD&date-min=1900-01-01&date-max={}&sort=date".format(datemax)
 
 
     try:
@@ -190,7 +205,7 @@ def main(argv):
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
-            print ('-t (required) : telegram channel configuration')
+            print ('-t (optional) : telegram channel configuration')
             print ('-------------------------------------')
             print ('Application:')
             print ('python tg_pha.py -c /etc/marcos/wic.cfg -t /etc/marcos/telegram.cfg')
@@ -221,51 +236,48 @@ def main(argv):
     print (" -> Done")
 
     print ("Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-tgbase.log', debug=debug)
+    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-pha.log', debug=debug)
     print (" -> Done")
 
     # SOME DEFINITIONS:
     proxyadd = ''
     if config.get('proxy'):
-        proxyadd = "http://{}:{}".format(config.get('proxy'),config.get('proxyport'))
+        proxyadd = "{}:{}".format(config.get('proxy'),config.get('proxyport'))
 
     temporarypath = config.get('temporarydata')
-    memorypath = os.path.join(temporarypath,'lastquake.npy')
-    currentvaluepath = config.get('currentvaluepath')
+    phamem = os.path.join(temporarypath,'tg-pha.json')
     if not channelconfig:
         channelconfig = config.get('notificationconfig')
-    if not channelconfig:
-        print ("No message channel defined - aborting")
-        sys.exit(1)
 
     continueproc = True
     # 2. Download PHA:
     # ###########################
     try:
+        print ("Checking data until:", datemax)
         alldata, field, data = download_PHA_jpl(url,proxy=proxyadd, debug=debug)
         statusmsg['PHA'] = 'downloading new PHAs successful'
     except:
-        statusmsg['PHA'] = 'downloading new PHAs failed' 
+        statusmsg['PHA'] = 'downloading new PHAs failed'
         continueproc = False
 
     # 3. Get local PHA memory:
     # ###########################
     if continueproc and len(data) > 0:
         try:
-            existalldata, existname, existdata = get_PHA_mem(phamem, data, debug=debug)
+            existalldata, existname, existdata = get_PHA_mem(phamem, data, field, debug=debug)
             statusmsg['PHA'] = 'getting PHA memory successful'
         except:
-            statusmsg['PHA'] = 'getting PHA memory failed' 
+            statusmsg['PHA'] = 'getting PHA memory failed'
             continueproc = False
 
     # 4. sending PHA message:
     # ###########################
     if continueproc and len(alldata) > 0:
         try:
-            check_new_PHA(alldata, existalldata, languagedict={}, exceptlist=exceptlist, debug=debug)
+            check_new_PHA(alldata, existalldata, field, existname, languagedict=languagedict, exceptlist=exceptlist, pastrange=pastrange, debug=debug)
             statusmsg['PHA'] = 'sending PHA data successful'
         except:
-            statusmsg['PHA'] = 'sending PHA data failed' 
+            statusmsg['PHA'] = 'sending PHA data failed'
             continueproc = False
 
 
@@ -274,7 +286,7 @@ def main(argv):
             write_memory(phamem,data,debug=debug)
             statusmsg['PHA'] = 'successfully finished'
         except:
-            statusmsg['PHA'] = 'writing new PHA memory failed' 
+            statusmsg['PHA'] = 'writing new PHA memory failed'
 
     print ("tg_pha successfully finished")
 

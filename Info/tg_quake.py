@@ -298,7 +298,7 @@ def main(argv):
     print (" -> Done")
 
     print ("Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-tgbase.log', debug=debug)
+    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-quake.log', debug=debug)
     print (" -> Done")
 
     # 2. database:

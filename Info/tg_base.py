@@ -150,7 +150,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-tgbase.log', debug=debug)
+    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-base.log', debug=debug)
 
     name1 = "{}-tgbase".format(config.get('logname'))
     statusmsg[name1] = 'Baseline notification successful'
