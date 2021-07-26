@@ -2,11 +2,13 @@
 # coding=utf-8
 
 """
-Script to check the creation date of the latest file matching a certain structure
-in a defined directory
+DESCRIPTION:
+    Script to check the creation date of the latest file matching a certain structure
+    in a defined directory
 
-TODO - is replaced by the monitor.py MARTAS script using the 'datafile' job.
-""" 
+APPLICATION:
+
+"""
 
 from magpy.stream import *
 from magpy.database import *
@@ -133,7 +135,7 @@ def main(argv):
 
     if not os.path.exists(configpath):
         print ('Specify a valid path to configuration information')
-        print ('-- check magnetism_products.py -h for more options and requirements')
+        print ('-- check logfiledates.py -h for more options and requirements')
         sys.exit()
 
     print ("1. Read and check validity of configuration data")
