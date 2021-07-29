@@ -16,6 +16,7 @@ flagging.py                   | DataProducts    | analysis_5min     | CONF/wic.c
 gamma\_products.py            | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
 baseline\_generator.py        | DataProducts    | to daily          | gam.cfg/swz.cfg |  MARTAS telegram  |                | py2 and py3
+convert\_data.py              | DataProducts    | hourly            | wic.cfg        |  MARTAS telegram  |                | py2 and py3
 tg\_pha.py                    | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
 tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
@@ -263,9 +264,30 @@ PARAMETERS
 
 APPLICATION
     Runtime:
-        python3 baseline_generator.py -c ../conf/gam.cfg
+        python3 baseline\_generator.py -c ../conf/gam.cfg
     Testing:
-        python3 baseline_generator.py -c ../conf/gam.cfg -t 2018-08-08T07:41:00 -v 64.33397725500629,4.302646668706179,48621.993688723036 -D
+        python3 baseline\_generator.py -c ../conf/gam.cfg -t 2018-08-08T07:41:00 -v 64.33397725500629,4.302646668706179,48621.993688723036 -D
+
+### 3.8 convert\_data.py
+
+DESCRIPTION
+   Converts data from a database to any specified data format. Unlike mpconvert
+   it automatically chooses the best match containing the given sensor name fragment
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+
+APPLICATION
+    PERMANENTLY with cron:
+        python3 convert\_data.py -c ~/CONF/wic.cfg -s BM35 -o /srv/products/data/meteo/pressure/
+
 
 ## 4. Descriptions of TitleGraphs scripts
 
@@ -404,5 +426,103 @@ APPLICATION
     PERMANENTLY with cron:
         python3 python quakes_import.py -c /home/user/CONF/wic.cfg -p /srv/archive/external/neic/neic_quakes.d
 
+
+## 8. CRONTAB on ANALYSIS
+
+# prevent cron mails and overflow
+MAILTO=""
+# other commands
+PYTHON=/usr/bin/python3
+HOME=/home/cobs
+LOGPATH=/var/log/magpy
+
+# m h  dom mon dow   command
+# -----------------------------
+# MARTAS Jobs
+# -----------------------------
+# Periodically testing threshold every 10 min
+#1,11,21,31,41,51  *  *  *  *    /home/cobs/MARTAS/app/threshold.py -m /etc/martas/threshold.cfg
+# Periodical process monitoring
+#30  *  *  *  *    /home/cobs/MARTAS/app/monitor.py -c /etc/martas/monitor.cfg
+
+# ------------------------------
+# FAST jobs - 5 to 10 min or faster
+# ------------------------------
+9,19,29,39,49,59  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataProducts/getprimary.py -c /home/cobs/CONF/wic.cfg > $LOGPATH/cron-dp-getprimary 2>&1
+8,18,28,38,48,58  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataProducts/flagging.py -c /home/cobs/CONF/wic.cfg -j flag > $LOGPATH/cron-dp-flagging 2>&1
+*/10  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataProducts/magnetism_products.py -c /home/cobs/CONF/wic.cfg > $LOGPATH/cron-dp-magprod 2>&1
+4,14,24,34,44,54  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/Info/tg_kval.py > $LOGPATH/cron-info-kval  2>&1
+5,15,25,35,45,55  *  *  *  *  rsync -avz -e ssh `find /srv/products/data/magnetism/variation/sec/ -type f -mtime -1` cobs@138.22.30.117:/home/cobs/SPACE/data/WICsec_v/
+5,15,25,35,45,55  *  *  *  *  rsync -avz -e ssh `find /srv/products/data/magnetism/variation/min/ -type f -mtime -1` cobs@138.22.30.117:/home/cobs/SPACE/data/WICmin_v/
+5,15,25,35,45,55  *  *  *  *  rsync -avz -e ssh `find /srv/products/data/magnetism/quasidefinitive/min/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/WICmin_qd/
+5,15,25,35,45,55  *  *  *  *  rsync -avz -e ssh `find /srv/products/data/magnetism/quasidefinitive/sec/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/WICsec_qd/
+
+
+
+# ------------------------------
+# 20 min JOBS
+# ------------------------------
+1,21,41  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataImport/quakes_import.py -c /home/cobs/CONF/wic.cfg -p /srv/archive/external/neic/neic_quakes.d
+2,22,42  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/Info/tg_quake.py -c /home/cobs/CONF/wic.cfg
+
+
+# ------------------------------
+# HOURLY JOBS
+# ------------------------------
+#24  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/TitleGraphs/mag_graph.py >> $TLOG 2>&1
+#24  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/TitleGraphs/weather_graph.py >> $TLOG 2>&1
+#25  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/PeriodicGraphs/tilt_graph.py >> $TLOG 2>&1
+#25  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/PeriodicGraphs/supergrad_graph.py >> $TLOG 2>&1
+#26  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/PeriodicGraphs/gamma_graph.py >> $TLOG 2>&1
+#26  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/PeriodicGraphs/spaceweather_graph.py >> $TLOG 2>&1
+#27  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/PeriodicGraphs/current_weatherchanges.py >> $TLOG 2>&1
+27  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/Info/tg_pha.py -c /home/cobs/CONF/wic.cfg > $LOGPATH/cron-info-pha 2>&1
+28  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataProducts/weather_products.py -c /home/cobs/CONF/wic.cfg > $LOGPATH/cron-dp-weathprod  2>&1
+29  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataProducts/gamma_products.py -c /home/cobs/CONF/wic.cfg > $LOGPATH/cron-dp-gamprod  2>&1
+34  *  *  *  *  $PYTHON /home/cobs/ANALYSIS/DataProducts/convert_data.py -c /home/cobs/CONF/wic.cfg -s BM35 -o /srv/products/data/meteo/pressure/  > $LOGPATH/cron-dp-convertbm35  2>&1
+# uploads to broker
+# -----------------
+# RCS
+34  *  *  *  *  rsync -avz -e ssh `find /srv/archive/SGO/RCST7_20160114_0001/raw/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/rcst7/
+34  *  *  *  *  rsync -avz -e ssh `find /srv/archive/SGO/RCSG0_20160114_0001/raw/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/rcsg0/
+34  *  *  *  *  rsync -avz -e ssh `find /srv/archive/SGO/GAMMA_SFB867_0001/raw/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/gamma/
+# Tilt data
+35  *  *  *  *  rsync -avz -e ssh `find /srv/archive/SGO/LM_TILT01_0001/raw/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/tilt/
+# LNM
+36  *  *  *  *  rsync -avz -e ssh `find /srv/archive/SGO/LNM_0351_0001/raw/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/lnm/
+37  *  *  *  *  rsync -avz -e ssh `find /srv/products/data/meteo/pressure/ -type f -mtime -5` cobs@138.22.30.117:/home/cobs/SPACE/data/bm35/
+
+# ------------------------------
+# DAILY ANALYSIS JOBS
+# ------------------------------
+# contains LEMI036_2 -> wait until End of September 2021 to activate for BLV
+#1  2  *  *  *    $PYTHON /home/cobs/ANALYSIS/DataProducts/magnetism_checkadj.py -c /home/cobs/CONF/wic.cfg
+#$PYTHONPATH /home/cobs/ANALYSIS/Projects/gamma/gamma.py -p /srv/projects/gamma/ -m /home/cobs/ANALYSIS/Projects/gamma/mygamma.cfg -d /srv/projects/gamma/ >> $TLOG 2>&1
+#15  2  *  *  *   $PYTHON /home/cobs/ANALYSIS/DataProducts/flagging.py -c /home/cobs/CONF/wic.cfg -j upload,clean -p /srv/archive/flags/uploads/  > $LOGPATH/cron-dp-flagdaily 2>&1
+
+# logfiledate has been replaced by monitor.py jobs on ALDEBARAN and SOL
+#$PYTHONPATH /home/cobs/ANALYSIS/DataProducts/logfiledates.py -c /home/cobs/CONF/wic.cfg -p /srv/archive/WIC/DI/raw/ -s "*A16_WIC.txt" -a 2 -i day -l autodif >> $TLOG
+# uploads to broker
+# -----------------
+15  2  *  *  *  rsync -avz -e ssh `find /srv/archive/SGO/BGSINDCOIL_1_0001/raw/ -type f -mtime -3` cobs@138.22.30.117:/home/cobs/SPACE/data/induction/
+
+
+# ------------------------------
+# WEEKLY ANALYSIS JOBS
+# ------------------------------
+# INFO
+15  12  *  * 2    $PYTHON /home/cobs/ANALYSIS/Info/tg_base.py -c /home/cobs/CONF/wic.cfg -t /etc/martas/telegram.cfg
+
+# ------------------------------
+# MONTHLY ANALYSIS JOBS
+# ------------------------------
+# baseline generator schwaz: offsets determined as average of 2020-08-04 and 2020-08-06 - valid from 08-2019 until 18-07-2021
+#0  3  7  *  *     $PYTHON $HOME/ANALYSIS/DataProducts/baseline_generator.py -c $HOME/CONF/swz.cfg -t `date -d "$D" "+\%Y"`-`date -d "$D" "+\%m"`-01T03:00:00 -o I:-0.00778,D:0.04308 -l mm-basegen-swz.log > /var/log/magpy/cron-baseline-swz.log 2>&1
+0  3  7  *  *     $PYTHON $HOME/ANALYSIS/DataProducts/baseline_generator.py -c $HOME/CONF/swz.cfg -t `date -d "$D" "+\%Y"`-`date -d "$D" "+\%m"`-01T03:00:00 -l mm-basegen-swz.log > /var/log/magpy/cron-baseline-swz.log 2>&1
+
+# ------------------------------
+# YEARLY ANALYSIS JOBS
+# ------------------------------
+#30  2  1  2  *    $PYTHON /home/cobs/ANALYSIS/DataProducts/flagging.py -c /home/cobs/CONF/wic.cfg -j archive > $LOGPATH/cron-db-flagarchive 2>&1
 
 
