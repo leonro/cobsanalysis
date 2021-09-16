@@ -36,12 +36,12 @@ languagedict = {'deutsch': {'msghead':'*Erdnahes Objekt (z.B. Asteroid)*','msgne
                             'msgupdate':'Update zu','msgfuture':'Nähert sich der Erde am',
                             'msgpast':'Näherte sich der Erde am','msgdist':'in einem Abstand von',
                             'msgsize':'Durchmesser','msgref':'Daten des','channeltype':'telegram',
-                            'channelconfig':'/etc/martas/telegram.cfg'},
+                            'channelconfig':'/etc/martas/tg_weltraum.cfg'},
                 'english': {'msghead':'*Near Earth Objekt*','msgnew':'New',
                             'msgupdate':'Update to','msgfuture':'Approaching earth on',
                             'msgpast':'Approached earth on','msgdist':'within',
                             'msgsize':'Size','msgref':'Based on','channeltype':'telegram',
-                            'channelconfig':'/etc/martas/telegram.cfg'}}
+                            'channelconfig':'/etc/martas/tg_space.cfg'}}
 
 #data = read("https://www.minorplanetcenter.net/iau/MPCORB/PHA.txt")
 #data = read("/home/leon/CronScripts/MagPyAnalysis/Asteroids/pha.txt")

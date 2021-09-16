@@ -171,11 +171,19 @@ def new_quakes(relquakes, memorypath='',debug=False):
         print ("Now get last record from temporary folder")
         try:
             lq = np.load(memorypath)
+            if debug:
+                print (memorypath, lq)
             ind, tmp = np.where(np.asarray(relquakes)==lq[0])
-            ind = ind[0]
-            print ("Found last quake at index", ind)
+            if len(ind) > 0:
+                ind = ind[0]
+                print (" -> Found last quake at index", ind)
+            else:
+                print (" -> last notification quake not found within the most recent 200 quakes - activating firstrun")
+                firstrun = True
+                ind=-1
         except:
             # first run? memory deleted?
+            print (" -> Could not access memory - firstrun or memory deleted?")
             firstrun = True
 
     if debug:
