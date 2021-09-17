@@ -2,107 +2,109 @@
 
 """
 Skeleton for graphs
+--------------------------------------------------------------------------------------
+
+DESCRIPTION
+   Skeleton file for creating plots for a specific sensors/groups/etc.
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -r range               :   int     :  default  2 (days)
+    -s sensor              :   string  :  sensor or dataid
+    -k keys                :   string  :  comma separated list of keys to be plotted
+    -f flags               :   string  :  flags from other lists e.g. quakes, coil, etc
+    -y style               :   string  :  plot style
+    -l loggername          :   string  :  loggername e.g. mm-pp-tilt.log
+    -e endtime             :   string  :  endtime (plots from endtime-range to endtime)
+
+APPLICATION
+    PERMANENTLY with cron:
+        python webpage_graph.py -c /etc/marcos/analysis.cfg
+    SensorID:
+        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001 -D
+    DataID:
+        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001_0001 -D
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
-from inspect import stack, getmodule # ADDED BY N. KOMPEIN 2018-09-27 due to missing info on start of supergrad_graph.py in logfile
+import io, pickle
+import getopt
+import pwd
+import sys  # for sys.version_info()
+import socket
 
-## New Logging features 
+import itertools
+from threading import Thread
+from subprocess import check_output   # used for checking whether send process already finished
+
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, Quakes2Flags, combinelists
 from martas import martaslog as ml
-logpath = '/var/log/magpy/mm-per-supergrad.log'
-#import socket
-#sn = socket.gethostname().upper()
-sn = 'SAGITTARIUS' # servername ### Get that automatically??
-statusmsg = {}
-name = "{}-PeriodicPlot-supergrad".format(sn)
+from acquisitionsupport import GetConf2 as GetConf
+from version import __version__
 
-# ####################
-#  Importing database
-# ####################
 
-dbpasswd = mpcred.lc('cobsdb','passwd')
-try:
-    # Test MARCOS 1
-    print ("Connecting to primary MARCOS...")
-    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
-    print ("... DB on vega connected")
-except:
-    print ("... failed")
+
+
+
+
+
+
+
+
+#>> EDIT >>>>>>>>>>>>>>>>>>>>>>>>
+def CreateDiagram(config={}, endtime=datetime.utcnow(), dayrange=1, debug=False):
+    """
+    Skeleton
+    """
+    # basic parameter
+    starttimedata = endtime-timedelta(days=dayrange)
+    savepath = "/srv/products/graphs/tilt/tilt_%s.png" % date
+
+    # READ data
+    goodlvl = 12500
+    savepath = "/srv/products/graphs/magnetism/supergrad_%s.png" % date
+
+    nsmissing = False
+    ewmissing = False
+    vmissing = False
+
+    # Read status information
+    print (" - Reading Status information")
     try:
-        # Test MARCOS 2
-        print ("Connecting to secondary MARCOS...")
-        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
-        print ("... DB on sol connected")
-    except:
-        print ("... failed -- aborting")
-        sys.exit()
-print ("... success")
-# please note: DB availability is monitored elsewhere
-
-
-# ####################
-#  Activate monitoring
-# #################### 
-# discontinued
-try:
-    from magpy.opt.analysismonitor import *
-    analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
-    analysisdict = analysisdict.load()
-except:
-    print ("Analysis monitor failed")
-    pass
-
-
-# ####################
-#  Basic definitions
-# #################### 
-failure = False
-noplot = False
-path2log = '/home/cobs/ANALYSIS/Logs/supergrad_graph.log'
-
-endtime = datetime.utcnow()
-starttime=datetime.strftime(endtime-timedelta(days=4), "%Y-%m-%d")
-starttimedata = endtime-timedelta(days=3)
-date = datetime.strftime(endtime,"%Y-%m-%d")
-
-print ("-----------------------------------")
-print ("Starting Supergrad analysis script:")
-print ("-----------------------------------")
-print ('datetime of processing is: {}'.format(endtime)) 
-#print 'calling script is: ', stack()[0] # ADDED BY N. KOMPEIN 2018-09-27 due to missing info on start of supergrad_graph.py in logfile
-
-nsmissing = False
-ewmissing = False
-vmissing = False
-
-try:
-    try:
-        print (" - Reading Status information")
         nsstat = readDB(db,'GP20S3NSstatus_012201_0001_0001',starttime=starttimedata)
     except:
         print ("...no status information from NS-System")
-        statusmsg[name] = 'Supergrad NS-Statusinfo failed'
     try:
         ewstat = readDB(db,'GP20S3EWStatus_111201_0001_0001',starttime=starttimedata)
     except:
         print ("...no status information from EW-System")
-        statusmsg[name] = 'Supergrad EW-Statusinfo failed'
     try:
         vstat = readDB(db,'GP20S3VStatus_911005_0001_0001',starttime=starttimedata)
     except:
         print ("...no status information from V-System")
-        statusmsg[name] = 'Supergrad V-Statusinfo failed'
-    
+
+    # Read data files    
     print (" - Reading data files")
     try:
         ns = readDB(db,'GP20S3NS_012201_0001_0001',starttime=starttimedata)
+        ns = ns.flag_outlier(threshold=5.0,timerange=timedelta(minutes=10))
+        ns = ns.remove_flagged()
         print( 'NS-gradient...read')
-        if( ns.length()[0] == 0):
+        if not ns.length()[0] > 0:
             nsmissing = True
     except:
         print( 'NS-gradient...no data')
@@ -110,8 +112,10 @@ try:
         nsmissing = True
     try:
         ew = readDB(db,'GP20S3EW_111201_0001_0001',starttime=starttimedata)
+        ew = ew.flag_outlier(threshold=5.0,timerange=timedelta(minutes=10))
+        ew = ew.remove_flagged()
         print( 'EW-gradient...read')
-        if( ew.length()[0] == 0):
+        if not ew.length()[0] > 0:
             ewmissing = True
     except:
         print( 'EW-gradient...no data')
@@ -119,23 +123,15 @@ try:
         ewmissing = True
     try:
         v = readDB(db,'GP20S3V_911005_0001_0001',starttime=starttimedata)
+        v = v.flag_outlier(threshold=5.0,timerange=timedelta(minutes=10))
+        v = v.remove_flagged()
         print( 'V-gradient...read')
-        if( v.length()[0] == 0):
+        if not v.length()[0] > 0:
             vmissing = True
     except:
         print( 'V-gradient...no data')
         statusmsg[name] = 'Supergrad V-dataread failed'
         vmissing = True
-    
-    try:
-        if ns.length()[0] > 0 and ew.length()[0] > 0 and v.length()[0] > 0:
-            statusmsg[name] = 'Data available'
-        else:
-            #statusmsg[name] = 'Necessary data not available'
-            print( 'At least one dataset is missing...trying to move on...')
-            statusmsg[name] = 'At least one dataset is missing...trying to move on...'
-    except:
-        pass
     
     # Statustext:
     print (" - Preparing status information")
@@ -147,90 +143,7 @@ try:
         line1 = ""
         line2 = ""
         statusmsg[name] = 'Status line generation failed'
-    #print line1
-    goodlvl = 12500.0 # MAXIMUM DIFFERENCE WHICH IS ASSUMED TO BE A REAL DIFFERENCE NOT BASED ON EQUIPMENT MALFUNCTION N. KOMPEIN 2019-05-15
-    print (" - Removing prominent outliers")
-    if( not ewmissing):
-        ew = ew.flag_outlier(threshold=5.0,timerange=timedelta(minutes=10))
-        #flew = ew.flag_range(keys=['dy'], above = goodlvl, below = -goodlvl)
-        #ew = ew.flag(flew)
-        ew = ew.remove_flagged()
-        print (" - EW-outliers removed...")
-    if( not nsmissing):
-        ns = ns.flag_outlier(threshold=5.0,timerange=timedelta(minutes=10))
-        #flns = ns.flag_range(keys=['dy'], above = goodlvl, below = -goodlvl)
-        #ns = ns.flag(flns)
-        ns = ns.remove_flagged()
-        print (" - NS-outliers removed...")
-    if( not vmissing):
-        v = v.flag_outlier(threshold=5.0,timerange=timedelta(minutes=10))
-        #flv = v.flag_range(keys=['dz'], above = goodlvl, below = -goodlvl)
-        #v = v.flag(flv)
-        v = v.remove_flagged()
-        print (" - V-outliers removed...")
-    
-    #print ("Here I found", nsstat.ndarray[14][-1])
-    #print ("Here I found", ewstat.ndarray)
-    #print ("Here I found", vstat.ndarray)
-    
-    print (" - Checking threshold values - removed ...")
-    
-    """
-    try:
-        analysisdict.check({'data_threshold_t1_GP20S3EW_111201_0001': [float(ewstat.ndarray[1][-1]),'>',30]})
-        analysisdict.check({'data_threshold_t2_GP20S3EW_111201_0001': [float(ewstat.ndarray[2][-1]),'>',30]})
-        analysisdict.check({'data_threshold_t3_GP20S3EW_111201_0001': [float(ewstat.ndarray[3][-1]),'>',30]})
-        analysisdict.check({'data_threshold_l1_GP20S3EW_111201_0001': [float(ewstat.ndarray[12][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_l2_GP20S3EW_111201_0001': [float(ewstat.ndarray[13][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_l3_GP20S3EW_111201_0001': [float(ewstat.ndarray[14][-1]),'>',2.3]}) 
-        analysisdict.check({'data_threshold_f1_GP20S3EW_111201_0001': [abs( float(ew.ndarray[1][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_f2_GP20S3EW_111201_0001': [abs( float(ew.ndarray[2][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_f3_GP20S3EW_111201_0001': [abs( float(ew.ndarray[3][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_t1_GP20S3NS_012201_0001': [float(nsstat.ndarray[1][-1]),'>',30]})
-        analysisdict.check({'data_threshold_t2_GP20S3NS_012201_0001': [float(nsstat.ndarray[2][-1]),'>',30]})
-        analysisdict.check({'data_threshold_t3_GP20S3NS_012201_0001': [float(nsstat.ndarray[3][-1]),'>',30]})
-        analysisdict.check({'data_threshold_l1_GP20S3NS_012201_0001': [float(nsstat.ndarray[12][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_l2_GP20S3NS_012201_0001': [float(nsstat.ndarray[13][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_l3_GP20S3NS_012201_0001': [float(nsstat.ndarray[14][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_f1_GP20S3NS_012201_0001': [abs( float(ns.ndarray[1][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_f2_GP20S3NS_012201_0001': [abs( float(ns.ndarray[2][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_f3_GP20S3NS_012201_0001': [abs( float(ns.ndarray[3][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_t1_GP20S3V_911005_0001': [float(vstat.ndarray[1][-1]),'>',30]})
-        analysisdict.check({'data_threshold_t2_GP20S3V_911005_0001': [float(vstat.ndarray[2][-1]),'>',30]})
-        analysisdict.check({'data_threshold_t3_GP20S3V_911005_0001': [float(vstat.ndarray[3][-1]),'>',30]})
-        analysisdict.check({'data_threshold_l1_GP20S3V_911005_0001': [float(vstat.ndarray[12][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_l2_GP20S3V_911005_0001': [float(vstat.ndarray[13][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_l3_GP20S3V_911005_0001': [float(vstat.ndarray[14][-1]),'>',2.3]})
-        analysisdict.check({'data_threshold_f1_GP20S3V_911005_0001': [abs( float(v.ndarray[1][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_f2_GP20S3V_911005_0001': [abs( float(v.ndarray[2][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-        analysisdict.check({'data_threshold_f3_GP20S3V_911005_0001': [abs( float(v.ndarray[3][-1])),'>',30000000]}) # abs added by N KOMPEIN 2018-04-16
-    except:
-        print ("Found error while creating analysisdict")
-    """
 
-    print (" - Filtering data for plot")
-    
-    if( not ewmissing):
-        ew = ew.filter(filter_width=timedelta(minutes=1))
-        print (" - EW-filtered to 1min-data...")
-    if( not nsmissing):
-        ns = ns.filter(filter_width=timedelta(minutes=1))
-        print (" - NS-filtered to 1min-data...")
-    if( not vmissing):
-        v = v.filter(filter_width=timedelta(minutes=1))
-        print (" - V-filtered to 1min-data...")
-    
-    # providing some Info on content
-    #print data._get_key_headers()
-    
-    # Change to 
-    #mp.plot(ns,['y','z','dy'], bgcolor = '#d5de9c', gridcolor = '#316931',fill=['x','y','z'],confinex=True,noshow=True,plottitle='East-West system')
-    #ns.header['col-y'] = 'E-W' # - TO CHANGE LABELS ON PLOT
-    #mp.plot(ns,['y','x','dz'], gridcolor = '#316931',fill=['x','y','z'],confinex=True,noshow=True,plottitle='East-West system')
-###########################
-# ACTIVATED DUE TO E-W AXES PROBLEM SOLVING BY Niko Kompein 7.2.2018
-###########################
-    #goodlvl = 7500.0 # MAXIMUM DIFFERENCE WHICH IS ASSUMED TO BE A REAL DIFFERENCE NOT BASED ON EQUIPMENT MALFUNCTION N. KOMPEIN 2019-05-15
     if( not ewmissing):
         ewgraph = ew.extract( 'dy', goodlvl, '<=') 
         ewgraph = ewgraph.extract( 'dy', -goodlvl, '>=')
@@ -335,16 +248,14 @@ try:
         if( k == 2):
             if( el == 0):
                 vgraph = dumpdata
-#    baddaybool = True
-#    if( devv > 3.0* np.sqrt( devew* devns)):
-#        testarrayv = np.array( v['dy'])
-#        vgoodind = np.where( np.logical_and( np.abs( testarrayv - np.nanmedian( testarrayv)) < goodlvl/ 10.0, ~np.isnan( testarrayv)))[0]
-#        devv = np.nanstd( testarrayv[vgoodind])
-#        baddaybool = False
-#    if( ~baddaybool):
-#        avgv = np.nanmedian( testarrayv[vgoodind])
+
     print( 'Standard-dev EW: ', devew,' Standard-dev NS: ', devns, 'Standard-dev V: ', devv)
     print( 'mean EW: ', avgew,' mean NS: ', avgns, 'mean V: ', avgv)
+
+    # MODIFY data
+
+
+    # PLOT data
     #mp.plotStreams([ns,ew,v],[['dx'],['dx'],['dx']], gridcolor = '#316931',confinex=True, plottitle='Gradients: N-S(blue), E-W(green), VERTICAL(pink)', noshow=True)
     if( ewgoodbool & nsgoodbool & vgoodbool):
         print('Three main differences are OK...')
@@ -372,11 +283,11 @@ try:
             noplot = True
  
 
-###########################
-# ALTERNATIVE DEACTIVED UNTIL E-W GRADIENT PROBLEMS ARE FIXED BY Niko Kompein 7.2.2018
-###########################
+    ###########################
+    # ALTERNATIVE DEACTIVED UNTIL E-W GRADIENT PROBLEMS ARE FIXED BY Niko Kompein 7.2.2018
+    ###########################
     #mp.plotStreams([ns,v],[['dx'],['dx']], gridcolor = '#316931',confinex=True, plottitle='Gradients: N-S(blue), VERTICAL(pink)', noshow=True)
-###########################
+    ###########################
     #mp.plotStreams([ns,ew,vert],[['dy'],['dy'],['dy']],bgcolor='#d5de9c', gridcolor='#316931',fill=['dy'],confinex=True, fullday=True, opacity=0.7, plottitle='Field gradients (until %s)' % (datetime.utcnow().date()),noshow=True)
     #mp.plot(ns,['y','z','dy'], gridcolor = '#316931',fill=['x','y','z'],confinex=True,noshow=True,plottitle='North-South system')
     #mp.plotStreams([ns],[['dy']],bgcolor='#d5de9c', gridcolor='#316931',confinex=True, fullday=True, opacity=0.7, plottitle='Field gradients (until %s)' % (datetime.utcnow().date()),noshow=True)
@@ -392,51 +303,123 @@ try:
     #    plt.text(nsstat.ndarray[0][0]+0.01,minval+0.1*diff,line2)
     #except:
     #    pass
-    #plt.show()
-    #upload
-    #plt.show()
-    if not noplot:
-        # A further notification is not necessary if no data for ploos is available
-        savepath = "/srv/products/graphs/magnetism/supergrad_%s.png" % date
-        #savepath = "/home/cobs/ANALYSIS/PeriodicGraphs/tmpgraphs/supergrad_%s.png" % date
+
+
+    if not debug:
+        print (" ... saving now")
         plt.savefig(savepath)
+        print("Plot successfully saved to {}.".format(savepath))
+    else:
+        print (" ... debug mode - showing plot")
+        plt.show()
 
-        cred = 'cobshomepage'
-        #address=mpcred.lc(cred,'address')
-        user=mpcred.lc(cred,'user')
-        passwd=mpcred.lc(cred,'passwd')
-        #port=mpcred.lc(cred,'port')
-        remotepath = 'zamg/images/graphs/magnetism/supergrad/'
+    return True
 
-        #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
-        #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=user,passwd=passwd,logfile=path2log)
+#<<<<<<<<<<<<<<<<<<<<<<<< EDIT <<
+
+
+def main(argv):
+    version = __version__
+    configpath = ''
+    statusmsg = {}
+    path=''
+    dayrange = 1
+    debug=False
+    endtime = datetime.utcnow()
+
+
+    try:
+        opts, args = getopt.getopt(argv,"hc:r:e:l:D",["config=","range=","endtime=","debug=",])
+    except getopt.GetoptError:
+        print ('job.py -c <config>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('-------------------------------------')
+            print ('Description:')
+            print ('-- general_graph.py will plot sensor data --')
+            print ('-----------------------------------------------------------------')
+            print ('detailed description ..')
+            print ('...')
+            print ('...')
+            print ('-------------------------------------')
+            print ('Usage:')
+            print ('python general_graph.py -c <config>')
+            print ('-------------------------------------')
+            print ('Options:')
+            print ('-c (required) : configuration data path')
+            print ('-r            : range in days')
+            print ('-e            : endtime')
+            print ('-------------------------------------')
+            print ('Application:')
+            print ('python general_graph.py -c /etc/marcos/analysis.cfg')
+            print ('python general_graph.py -c /etc/marcos/analysis.cfg')
+            print ('# debug run on my machine')
+            print ('python3 general_graph.py -c ../conf/wic.cfg -s debug -k x,y,z -f none -D')
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            # delete any / at the end of the string
+            configpath = os.path.abspath(arg)
+        elif opt in ("-r", "--range"):
+            # range in days
+            dayrange = int(arg)
+        elif opt in ("-e", "--endtime"):
+            # endtime of the plot
+            endtime = arg
+        elif opt in ("-D", "--debug"):
+            # delete any / at the end of the string
+            debug = True
+
+    if debug:
+        print ("Running ... graph creator version {}".format(version))
+
+    if not os.path.exists(configpath):
+        print ('Specify a valid path to configuration information')
+        print ('-- check general_graph.py -h for more options and requirements')
+        sys.exit(0)
+
+    if endtime:
         try:
-            # to send with 664 permission use a temporary directory
-            tmppath = "/tmp"
-            tmpfile= os.path.join( tmppath, os.path.basename(savepath))
-            from shutil import copyfile
-            copyfile(savepath,tmpfile)
-            scptransfer(tmpfile,'94.136.40.103:'+remotepath,passwd)
-            os.remove(tmpfile)
-            #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
-            analysisdict.check({'upload_homepage_supergradEWplot': ['success','=','success']})
+            endtime = DataStream()._testtime(endtime)
         except:
-            analysisdict.check({'upload_homepage_supergradEWplot': ['failure','=','success']})
-            pass
+            print ("Endtime could not be interpreted - Aborting")
+            sys.exit(1)
+    else:
+        endtime = datetime.utcnow()
 
-    statusmsg[name] = 'Supergrad analysis successful'
-except:
-    failure = True
-    statusmsg[name] = 'Supergrad analysis failed'
+    #>> EDIT >>>>>>>>>>>>>>>>>>>>>>>>
+    newloggername = 'mm-pp-myplot'
+    category = "MyPlot"
+    #<<<<<<<<<<<<<<<<<<<<<<<< EDIT <<
 
-if not failure:
-    analysisdict.check({'script_periodic_supergrad_graph': ['success','=','success']})
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-    print ("    supergrad_graph successfully finished     ")
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-else:
-    analysisdict.check({'script_periodic_supergrad_graph': ['failure','=','success']})
+    print ("1. Read and check validity of configuration data")
+    config = GetConf(configpath)
 
-martaslog = ml(logfile=logpath,receiver='telegram')
-martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-martaslog.msg(statusmsg)
+    print ("2. Activate logging scheme as selected in config")
+    config = DefineLogger(config=config, category=category, job=os.path.basename(__file__), newname=newloggername, debug=debug)
+    monitorname = "{}-plot".format(config.get('logname'))
+
+    print ("3. Connect to databases")
+    config = ConnectDatabases(config=config, debug=debug)
+
+    #try:
+    #    print ("4. Read and Plot method")
+    success = CreateDiagram(config=config, endtime=endtime, dayrange=dayrange, debug=debug)
+    #    statusmsg[namecheck1] = "success"
+    #     if not success:
+    #         statusmsg 
+    #except:
+    #    statusmsg[namecheck1] = "failure"
+
+    if not debug:
+        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+        martaslog.telegram['config'] = config.get('notificationconfig')
+        martaslog.msg(statusmsg)
+    else:
+        print ("Debug selected - statusmsg looks like:")
+        print (statusmsg)
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
+
+
