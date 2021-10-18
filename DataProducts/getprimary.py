@@ -140,6 +140,7 @@ def PrimaryVario(db, variolist, endtime=datetime.utcnow(), logname='', statusmsg
     """
     Identify currently active variometer and f-instrument, which are recording now and have at least one day of data
     """
+    varioinst = ''
     ## Step 1: checking available data for variometers (need to cover one day and should not be older than one hour 
     ##         the first instrument fitting these conditions is selected
     for inst in variolist:
@@ -158,7 +159,7 @@ def PrimaryVario(db, variolist, endtime=datetime.utcnow(), logname='', statusmsg
                 break
             else:
                 print ("    -- Coverage not OK")
-        print ("  -> Selected: {}".format(varioinst))
+    print ("  -> Selected: {}".format(varioinst))
 
     if varioinst == '':
         print (" -- Did not find variometer instrument")
@@ -175,6 +176,7 @@ def PrimaryScalar(db, scalarlist, endtime=datetime.utcnow(), logname='', statusm
     """
     Identify currently active variometer and f-instrument, which are recording now and have at least one day of data
     """
+    scalainst=''
     ## Step 2: checking available scalar data (need to be valid data and cover one day)
     ##         the first instrument fitting these conditions is selected
     for inst in scalarlist:
@@ -207,7 +209,7 @@ def PrimaryScalar(db, scalarlist, endtime=datetime.utcnow(), logname='', statusm
             else:
                 if debug:
                     print ("    -- Test 2 failed: {} is smaller than {} or {} is smaller than {}".format(lastval,endtime-timedelta(minutes=60),firstval,endtime-timedelta(minutes=1500)))
-        print ("  -> Selected: {}".format(scalainst))
+    print ("  -> Selected: {}".format(scalainst))
 
     if scalainst == '':
         print ("  !! Did not find scalar instrument")
