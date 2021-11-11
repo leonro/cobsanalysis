@@ -118,6 +118,7 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
         sens=[]
         sens2=[]
         for sensor in senslist:
+            print ("Found", sensor)
             if source == 'database':
                 if debug:
                     print ("   -- checking sensor {}".format(sensor))
@@ -136,8 +137,10 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
                 sens.append(sensor)
 
         # sort sens2 so that the one with the latest record is last
-        sens = [el[0] for el in sorted(sens2, key=lambda x: x[1])]
+        if not sens:
+            sens = [el[0] for el in sorted(sens2, key=lambda x: x[1])]
 
+        #print (sens)
 
         datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
         if len(sens) > 0:
@@ -399,12 +402,13 @@ def transformRCST7(db, datastream, debug=False):
         flagpos = KEYLIST.index('flag')
         commpos = KEYLIST.index('comment')
         datastream.ndarray[flagpos] = np.asarray([])
-        datastream.ndarray[commpos] = np.asarray([]) 
+        datastream.ndarray[commpos] = np.asarray([])
         ## Now use missingvalue treatment
         print ("    -- interpolating missing values if less then 5 percent are missing within 2 minutes")
         datastream.ndarray[1] = datastream.missingvalue(datastream.ndarray[1],120,threshold=0.05,fill='interpolate')
         print ("    -- determine average rain")
         res = datastream.steadyrise('t1', timedelta(minutes=60),sensitivitylevel=0.002)
+        print ("       -> RCST7 rain checked")
         datastream= datastream._put_column(res, 'var1', columnname='Percipitation',columnunit='mm/1h')
         print ("    -- filter all RCS data columns to 1 min")
         filtdatastream = datastream.filter(missingdata='interpolate')
@@ -433,8 +437,8 @@ def transformMETEO(db, datastream, debug=False):
     """
     DESCRIPTION:
         filter and transform rcs t7 data to produce a general structure for combination
-        # --------------------------------------------------------    
-        # METEO - Get data from RCS (no version/revision control in rcs) 
+        # --------------------------------------------------------
+        # METEO - Get data from RCS (no version/revision control in rcs)
         # Schnee: z, Temperature: f, Humidity: t1, Pressure: var5
     """
 
@@ -465,6 +469,9 @@ def transformMETEO(db, datastream, debug=False):
         meteost = datastream.remove_flagged()
         print ("    -- Determine average rain")
         res = datastream.steadyrise('dx', timedelta(minutes=60),sensitivitylevel=0.002)
+        print ("       -> METEO rain checked")
+        if np.isnan(np.sum(res)):
+            print (" STEADYRISE: found a NAN value")
         datastream = datastream._put_column(res, 'y', columnname='Percipitation',columnunit='mm/1h')
         flagpos = KEYLIST.index('flag')
         commpos = KEYLIST.index('comment')
@@ -710,8 +717,9 @@ def ExportData(datastream, onlyarchive=False, config={}):
     try:
         if meteoproductpath:
             # save result to products
+            print (" Writing meteo data to file ...")
             datastream.write(meteoproductpath,filenamebegins=meteofilename,dateformat='%Y',coverage='year', mode='replace',format_type='PYCDF')
-            print ("  -> METEO_adjusted written to File")
+            print ("  -> METEO_adjusted data successfully written to yearly file")
 
         if len(connectdict) > 0 and not onlyarchive:
             for dbel in connectdict:
