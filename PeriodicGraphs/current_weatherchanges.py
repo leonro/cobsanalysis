@@ -42,8 +42,8 @@ Provides:
 - Provide some specific combinantions for certain projects
 - Analysis checks of data validity in source data
 """
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
@@ -65,7 +65,6 @@ import sys  # for sys.version_info()
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
-anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'ANALYSIS','core'))
 sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, ConnectDatabases, getstringdate
 from martas import martaslog as ml
@@ -86,7 +85,7 @@ def weather_change(db,config={},starttime=datetime.utcnow()-timedelta(days=3),en
     source = 'archive'  # access dataarchive using sgopath
 
     filedate = datetime.strftime(endtime,"%Y-%m-%d")
-    
+
     # variables: fd, meteofilename, name
 
     if debug:
@@ -180,7 +179,7 @@ def weather_change(db,config={},starttime=datetime.utcnow()-timedelta(days=3),en
         max1a = 0
         max1b = 0
         max2a = 0
-        
+
         # YLIM MAX OF RAINFALL
         if len(y2) > 0:
             max1a = np.nanmax(y2)
@@ -217,9 +216,9 @@ def weather_change(db,config={},starttime=datetime.utcnow()-timedelta(days=3),en
             max2a = 5
             min2a = -5
         print( 'limits succesfully derived')
-        fig, axarr = plt.subplots(3, sharex=True, figsize=(15,9), dpi=200)
+        fig, axarr = plt.subplots(3, sharex=True, figsize=(15,9), dpi=100) #dpi=200)
         displyvar = d4#/ dt
-        
+
         axarr[0].set_ylabel('TEMP [$ \circ$C]')
         axarr[0].plot_date( t, displyvar,'-',color='lightgray')
         axarr[0].fill_between(t,0, displyvar,where=displyvar<0,facecolor='blue',alpha=0.5)
@@ -227,28 +226,27 @@ def weather_change(db,config={},starttime=datetime.utcnow()-timedelta(days=3),en
         axarr[0].set_title( 'Weatherchanges since: ' + num2date(t[0]).strftime(' %Y-%m-%d'))
         print( 'Temperature plot successful')
         displyvar = d3#/ dt
-        
+
         axarr[1].set_ylabel('SNOW [cm]')
         axarr[1].plot_date(t,displyvar,'-',color='gray')
         axarr[1].fill_between(t,0,displyvar,where=displyvar>=0,facecolor='cyan',alpha=0.5)
         axarr[1].fill_between(t,0,displyvar,where=displyvar<0,facecolor='magenta',alpha=0.5)
         print( 'Snowheight plot successful')
-        
-        
+
         ax1 = axarr[1].twinx()
         ax1.set_ylabel('N [mm/h]',color='blue')
         ax1.plot_date(t,y2,'-',color='blue')
         ax1.fill_between(t,0,y2,where=y2>=0,facecolor='blue',alpha=0.5)
         print( 'Rainfall plot successful')
-        
+
         displyvar = d7#/ dt
-        
+
         axarr[2].set_ylabel('WIND [km/h]')
         axarr[2].plot_date(t,displyvar,'-',color='gray')
         axarr[2].fill_between(t,0,displyvar,where=displyvar>=2.0*nanstd( d7),facecolor='orange',alpha=0.5)
         axarr[2].fill_between(t,0,displyvar,where=displyvar<2.0*nanstd( d7),facecolor='green',alpha=0.5)
         print( 'Windspeed plot successful')
-        
+
         for ax, avg in zip( axarr, [ avgy4, avgy3, avgy7]):
             ax.grid(which='both')
             maxchg = (ax.get_ylim()[1] - ax.get_ylim()[0])*0.1
@@ -345,7 +343,7 @@ def main(argv):
     if starttime >= endtime:
         print (" Starttime is larger than endtime. Please correct !")
         sys.exit(1)
-    
+
 
     if not os.path.exists(configpath):
         print ('Specify a valid path to configuration information')
