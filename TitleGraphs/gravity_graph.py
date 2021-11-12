@@ -1,7 +1,26 @@
 #!/usr/bin/env python
 
 """
-Skeleton for graphs
+DESCRIPTION
+   Title graph with gravity information
+
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+
+PARAMETERS
+    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
+    -e endtime             :   date    :  date until analysis is performed
+                                          default "datetime.utcnow()"
+    -s starttime           :   date    :  startdate for analysis
+                                          default "datetime.utcnow() - 7 days"
+
+APPLICATION
+    PERMANENTLY with cron:
+        python gravity_graph.py -c /etc/marcos/analysis.cfg
 """
 
 from magpy.stream import *   
@@ -11,55 +30,18 @@ import magpy.mpplot as mp
 import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
 
-dbpasswd = mpcred.lc('cobsdb','passwd')
-try:
-    # Test MARCOS 1
-    print ("Connecting to primary MARCOS...")
-    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
-    print db
-except:
-    print ("... failed")
-    try:
-        # Test MARCOS 2
-        print ("Connecting to secondary MARCOS...")
-        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
-        print db
-    except:
-        print ("... failed -- aborting")
-        sys.exit()
-print ("... success")
-
-# ####################
-#  Activate monitoring
-# #################### 
-
-try:
-    from magpy.opt.analysismonitor import *
-    analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
-    analysisdict = analysisdict.load()
-except:
-    print ("Analysis monitor failed")
-    pass
-
-
-# ####################
-#  Basic definitions
-# #################### 
-
-failure = False
-
-path2log = '/home/cobs/ANALYSIS/Logs/title_gravity.log'
-path2images = '/home/cobs/ANALYSIS/TitleGraphs'
-#path2images = '/home/leon/CronScripts/MagPyAnalysis/Gravity'
-
-endtime = datetime.utcnow()
-starttime=datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate
+from martas import martaslog as ml
+from acquisitionsupport import GetConf2 as GetConf
+from version import __version__
 
 path = '/srv/products/data/gravity/SGO/GWRSGC025_25_0002/raw'
 
-try:
+def gravity_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=4),endtime=datetime.utcnow(), debug=False)):
     data = read(os.path.join(path,'F1*'),starttime=starttime, endtime=endtime)
-    #data = read('/srv/products/data/gravity/SGO/GWRSHC025_25_0002/raw/F1161006.025')
 
     # get last values of filt
     lastval = data.ndarray[1][-1]
@@ -88,32 +70,123 @@ try:
     newax.imshow(img,origin='upper')
     newax.axis('off')
 
-    #plt.show()
-
     savepath2 = savepath = "/srv/products/graphs/title/title_gravity.png"
     plt.savefig(savepath2)
+    return True
 
-    #savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_gravity.png"
-    #plt.savefig(savepath)
+    
+def main(argv):
+    try:
+        version = __version__
+    except:
+        version = "1.0.0"
+    configpath = ''
+    statusmsg = {}
+    debug=False
+    starttime = None
+    endtime = None
+    source = 'database'
 
-    #cred = 'cobshomepage'
-    #address=mpcred.lc(cred,'address')
-    #user=mpcred.lc(cred,'user')
-    #passwd=mpcred.lc(cred,'passwd')
-    #port=mpcred.lc(cred,'port')
-    #remotepath = 'zamg/images/slideshow/'
+    try:
+        opts, args = getopt.getopt(argv,"hc:e:s:D",["config=","endtime=","starttime=","debug=",])
+    except getopt.GetoptError:
+        print ('gravity_graph.py -c <config>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('-------------------------------------')
+            print ('Description:')
+            print ('-- gravity_graph.py plots title --')
+            print ('-----------------------------------------------------------------')
+            print ('detailed description ..')
+            print ('...')
+            print ('...')
+            print ('-------------------------------------')
+            print ('Usage:')
+            print ('python gravity_graph.py -c <config>')
+            print ('-------------------------------------')
+            print ('Options:')
+            print ('-c (required) : configuration data path')
+            print ('-e            : endtime - default is now')
+            print ('-s            : starttime -  default is three days from now')
+            print ('-------------------------------------')
+            print ('Application:')
+            print ('python gravity_graph.py -c /etc/marcos/analysis.cfg')
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            # delete any / at the end of the string
+            configpath = os.path.abspath(arg)
+        elif opt in ("-s", "--starttime"):
+            # get an endtime
+            starttime = arg
+        elif opt in ("-e", "--endtime"):
+            # get an endtime
+            endtime = arg
+        elif opt in ("-D", "--debug"):
+            # delete any / at the end of the string
+            debug = True
 
-    #ftpdatatransfer(localfile=savepath,ftppath=remotepath,myproxy=address,port=port,login=$
-    #scptransfer(savepath,'94.136.40.103:'+remotepath,passwd)
-except:
-    failure = True
+    print ("Running gravity_graph version {}".format(version))
+    print ("--------------------------------")
 
-if not failure:
-    analysisdict.check({'script_title_gravity_graph': ['success','=','success']})
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-    print ("      gravity_graph successfully finished       ")
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-else:
-    analysisdict.check({'script_title_gravity_graph': ['failure','=','success']})
+    if endtime:
+        try:
+            endtime = DataStream()._testtime(endtime)
+        except:
+            print (" Could not interprete provided endtime. Please Check !")
+            sys.exit(1)
+    else:
+        endtime = datetime.utcnow()
 
+    if starttime:
+        try:
+            starttime = DataStream()._testtime(starttime)
+        except:
+            print (" Could not interprete provided starttime. Please Check !")
+            sys.exit(1)
+    else:
+        starttime=datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
+
+    if starttime >= endtime:
+        print (" Starttime is larger than endtime. Please correct !")
+        sys.exit(1)
+
+    if not os.path.exists(configpath):
+        print ('Specify a valid path to configuration information')
+        print ('-- check magnetism_products.py -h for more options and requirements')
+        sys.exit()
+
+    print ("1. Read and check validity of configuration data")
+    config = GetConf(configpath)
+
+    print ("2. Activate logging scheme as selected in config")
+    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tp-gravity.log', debug=debug)
+    name1 = "{}-graph".format(config.get('logname'))
+    statusmsg[name1] = 'mag graph successful'
+
+    print ("3. Connect databases and select first available")
+    try:
+        config = ConnectDatabases(config=config, debug=debug)
+        db = config.get('primaryDB')
+    except:
+        statusmsg[name1] = 'database failed'
+    # it is possible to save data also directly to the brokers database - better do it elsewhere
+
+    print ("4. gravity graph")
+    try:
+        success = gravity_graph(db, config=config, starttime=starttime, endtime=endtime, debug=debug)
+    except:
+        statusmsg[name1] = 'gravity graph failed'
+
+    if not debug:
+        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+        martaslog.telegram['config'] = config.get('notificationconfig')
+        martaslog.msg(statusmsg)
+    else:
+        print ("Debug selected - statusmsg looks like:")
+        print (statusmsg)
+
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
 
