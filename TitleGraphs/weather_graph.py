@@ -23,12 +23,17 @@ APPLICATION
         python weather_graph.py -c /etc/marcos/analysis.cfg
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
+
+import getopt
+import pwd
+import socket
+import sys  # for sys.version_info()
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
@@ -46,13 +51,13 @@ def weather_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=4),end
     month = endtime.month
 
     if month in [12,1,2,3]:
-        img = imread(os.path.join(path2images,"winter.jpg"))
+        img = imread(os.path.join(scriptpath,"winter.jpg"))
     elif month in [4,5,6]:
-        img = imread(os.path.join(path2images,"spring.jpg"))
+        img = imread(os.path.join(scriptpath,"spring.jpg"))
     elif month in [7,8,9]:
-        img = imread(os.path.join(path2images,"summer.jpg"))
+        img = imread(os.path.join(scriptpath,"summer.jpg"))
     else:
-        img = imread(os.path.join(path2images,"autumn.jpg"))
+        img = imread(os.path.join(scriptpath,"autumn.jpg"))
 
     clean = True
     if clean:
@@ -144,7 +149,7 @@ def main(argv):
             # delete any / at the end of the string
             debug = True
 
-    print ("Running current_weather version {}".format(version))
+    print ("Running weather_graph version {}".format(version))
     print ("--------------------------------")
 
     if endtime:
@@ -163,7 +168,7 @@ def main(argv):
             print (" Could not interprete provided starttime. Please Check !")
             sys.exit(1)
     else:
-        starttime=datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
+        starttime=endtime-timedelta(days=7)
 
     if starttime >= endtime:
         print (" Starttime is larger than endtime. Please correct !")
@@ -178,7 +183,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tp-weather.log', debug=debug)
+    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tg-weather.log', debug=debug)
     name1 = "{}-graph".format(config.get('logname'))
     statusmsg[name1] = 'weather graph successful'
 
@@ -191,10 +196,10 @@ def main(argv):
     # it is possible to save data also directly to the brokers database - better do it elsewhere
 
     print ("4. Weather graph")
-    try:
-        success = weather_graph(db, config=config, starttime=starttime, endtime=endtime, debug=debug)
-    except:
-        statusmsg[name1] = 'weather graph failed'
+    #try:
+    success = weather_graph(db, config=config, starttime=starttime, endtime=endtime, debug=debug)
+    #except:
+    #    statusmsg[name1] = 'weather graph failed'
 
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))

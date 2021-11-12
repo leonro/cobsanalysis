@@ -23,15 +23,20 @@ APPLICATION
         python mag_graph.py -c /etc/marcos/analysis.cfg
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
 
 import requests
-from pickle import load as pload
+import shutil
+
+import getopt
+import pwd
+import socket
+import sys  # for sys.version_info()
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
@@ -42,27 +47,52 @@ from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
 
 
-def mag_title(db,config={},starttime=datetime.utcnow()-timedelta(days=3),endtime=datetime.utcnow(), debug=False):
+def mag_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=3),endtime=datetime.utcnow(), debug=False):
 
+    msg = 'mag graph successful'
     variosens = config.get('primaryVario')
     scalarsens = config.get('primaryScalar')
     varioinst = config.get('primaryVarioInst')
     scalarinst = config.get('primaryScalarInst')
 
+    print ('Getting Solare image')
+    import urllib.request
+    sohopath = '/srv/archive/external/esa-nasa/soho/'
+    sohoname = 'EIT304_latest.jpg'
+    sohonewname = 'EIT304_{}.jpg'.format(datetime.strftime(datetime.utcnow(),"%Y-%m-%d_%H"))
+    print (sohonewname)
+    try:
+        urllib.request.urlretrieve("https://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg", sohoname)
+    except:
+        msg = "Latest soho image not available"
+    try:
+        shutil.copyfile(sohoname, os.path.join(sohopath,sohonewname))
+    except:
+        print ("copying failed")
+    sys.exit()
     print ('Reading data from primary instrument')
-    data = readDB(db,varioinst,starttime=starttime)
-    kvals = data.k_fmi(k9_level=500)
+    try:
+        data = readDB(db,varioinst,starttime=starttime)
+        kvals = data.k_fmi(k9_level=500)
+    except:
+        msg = 'problem reading data'
 
     print ('Getting Solare image')
-    request = requests.get('http://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg', timeout=20, stream=True, verify=False)
-    # Open the output file and make sure we write in binary mode
-    with open('/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg', 'wb') as fh:
-        # Walk through the request response in chunks of 1024 * 1024 bytes, so 1MiB
-        for chunk in request.iter_content(1024 * 1024):
-            # Write the chunk to the file
-            fh.write(chunk)
+    import urllib.request
+    try:
+        urllib.request.urlretrieve("https://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg", "EIT304_latest.jpg")
+        #request = requests.get('http://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg', timeout=20, stream=True, verify=False)
+        # Open the output file and make sure we write in binary mode
+        #with open('/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg', 'wb') as fh:
+        #    # Walk through the request response in chunks of 1024 * 1024 bytes, so 1MiB
+        #    for chunk in request.iter_content(1024 * 1024):
+        #        # Write the chunk to the file
+        #        fh.write(chunk)
 
-    #urllib.urlretrieve("http://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg","/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg")
+        #urllib.urlretrieve("http://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg","/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg")
+    except:
+        msg = "Latest soho image not available"
+
     img = imread("/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg")
 
     print ('Plotting streams')
@@ -101,7 +131,7 @@ def mag_title(db,config={},starttime=datetime.utcnow()-timedelta(days=3),endtime
     savepath2 = "/srv/products/graphs/title/title_mag.png"
     #/srv/products/graphs/title/
     plt.savefig(savepath2)
-    print ("Save 2 done")
+    print ("Save to {} done".format(savepath2))
 
 
 def main(argv):
@@ -155,7 +185,7 @@ def main(argv):
             # delete any / at the end of the string
             debug = True
 
-    print ("Running current_weather version {}".format(version))
+    print ("Running mag_graph version {}".format(version))
     print ("--------------------------------")
 
     if endtime:
@@ -174,7 +204,7 @@ def main(argv):
             print (" Could not interprete provided starttime. Please Check !")
             sys.exit(1)
     else:
-        starttime=datetime.strftime(endtime-timedelta(days=4),"%Y-%m-%d")
+        starttime=endtime-timedelta(days=4)
 
     if starttime >= endtime:
         print (" Starttime is larger than endtime. Please correct !")
@@ -189,7 +219,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tp-mag.log', debug=debug)
+    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tg-mag.log', debug=debug)
     name1 = "{}-graph".format(config.get('logname'))
     statusmsg[name1] = 'mag graph successful'
 
@@ -203,12 +233,10 @@ def main(argv):
 
     print ("4. Loading current.data and getting primary instruments")
     config, statusmsg = GetPrimaryInstruments(config=config, statusmsg=statusmsg, debug=debug)
-    
+
     print ("5. Mag graph")
-    try:
-        success = mag_graph(db, config=config, starttime=starttime, endtime=endtime, debug=debug)
-    except:
-        statusmsg[name1] = 'mag graph failed'
+    msg = mag_graph(db, config=config, starttime=starttime, endtime=endtime, debug=debug)
+    statusmsg[name1] = msg
 
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))

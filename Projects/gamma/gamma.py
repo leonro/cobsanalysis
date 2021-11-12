@@ -6,7 +6,7 @@ from magpy.acquisition import acquisitionsupport as acs
 
 from martas import martaslog as ml
 logpath = '/var/log/magpy/mm-pro-gamma.log'
-sn = 'SAGITTARIUS' # servername
+sn = 'POWEHI' # servername
 statusmsg = {}
 
 
@@ -347,7 +347,7 @@ def fitpeak(x,y,n=4,plot=False):
         t_y = yi-sig_yi
         y_winmin = t_y[list(x_new).index(x_win[0]):list(x_new).index(x_win[-1])+1]
         if not len(x_win) == len(y_win):
-            print "------------------------------------------- Check it!!!!!!!!!!!!!!!!!!!"
+            print ("------------------------------------------- Check it!!!!!!!!!!!!!!!!!!!")
         I = np.trapz(y_win, x_win)
         Imax = np.trapz(y_winmax, x_win)
         Imin = np.trapz(y_winmin, x_win)
@@ -646,7 +646,7 @@ def analyse_mca(path, startdate=None, enddate=None, config={}):
             # Add flags to the datastream
             # Notes should be converted to flags
         except:
-            print "----------------------------"
+            print ("----------------------------")
             print ("Failed analysis for {}!".format(filename))
 
     print ("# -------------------------------------------------------------------------")

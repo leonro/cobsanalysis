@@ -23,12 +23,17 @@ APPLICATION
         python gravity_graph.py -c /etc/marcos/analysis.cfg
 """
 
-from magpy.stream import *   
-from magpy.database import *   
+from magpy.stream import *
+from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
 import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
+
+import getopt
+import pwd
+import socket
+import sys  # for sys.version_info()
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
@@ -74,7 +79,6 @@ def gravity_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=4),end
     plt.savefig(savepath2)
     return True
 
-    
 def main(argv):
     try:
         version = __version__
@@ -145,7 +149,7 @@ def main(argv):
             print (" Could not interprete provided starttime. Please Check !")
             sys.exit(1)
     else:
-        starttime=datetime.strftime(endtime-timedelta(days=7),"%Y-%m-%d")
+        starttime=endtime-timedelta(days=7)
 
     if starttime >= endtime:
         print (" Starttime is larger than endtime. Please correct !")
@@ -160,7 +164,7 @@ def main(argv):
     config = GetConf(configpath)
 
     print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tp-gravity.log', debug=debug)
+    config = DefineLogger(config=config, category = "TitleGraphs", job=os.path.basename(__file__), newname='mm-tg-gravity.log', debug=debug)
     name1 = "{}-graph".format(config.get('logname'))
     statusmsg[name1] = 'mag graph successful'
 

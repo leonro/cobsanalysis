@@ -17,7 +17,7 @@ import csv
 from scipy.interpolate import interp1d
 from scipy import interpolate
 from scipy.optimize import curve_fit, minimize
-from scipy.misc import factorial
+from scipy.special import factorial
 import pylab
 import numpy.polynomial.polynomial as poly
 #from scipy.optimize import curve_fit
