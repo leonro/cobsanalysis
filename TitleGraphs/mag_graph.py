@@ -30,7 +30,7 @@ import magpy.mpplot as mp
 import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
 
-import requests
+import urllib.request
 import shutil
 
 import getopt
@@ -55,43 +55,32 @@ def mag_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=3),endtime
     varioinst = config.get('primaryVarioInst')
     scalarinst = config.get('primaryScalarInst')
 
-    print ('Getting Solare image')
-    import urllib.request
+    if debug:
+        print ('Getting Solare image')
+        print ('TODO Move that job to aldebaran')
+
     sohopath = '/srv/archive/external/esa-nasa/soho/'
     sohoname = 'EIT304_latest.jpg'
     sohonewname = 'EIT304_{}.jpg'.format(datetime.strftime(datetime.utcnow(),"%Y-%m-%d_%H"))
-    print (sohonewname)
+    if debug:
+        print ("New name:", sohonewname)
     try:
         urllib.request.urlretrieve("https://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg", sohoname)
     except:
         msg = "Latest soho image not available"
     try:
+        if not os.path.exists(sohopath):
+            os.makedirs(sohopath)
         shutil.copyfile(sohoname, os.path.join(sohopath,sohonewname))
     except:
         print ("copying failed")
-    sys.exit()
+
     print ('Reading data from primary instrument')
     try:
         data = readDB(db,varioinst,starttime=starttime)
         kvals = data.k_fmi(k9_level=500)
     except:
         msg = 'problem reading data'
-
-    print ('Getting Solare image')
-    import urllib.request
-    try:
-        urllib.request.urlretrieve("https://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg", "EIT304_latest.jpg")
-        #request = requests.get('http://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg', timeout=20, stream=True, verify=False)
-        # Open the output file and make sure we write in binary mode
-        #with open('/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg', 'wb') as fh:
-        #    # Walk through the request response in chunks of 1024 * 1024 bytes, so 1MiB
-        #    for chunk in request.iter_content(1024 * 1024):
-        #        # Write the chunk to the file
-        #        fh.write(chunk)
-
-        #urllib.urlretrieve("http://sohowww.nascom.nasa.gov/data/realtime/eit_304/512/latest.jpg","/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg")
-    except:
-        msg = "Latest soho image not available"
 
     img = imread("/home/cobs/ANALYSIS/TitleGraphs/EIT304_latest.jpg")
 
@@ -108,7 +97,7 @@ def mag_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=3),endtime
         #a.set_frame_on(False)
     print (" p1")
     maxk = kvals._get_max('var1')
-    if maxk >= 6: 
+    if maxk >= 6:
         img2 = imread("/home/cobs/ANALYSIS/TitleGraphs/polarlichter.v02.jpg")
         newax2 = fig.add_axes([0.0, 0.0, 1.0, 1.0], anchor='SE', zorder=-1)
         newax2.imshow(img2,origin='upper')
@@ -119,17 +108,15 @@ def mag_graph(db,config={},starttime=datetime.utcnow()-timedelta(days=3),endtime
         newax2.imshow(img2,origin='upper')
         newax2.axis('off')
 
-    print (" p2")
+    #if debug:
+    #print (" p2")
     newax = fig.add_axes([0.0, 0.0, 1.0, 1.0], anchor='SW', zorder=-1)
     newax.imshow(img,origin='upper')
     newax.axis('off')
 
+    #if debug:
     #plt.show()
-    #savepath = "/home/cobs/ANALYSIS/TitleGraphs/title_mag.png"
-    #plt.savefig(savepath)
-    #print ("Save 1 done")
     savepath2 = "/srv/products/graphs/title/title_mag.png"
-    #/srv/products/graphs/title/
     plt.savefig(savepath2)
     print ("Save to {} done".format(savepath2))
 
