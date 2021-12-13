@@ -257,13 +257,17 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     prelim = DataStream()
     prelimmin = DataStream()
     success = True
-    variosens = config.get('primaryVario')
+    archivepath = config.get('archivepath')
+    variosens = config.get('primaryVario') # LEMI036_1_0002
     scalarsens = config.get('primaryScalar')
-    varioinst = config.get('primaryVarioInst')
+    varioinst = config.get('primaryVarioInst') # LEMI036_1_0002_0001
     scalarinst = config.get('primaryScalarInst')
     primpier = config.get('primarypier')
     daystodeal = config.get('daystodeal')
     db = config.get('primaryDB')
+
+    st = endtime-timedelta(days=daystodeal)
+    starttime = datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
 
     if debug:
         p1start = datetime.utcnow()
@@ -277,7 +281,12 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
 
     name1b = "{}-AdjustedVarioData".format(config.get('logname'))
     if not varioinst == '':
-        vario = readDB(db,varioinst,starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
+        if st < datetime.utcnow()-timedelta(days=10): 
+            print ("  -> reading archive data")
+            vario = read(os.path.join(archivepath,variosens,varioinst,'*'),starttime=starttime,endtime=endtime)
+        else:
+            print ("  -> reading data from database")
+            vario = readDB(db,varioinst,starttime=starttime,endtime=endtime)
         db = config.get('primaryDB',None)
         if vario.length()[0] > 0 and db:
             vario = DoVarioCorrections(db, vario, variosens=config.get('primaryVario'), starttimedt=endtime-timedelta(days=daystodeal))
@@ -286,6 +295,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
             print ("  -> Did not find variometer data - aborting")
             statusmsg[name1b] = 'variometer data loading failed - aborting'
             #sys.exit()
+        print ("  => got vario data from {}".format(vario._find_t_limits()))
     else:
         print ("  -> No variometer - aborting")
         statusmsg[name1b] = 'no variometer specified - aborting'
@@ -295,7 +305,12 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     print ("  ----------------------")
     name1c = "{}-AdjustedScalarData".format(config.get('logname','Dummy'))
     if not scalarinst == '':
-        scalar = readDB(db,scalarinst,starttime=datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d"))
+        if st < datetime.utcnow()-timedelta(days=10): # TODO 10 days should not be fixed here 
+            print ("  -> reading archive data")
+            scalar = read(os.path.join(archivepath,scalarsens,scalarinst,'*'),starttime=starttime,endtime=endtime)
+        else:
+            print ("  -> reading data from database")
+            scalar = readDB(db,scalarinst,starttime=starttime,endtime=endtime)
         if scalar.length()[0] > 0 and db:
             scalar = DoScalarCorrections(db, scalar, scalarsens=config.get('primaryScalar'), starttimedt=endtime-timedelta(days=daystodeal))
             statusmsg[name1c] = 'scalar data loaded'
@@ -303,6 +318,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
             print ("  -> Did not find scalar data - aborting")
             statusmsg[name1c] = 'scalar data load faild - aborting'
             #sys.exit()
+        print ("  => got scalar data from {}".format(scalar._find_t_limits()))
     else:
         print ("No scalar instrument - aborting")
         statusmsg[name1c] = 'no scalar instrument specified - aborting'
@@ -335,6 +351,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     print ("  ----------------------")
     name1f = "{}-AdjustedDataExport".format(config.get('logname','Dummy'))
     statusmsg[name1f] = 'export of adjusted data successful'
+    print ("     for time range: {}".format(datastream._find_t_limits()))
     if not debug:
         #try:
         prelimmin = ExportData(prelim, config=config, publevel=2)
