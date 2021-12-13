@@ -351,7 +351,8 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     print ("  ----------------------")
     name1f = "{}-AdjustedDataExport".format(config.get('logname','Dummy'))
     statusmsg[name1f] = 'export of adjusted data successful'
-    print ("     for time range: {}".format(datastream._find_t_limits()))
+    if debug:
+        print ("     for time range: {}".format(prelim._find_t_limits()))
     if not debug:
         #try:
         prelimmin = ExportData(prelim, config=config, publevel=2)
