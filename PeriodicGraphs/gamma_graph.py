@@ -28,60 +28,6 @@ currentvaluepath = '/srv/products/data/current.data'
 #  Importing database
 # ####################
 
-dbpasswd = mpcred.lc('cobsdb','passwd')
-try:
-    # Test MARCOS 1
-    print ("Connecting to primary MARCOS...")
-    db = mysql.connect(host="138.22.188.195",user="cobs",passwd=dbpasswd,db="cobsdb")
-    print db
-except:
-    print ("... failed")
-    try:
-        # Test MARCOS 2
-        print ("Connecting to secondary MARCOS...")
-        db = mysql.connect(host="138.22.188.191",user="cobs",passwd=dbpasswd,db="cobsdb")
-        print db
-    except:
-        print ("... failed -- aborting")
-        sys.exit()
-print ("... success")
-
-# ####################
-#  Activate monitoring
-# #################### 
-
-try:
-    from magpy.opt.analysismonitor import *
-    analysisdict = Analysismonitor(logfile='/home/cobs/ANALYSIS/Logs/AnalysisMonitor_cobs.log')
-    analysisdict = analysisdict.load()
-except:
-    print ("Analysis monitor failed")
-    pass
-
-
-# ####################
-#  Basic definitions
-# #################### 
-failure = False
-
-endtime = datetime.utcnow()
-starttime=datetime.strftime(endtime-timedelta(days=20),"%Y-%m-%d")
-date = datetime.strftime(endtime,"%Y-%m-%d")
-
-figpath = '/srv/products/graphs/radon/'
-
-zamgcred = 'zamg'
-zamgaddress=mpcred.lc(zamgcred,'address')
-zamguser=mpcred.lc(zamgcred,'user')
-zamgpasswd=mpcred.lc(zamgcred,'passwd')
-zamgport=mpcred.lc(zamgcred,'port')
-
-cred = 'cobshomepage'
-address=mpcred.lc(cred,'address')
-user=mpcred.lc(cred,'user')
-passwd=mpcred.lc(cred,'passwd')
-port=mpcred.lc(cred,'port')
-
 def getcurrentdata(path):
     """
     usage: getcurrentdata(currentvaluepath)
@@ -111,12 +57,11 @@ def writecurrentdata(path,dic):
         file.write(unicode(json.dumps(dic)))
 
 
-part1 = True
-if part1:
+
+def gamma_plot():
     """
     Plot radon data
     """
-    p1start = datetime.utcnow()
     try:
         meteopath = '/srv/products/data/meteo'
         gamma = readDB(db,'GAMMA_SFB867_0001_0001',starttime=starttime,endtime=endtime)
@@ -192,16 +137,120 @@ if part1:
 
     fulldict[u'logging'] = valdict
     writecurrentdata(currentvaluepath, fulldict)
- 
-if not failure:
-    analysisdict.check({'script_periodic_gamma_graph': ['success','=','success']})
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-    print ("    gamma_graph successfully finished     ")
-    print ("++++++++++++++++++++++++++++++++++++++++++++++++")
-else:
-    analysisdict.check({'script_periodic_gamma_graph': ['failure','=','success']})
 
-martaslog = ml(logfile=logpath,receiver='telegram')
-martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
-martaslog.msg(statusmsg)
+
+def main(argv):
+    try:
+        version = __version__
+    except:
+        version = "1.0.0"
+    configpath = ''
+    statusmsg = {}
+    debug=False
+    starttime = None
+    endtime = None
+    source = 'database'
+
+    try:
+        opts, args = getopt.getopt(argv,"hc:e:s:D",["config=","endtime=","starttime=","debug=",])
+    except getopt.GetoptError:
+        print ('gamma_plot.py -c <config>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('-------------------------------------')
+            print ('Description:')
+            print ('-- gamma_plot.py will determine the primary instruments --')
+            print ('-----------------------------------------------------------------')
+            print ('detailed description ..')
+            print ('...')
+            print ('...')
+            print ('-------------------------------------')
+            print ('Usage:')
+            print ('python gamma_plot.py -c <config>')
+            print ('-------------------------------------')
+            print ('Options:')
+            print ('-c (required) : configuration data path')
+            print ('-e            : endtime - default is now')
+            print ('-s            : starttime -  default is three days from now')
+            print ('-------------------------------------')
+            print ('Application:')
+            print ('python gamma_plot.py -c /etc/marcos/analysis.cfg')
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            # delete any / at the end of the string
+            configpath = os.path.abspath(arg)
+        elif opt in ("-s", "--starttime"):
+            # get an endtime
+            starttime = arg
+        elif opt in ("-e", "--endtime"):
+            # get an endtime
+            endtime = arg
+        elif opt in ("-D", "--debug"):
+            # delete any / at the end of the string
+            debug = True
+
+    print ("Running current_weather version {}".format(version))
+    print ("--------------------------------")
+
+    if endtime:
+         try:
+             endtime = DataStream()._testtime(endtime)
+         except:
+             print (" Could not interprete provided endtime. Please Check !")
+             sys.exit(1)
+    else:
+         endtime = datetime.utcnow()
+
+    if starttime:
+         try:
+             starttime = DataStream()._testtime(starttime)
+         except:
+             print (" Could not interprete provided starttime. Please Check !")
+             sys.exit(1)
+    else:
+         starttime = datetime.utcnow()-timedelta(days=3)
+
+    if starttime >= endtime:
+        print (" Starttime is larger than endtime. Please correct !")
+        sys.exit(1)
+
+
+    if not os.path.exists(configpath):
+        print ('Specify a valid path to configuration information')
+        print ('-- check magnetism_products.py -h for more options and requirements')
+        sys.exit()
+
+    print ("1. Read and check validity of configuration data")
+    config = GetConf(configpath)
+
+    print ("2. Activate logging scheme as selected in config")
+    config = DefineLogger(config=config, category = "PeriodicGraphs", job=os.path.basename(__file__), newname='mm-pg-currentweatherchanges.log', debug=debug)
+    name1 = "{}-weatherchange".format(config.get('logname'))
+    statusmsg[name1] = 'weather change analysis successful'
+
+    print ("3. Connect databases and select first available")
+    try:
+        config = ConnectDatabases(config=config, debug=debug)
+        db = config.get('primaryDB')
+    except:
+        statusmsg[name1] = 'database failed'
+    # it is possible to save data also directly to the brokers database - better do it elsewhere
+
+    print ("4. Weather change analysis")
+    success = weather_change(db, config=config, starttime=starttime, endtime=endtime, debug=debug)
+    if not success:
+        statusmsg[name1] = 'weather change analysis failed'
+
+    if not debug:
+        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
+        martaslog.telegram['config'] = config.get('notificationconfig')
+        martaslog.msg(statusmsg)
+    else:
+        print ("Debug selected - statusmsg looks like:")
+        print (statusmsg)
+
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
 
