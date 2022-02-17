@@ -20,12 +20,18 @@ PARAMETERS
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
     -e endtime             :   date    :  date until analysis is performed
                                           default "datetime.utcnow()"
+    -s starttime           :   date    :  new in version 1.0.1
+    -F Force               :   -       :  required to force an QD analyis between a certain time range
+
+
 APPLICATION
     PERMANENTLY with cron:
         python magnetism_products.py -c /etc/marcos/analysis.cfg
     REDO analysis for a time range:
         (startime is defined by endtime - daystodeal as given in the config file 
         python magnetism_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
+    REDO quasidefinitve data analysis 
+        python magnetism_products.py  -c /home/cobs/CONF/wic.cfg -j quasidefinitive -s 2021-07-13 -e 2021-07-20 -F -l test.log
 """
 
 from magpy.stream import *
@@ -247,7 +253,7 @@ def ExportData(datastream, config={}, publevel=2):
 
 
 
-def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=False):
+def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=None, debug=False):
     """
     DESCRIPTION
         Create and submit variation/adjusted data
@@ -265,9 +271,14 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     primpier = config.get('primarypier')
     daystodeal = config.get('daystodeal')
     db = config.get('primaryDB')
+    try:
+        dbcoverage = int(config.get('dbcoverage',10))
+    except:
+        dbcoverage = 10 # amount of days covered in database (second resolution)
 
-    st = endtime-timedelta(days=daystodeal)
-    starttime = datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
+    if not starttime:
+       st = endtime-timedelta(days=daystodeal)
+       starttime = datetime.strftime(endtime-timedelta(days=daystodeal),"%Y-%m-%d")
 
     if debug:
         p1start = datetime.utcnow()
@@ -281,7 +292,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
 
     name1b = "{}-AdjustedVarioData".format(config.get('logname'))
     if not varioinst == '':
-        if st < datetime.utcnow()-timedelta(days=10): 
+        if st < datetime.utcnow()-timedelta(days=dbcoverage): 
             print ("  -> reading archive data")
             vario = read(os.path.join(archivepath,variosens,varioinst,'*'),starttime=starttime,endtime=endtime)
         else:
@@ -305,7 +316,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), debug=Fals
     print ("  ----------------------")
     name1c = "{}-AdjustedScalarData".format(config.get('logname','Dummy'))
     if not scalarinst == '':
-        if st < datetime.utcnow()-timedelta(days=10): # TODO 10 days should not be fixed here 
+        if st < datetime.utcnow()-timedelta(days=dbcoverage):
             print ("  -> reading archive data")
             scalar = read(os.path.join(archivepath,scalarsens,scalarinst,'*'),starttime=starttime,endtime=endtime)
         else:
@@ -574,7 +585,7 @@ def GetQDDonealready(lastQDdate='', QDenddate='', newQDenddate='', debug=False):
     return runqd
 
 
-def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
+def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, force=False, debug=False):
     """
     DESCRIPTION
         Create and submit quasidefinitive data
@@ -592,9 +603,11 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
     scalarinst = config.get('primaryScalarInst')
     db = config.get('primaryDB',None)
     date=datetime.strftime(datetime.utcnow(),"%Y-%m-%d")
+    dbcoverage = int(config.get('dbcoverage',10))
 
     rotangle = 0.0
     runqd = False
+    forcecond = False
 
     if debug:
         print ("----------------------------------------------------------------")
@@ -602,45 +615,60 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
         print ("----------------------------------------------------------------")
         p3start = datetime.utcnow()
 
-    # QDtype:
-    #name3b = "{}-step3b".format(config.get('logname','Dummy'))
-    #name4 = "{}-step4".format(config.get('logname','Dummy'))
-    #statusmsg[name3b] = "last quasidefinitive calculation successful" # will be newly set if conducted
-    #statusmsg[name3c] = "qd coverage ok"
-    #statusmsg[name4] = 'last upload of QD successful' # will be set to failed in case of error in  step 4
 
-    print ("  Suitability test for QD analysis")
-    print ("  ----------------------")
-
-    name3a = "{}-QDanalysis".format(config.get('logname','Dummy'))
-    statusmsg[name3a] = "last suitability-test for quasidefinitive finished"
-    try:
-        runqd = GetQDTimeslot(config=config, debug=debug)
-        if runqd:
-            runqd, newQDenddate = GetQDFlagcondition(db, lastQDdate=lastQDdate, variosens=variosens, scalasens=scalarsens, debug=debug)
-        if runqd:
-            runqd = GetQDDonealready(lastQDdate=lastQDdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
-    except:
-        statusmsg[name3a] = "suitability-test for quasidefinitive failed"
+    # Messages:
+    # name3a: {}-QDanalysis
+    # name3b: {}-QDanalysis-performance  -> general runtime notification
+    # name3c: {}-QDdatasource
+    # name3d: {}-QDvario
+    # name3e: {}-QDscalar
+    # name3f: {}-QDBaselineData
+    # name3g: {}-QDDataCombination
+    # name3h: {}-QDDataExport
 
     name3b = "{}-QDanalysis-performance".format(config.get('logname','Dummy'))
+
+    if force and starttime and endtime:
+        print ("  Force anaysis selected - running QD analysis")
+        print ("  ----------------------")
+        runqd = True
+        forcecond = True
+    else:
+        print ("  Suitability test for QD analysis")
+        print ("  ----------------------")
+
+        name3a = "{}-QDanalysis".format(config.get('logname','Dummy'))
+        statusmsg[name3a] = "last suitability-test for quasidefinitive finished"
+        try:
+            runqd = GetQDTimeslot(config=config, debug=debug)
+            if runqd:
+                runqd, newQDenddate = GetQDFlagcondition(db, lastQDdate=lastQDdate, variosens=variosens, scalasens=scalarsens, debug=debug)
+            if runqd:
+                runqd = GetQDDonealready(lastQDdate=lastQDdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
+        except:
+            statusmsg[name3a] = "suitability-test for quasidefinitive failed"
+
     if runqd:
         print ("  Running QD analysis")
         print ("  ----------------------")
         try:
-            # first time condition
-            qdendtime = datetime.strptime(newQDenddate,"%Y-%m-%d") + timedelta(days=1)
-            if not QDenddate == '':
-                # QDenddate is 8 days before newQDenddate
-                qdstarttime = datetime.strptime(QDenddate,"%Y-%m-%d") - timedelta(days=1)
+            if forcecond:
+                qdstarttime = starttime
+                qdendtime = endtime
             else:
-                qdstarttime = datetime.strptime(newQDenddate,"%Y-%m-%d") - timedelta(days=8)
-            print ("  -> all conditions met - running QD analysis")
+                 # first time condition
+                qdendtime = datetime.strptime(newQDenddate,"%Y-%m-%d") + timedelta(days=1)
+                if not QDenddate == '':
+                    # QDenddate is 8 days before newQDenddate
+                    qdstarttime = datetime.strptime(QDenddate,"%Y-%m-%d") - timedelta(days=1)
+                else:
+                    qdstarttime = datetime.strptime(newQDenddate,"%Y-%m-%d") - timedelta(days=8)
+                print ("  -> all conditions met - running QD analysis")
             print ("     -- Analyzing data between:")
             print ("     -- Start: {}".format(qdstarttime))
             print ("     -- End:   {}".format(qdendtime))
 
-            if not debug:
+            if not debug and not forcecond:
                 print ("  -> Updating current value file with new QD enddate {}".format(newQDenddate))
                 # QDenddate should be updated already now with newQDenddate in current.data file to prevent restart of job in next schedule, if running the analysis is not yet finished
                 if os.path.isfile(currentvaluepath):
@@ -653,14 +681,14 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
                         file.write(unicode(json.dumps(fulldict))) # use `json.loads` to 
                         print ("     -- QDenddate has been updated from {} to {}".format(QDenddate,newQDenddate))
             else:
-                print ("  -> Debug selected: Updating current value file with new QD enddate skipped...")
+                print ("  -> Debug (or Force) selected: Updating current value file with new QD enddate skipped...")
 
             # Running analysis
             # ##############################################
             print ("  -> Checking whether database has a suitable coverage")
             name3c = "{}-QDdatasource".format(config.get('logname','Dummy'))
             archive = False
-            if qdstarttime < datetime.utcnow()-timedelta(days=30):
+            if qdstarttime < datetime.utcnow()-timedelta(days=dbcoverage):
                 print ("     -- Eventually not enough data in database for full coverage")
                 print ("       -> Accessing archive files instead")
                 statusmsg[name3c] = 'using data from file archive for QD analysis'
@@ -728,7 +756,7 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
             else:
                 print ("Debug selected: export disabled")
 
-            if not debug:
+            if not debug and not forcecond:
                 print ("  -> Updating current data")
                 if os.path.isfile(currentvaluepath):
                     with open(currentvaluepath, 'r') as file:
@@ -740,9 +768,8 @@ def QuasidefinitiveData(config={}, statusmsg = {}, debug=False):
                         file.write(unicode(json.dumps(fulldict)))
                         print ("    -- last QD analysis date has been updated from {} to {}".format(lastQDdate,date))
             else:
-                print ("Debug selected: current data remains unchanged")
+                print ("Debug (or Force) selected: current data remains unchanged")
 
-            nameqd = "{}-quasidefinitive".format(config.get('logname','Dummy'))
             statusmsg[name3b] = "QD data between {} and {} calculated and published".format(qdstarttime, qdendtime)
         except:
             statusmsg[name3b] = "quasidefinitive calculation performed but failed - check current.data before redoing"
@@ -760,16 +787,18 @@ def main(argv):
     try:
         version = __version__
     except:
-        version = "1.0.0"
+        version = "1.0.1"
     configpath = ''
     statusmsg = {}
     debug=False
+    force=False
+    starttime = None
     endtime = None
     joblist = ["adjusted", "quasidefinitive", "addon"]
     newloggername = 'mm-dp-magnetism.log'
 
     try:
-        opts, args = getopt.getopt(argv,"hc:j:e:D",["config=","joblist=","endtime=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:j:s:e:l:FD",["config=","joblist=","starttime=","endtime=","loggername=","force=","debug=",])
     except getopt.GetoptError:
         print ('magnetism_products.py -c <config>')
         sys.exit(2)
@@ -795,11 +824,14 @@ def main(argv):
             print ('              :          baseline and only if observer flags are present')
             print ('              : addon -> requires adjusted, create diagtram and k values')
             print ('-l            : loggername')
+            print ('-s            : starttime')
             print ('-e            : endtime')
+            print ('-F            : force redo of quasidefinitve (not updating current.data)')
             print ('-------------------------------------')
             print ('Application:')
             print ('python magnetism_products.py -c /etc/marcos/analysis.cfg')
             print ('python magnetism_products.py -c /etc/marcos/analysisGAM.cfg -j adjusted -l mm-dp-magnetism-GAM')
+            print ('python magnetism_products.py -c /etc/marcos/analysisGAM.cfg -j quasidefinitive -s starttime -e endtime -F -l mm-dp-qd-GAM')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -807,12 +839,18 @@ def main(argv):
         elif opt in ("-j", "--joblist"):
             # get a list of jobs e.g. "adjusted, quasidefinitive, addon"
             joblist = arg.split(',')
+        elif opt in ("-s", "--starttime"):
+            # define an endtime for the current analysis - default is now
+            starttime = arg
         elif opt in ("-e", "--endtime"):
             # define an endtime for the current analysis - default is now
             endtime = arg
         elif opt in ("-l", "--loggername"):
             # define an endtime for the current analysis - default is now
             newloggername = arg
+        elif opt in ("-F", "--force"):
+            # delete any / at the end of the string
+            force = True
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
@@ -826,6 +864,12 @@ def main(argv):
 
     if "addon" in joblist and not "adjusted" in joblist:
         print ("joblist input 'addon' requires 'adjusted' as well - therefore skipping 'addon' option" )    
+
+    if starttime:
+        try:
+            starttime = DataStream()._testtime(starttime)
+        except:
+            print ("Starttime could not be interpreted - using None")
 
     if endtime:
         try:
@@ -871,7 +915,7 @@ def main(argv):
 
     if "quasidefinitive" in joblist:
         print ("10. Obtain quasidefinitive data")
-        statusmsg = QuasidefinitiveData(config=config, statusmsg=statusmsg, debug=debug)
+        statusmsg = QuasidefinitiveData(config=config, statusmsg=statusmsg, starttime=starttime, endtime=endtime, force=force, debug=debug)
 
 
     if not debug:
@@ -906,6 +950,8 @@ qdstarthour            :      3
 qdendhour              :      4
 # analyze quasidefinitive data only on 5=Saturday
 qdweekday              :      5
+# amount of days covered by database (in second resolution)
+dbcoverage             :      10
 # baseline anaylsis
 primarypier            :      A2
 baselinedays           :      100
