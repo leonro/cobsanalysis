@@ -3,16 +3,29 @@
 
 """
 DESCRIPTION
-   Creates magnetism products and graphs. The new version is making use of a configuration file.
-   magneism_products.py creates adjusted data files and if a certain time condition as defined
-   in the configuration file is met, then quasidefinitive data is produced as well, provided
-   actual flagging information is available.
-   Date files are stored in the archive directory and uploaded to all connected databases.
-   Besides adjusted and quasidefinitive data, k-values and a general two-day variation graph is
-   created.
+   Creates a averaged status file for basic observatory parameters making use of a configuration file.
+   obsstatus_products.py creates adjusted data files containing basic stats.
+   
+   The output files contains the following data:
+   x:   timeline of induction coil
+   y:   entrance control (magnetic) GMO
+   z:   CO2 value of SGO - future
+   f:   CO2 value of GMO
+   t1:  temperature of the tunnel GMO
+   t2:  temperatur of the tunnel SGO
+   var1: temperature SGO Seg 1
+   var2: temperature SGO Seg 2
+   var3: temperature GMO Seg 1
+   var4: temperature GMO Seg 2
+   var5: temperature of cabinet GMO
+   dx:  temperature of cabinet SGO
+   dy:  main power GMO
+   dz:  main power SGO
+   df:  nS/h SGO
+   
 PREREQUISITES
    The following packegas are required:
-      geomagpy >= 0.9.8
+      geomagpy >= 1.0.0
       martas.martaslog
       martas.acquisitionsupport
       analysismethods
@@ -21,7 +34,6 @@ PARAMETERS
     -e endtime             :   date    :  date until analysis is performed
                                           default "datetime.utcnow()"
     -s starttime           :   date    :  new in version 1.0.1
-    -F Force               :   -       :  required to force an QD analyis between a certain time range
 
 
 APPLICATION
@@ -58,27 +70,312 @@ from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
 
-def active_pid(name):
-     # Part of Magpy starting with version ??
-    try:
-        pids = map(int,check_output(["pidof",name]).split())
-    except:
-        return False
-    return True
-
-
 
 # ################################################
-#         New Methods
+#         Read Methods for specific data sources
 # ################################################
 
-def ValidityCheckConfig(config={}, debug=False):
+def combinelists(l1,l2):
+    if len(l1) > 0 and len(l2) > 0:
+        l1.extend(l2)
+    elif not len(l1) > 0 and len(l2) > 0:
+        l1 = l2
+    return l1
+
+
+
+def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', starttime='', endtime='', debug=False):
     """
     DESCRIPTION:
-        Check correctness of config data
+        read data from database for all sensors matching sourcetabe names and timerange
+        If archive is selected as source, then the database is searched for all sensors and
+        the archive directory is scanned for all related raw files in related subdirectores
     """
-    success = True
-    return success
+    print ("  -----------------------")
+    print ("  Reading source tables like {}".format(sourcetable))
+    datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
+    if db and not starttime == '':
+        search = 'SensorID LIKE "{}"'.format(sourcetable)
+        senslist = dbselect(db, 'DataID', 'DATAINFO',search)
+        sens=[]
+        sens2=[]
+        for sensor in senslist:
+            print ("Found", sensor)
+            if source == 'database':
+                if debug:
+                    print ("   -- checking sensor {}".format(sensor))
+                last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
+                ### last2 should be the better alternative
+                last2 = dbselect(db,'DataMaxTime','DATAINFO','DataID="{}"'.format(sensor))
+                #print (last, starttime, last2)
+                if not last2:
+                    last2 = last
+                if last and (getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime):
+                    #sens.append(sensor)
+                    sens2.append([sensor,getstringdate(last[0])])
+                    if debug:
+                        print ("     -> valid data for sensor {}".format(sensor))
+            else:
+                sens.append(sensor)
+
+        # sort sens2 so that the one with the latest record is last
+        if not sens:
+            sens = [el[0] for el in sorted(sens2, key=lambda x: x[1])]
+
+        #print (sens)
+
+        datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
+        if len(sens) > 0:
+            for sensor in sens:
+                print ("    -- getting data from {}".format(sensor))
+                try:
+                    if source == 'database':
+                        datastream = readDB(db,sensor,starttime=starttime,endtime=endtime)
+                    else:
+                        raw = 'raw'
+                        if sensor.startswith('BM35'):
+                            raw = sensor[:-5]+'_0002'
+                        print ("    -- reading from {}".format(os.path.join(path,sensor[:-5],raw)))
+                        if debug:
+                            print ("       starttime: {}, endtime: {}".format(starttime,endtime))
+                        datastream = read(os.path.join(path,sensor[:-5],raw,'*'),starttime=starttime,endtime=endtime)
+                except:
+                    datastream = DataStream()
+                if debug:
+                    print ("      -> got data with range: {}".format(datastream._find_t_limits()))
+                print ("      -> Done")
+
+    if debug:
+        print ("      -> obtained {}".format(datastream.length()[0]))
+    print ("      -> readTable finished")
+    print ("  -----------------------")
+
+    return datastream
+
+
+def transformDS(db, datastream, sourcekey='t1', destinationkey='t1', debug=False):
+    """
+    DESCRIPTION:
+        filter and transform dallas sensor data to obtain filtered temperature records
+        # Columns after: 
+        pressure: 'var5'
+    PARAMTER:
+        dbupdate : if True then new flags will be written to DB
+    """
+    flaglist = []
+
+    print ("  Transforming Dallas")
+    if datastream.length()[0] > 0:
+        if debug:
+            print ("    -- getting existing flags ...")
+        start, end = datastream._find_t_limits()
+        flaglist = db2flaglist(db, datastream.header.get("SensorID"),begin=start,end=end)
+        if len(flaglist) > 0:
+            datastream = datastream.flag(flaglist)
+            datastream = datastream.remove_flagged()        
+            if debug:
+                print ("    -- found and removed {} existing flags".format(len(flaglist)))
+        if debug:
+            print ("    -- flagging outliers ...")
+        flaglist = datastream.flag_outlier(threshold=3,returnflaglist=True)
+        if len(flaglist) > 0:
+            print ("    -- found {} new outliers".format(len(flaglist)))
+            #if not debug:
+            #    print ("    -> writing {} new flags to DB".format(len(flaglist)))
+            #    flaglist2db(db, flaglist)
+            datastream = datastream.flag(flaglist)
+            datastream = datastream.remove_flagged()
+            
+        print ("    -- filtering to minute")
+        datastream = datastream.filter() # minute data
+
+        if not sourcekey==destinationkey:
+            datastream._move_column(sourcekey,destinationkey)
+            datastream._drop_column(sourcekey)
+    print ("      -> Done")
+    return datastream, flaglist
+
+
+def transformRCS(db, datastream, debug=False):
+    """
+    DESCRIPTION:
+        filter and transform rcs t7 data to produce a general structure for combination
+        # --------------------------------------------------------    
+        # RCS - Get data from RCS (no version/revision control in rcs) 
+        # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
+        # 
+        # Columns after: 
+        pressure (if existing): 'var5'
+        temperature: 'f'
+        snowheight: 'z'
+        rain: 'y'
+        humidity: 't1'
+
+    PARAMTER:
+        dbupdate : if True then new flags will be written to DB
+    """
+
+    print ("  Transforming RCST7 data")
+
+    filtdatastream = DataStream()
+    flaglist = []
+    if datastream.length()[0]>0:
+        start, end = datastream._find_t_limits()
+        print ("    -- getting existing flags for {} ...".format(datastream.header.get("SensorID")))
+        flaglist = db2flaglist(db,datastream.header.get("SensorID"),begin=start, end=end)
+        print ("    -- found {} flags for given time range".format(len(flaglist)))
+        if len(flaglist) > 0:
+            datastream = datastream.flag(flaglist)
+        datastream = datastream.remove_flagged()
+        datastream.header['col-y'] = 'T'
+        datastream.header['unit-col-y'] = 'deg C'
+        datastream.header['col-t2'] = 'rh'
+        datastream.header['unit-col-t2'] = 'percent'
+        datastream.header['col-f'] = 'P'
+        datastream.header['unit-col-f'] = 'hPa'
+        datastream.header['col-x'] = 'snowheight'
+        datastream.header['unit-col-x'] = 'cm'
+
+        flaglist = []
+        print ("    -- cleanup snow height measurement - outlier")  # WHY NOT SAVED?? -- TOO MANY Flags -> needs another method
+        removeimmidiatly = True
+        if removeimmidiatly:
+            datastream = datastream.flag_outlier(keys=['x'],timerange=timedelta(days=5),threshold=3)
+            datastream = datastream.remove_flagged()
+        else:
+            flaglist = datastream.flag_outlier(keys=['x'],timerange=timedelta(days=5),threshold=3,returnflaglist=True)
+        print ("      -> size of flaglist now {}".format(len(flaglist)))
+        print ("    -- cleanup rain measurement")
+        try:
+            z = datastream._get_column('z')
+            if np.mean('z') >= 0 and np.mean('z') <= 1:
+                flaglist0 = datastream.bindetector('z',1,['t1','z'],datastream.header.get("SensorID"),'Maintanence switch for rain bucket',markallon=True)
+            else:
+                print ("      -> flagging of service switch rain bucket failed")
+        except:
+            flaglist0 = []
+            print ("      -> flagging of service switch rain bucket failed")
+        flaglist = combinelists(flaglist,flaglist0)
+        print ("      -> size of flaglist now {}".format(len(flaglist)))
+        print ("    -- cleanup temperature measurement")
+        flaglist1 = datastream.flag_outlier(keys=['y'],timerange=timedelta(hours=12),returnflaglist=True)
+        flaglist = combinelists(flaglist,flaglist1)
+        print ("      -> size of flaglist now {}".format(len(flaglist)))
+        print ("    -- cleanup pressure measurement") # not part of rcs any more -> flag only if mean is between 800 and 1000...
+        if not np.isnan(datastream.mean('f')) and 800 < datastream.mean('f') and datastream.mean('f') < 1000:
+            flaglist2 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], below=800,text='pressure below value range')
+            flaglist = combinelists(flaglist,flaglist2)
+            flaglist3 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], above=1000,text='pressure exceeding value range')
+            flaglist = combinelists(flaglist,flaglist3)
+            print ("      -> size of flaglist now {}".format(len(flaglist)))
+        else:
+            datastream._drop_column('f')
+            print ("      -> no pressure data found")
+        print ("    -- cleanup humidity measurement")
+        flaglist4 = datastream.flag_range(keys=['t2'], flagnum=3, keystoflag=['t2'], above=100, below=0,text='humidity not valid')
+        flaglist = combinelists(flaglist,flaglist4)
+        print ("      -> size of flaglist now {}".format(len(flaglist)))
+        datastream = datastream.flag(flaglist)
+        print ("    -- found new flags: {}".format(len(flaglist)))
+        datastream = datastream.remove_flagged()
+        print ("    -- found and removed new flags: {}".format(len(flaglist)))
+
+        # Now Drop flag and comment line - necessary because of later filling of gaps
+        flagpos = KEYLIST.index('flag')
+        commpos = KEYLIST.index('comment')
+        datastream.ndarray[flagpos] = np.asarray([])
+        datastream.ndarray[commpos] = np.asarray([])
+        ## Now use missingvalue treatment
+        print ("    -- interpolating missing values if less then 5 percent are missing within 2 minutes")
+        datastream.ndarray[1] = datastream.missingvalue(datastream.ndarray[1],120,threshold=0.05,fill='interpolate')
+        print ("    -- determine average rain")
+        res = datastream.steadyrise('t1', timedelta(minutes=60),sensitivitylevel=0.002)
+        print ("       -> RCST7 rain checked")
+        datastream= datastream._put_column(res, 'var1', columnname='Percipitation',columnunit='mm/1h')
+        print ("    -- filter all RCS data columns to 1 min")
+        filtdatastream = datastream.filter(missingdata='interpolate')
+
+        filtdatastream._move_column('f','var5')
+        filtdatastream._move_column('y','f')
+        filtdatastream._move_column('x','z')
+        filtdatastream._drop_column('x')
+        filtdatastream._move_column('var1','y')
+        filtdatastream._move_column('t2','t1')
+        filtdatastream._drop_column('t2')
+        filtdatastream._drop_column('var1')
+        filtdatastream._drop_column('var2')
+        filtdatastream._drop_column('var3')
+        filtdatastream._drop_column('var4')
+
+    else:
+        filtdatastream = DataStream()
+
+    print ("      -> Done")
+
+    return filtdatastream, flaglist
+
+
+def transformMETEO(db, datastream, debug=False):
+    """
+    DESCRIPTION:
+        filter and transform rcs t7 data to produce a general structure for combination
+        # --------------------------------------------------------
+        # METEO - Get data from RCS (no version/revision control in rcs)
+        # Schnee: z, Temperature: f, Humidity: t1, Pressure: var5
+    """
+
+    print ("  Transforming METEO data")
+
+    if datastream.length()[0] > 0:
+        start, end = datastream._find_t_limits()
+        flaglist = db2flaglist(db,datastream.header.get("SensorID"),begin=start, end=end)
+        print ("    -- Found existing flags: {}".format(len(flaglist)))
+        datastream = datastream.flag(flaglist)
+        datastream = datastream.remove_flagged()
+        datastream = datastream.flag_outlier(keys=['f','z'],timerange=timedelta(days=5),threshold=3)
+        # meteo data is not flagged
+        datastream = datastream.remove_flagged()
+        print ("    -- Cleanup pressure measurement")
+        if not np.isnan(datastream.mean('var5')) and 800 < datastream.mean('var5') and datastream.mean('var5') < 1000:
+            flaglist1 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], below=800,text='pressure below value range')
+            flaglist = combinelists(flaglist,flaglist1)
+            flaglist15 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], above=1000,text='pressure exceeding value range')
+            flaglist = combinelists(flaglist,flaglist15)
+        else:
+            print ("      -> no pressure data found")
+            datastream._drop_column('var5')
+        print ("    -- Cleanup humidity measurement")
+        flaglist2 = datastream.flag_range(keys=['t1'], flagnum=3, keystoflag=['t1'], above=100, below=0)
+        flaglist = combinelists(flaglist,flaglist2)
+        meteost = datastream.flag(flaglist)
+        meteost = datastream.remove_flagged()
+        print ("    -- Determine average rain")
+        res = datastream.steadyrise('dx', timedelta(minutes=60),sensitivitylevel=0.002)
+        print ("       -> METEO rain checked")
+        if np.isnan(np.sum(res)):
+            print (" STEADYRISE: found a NAN value")
+        datastream = datastream._put_column(res, 'y', columnname='Percipitation',columnunit='mm/1h')
+        flagpos = KEYLIST.index('flag')
+        commpos = KEYLIST.index('comment')
+        datastream.ndarray[flagpos] = np.asarray([])
+        datastream.ndarray[commpos] = np.asarray([])
+
+        print ("    -- cleaning data stream")
+        # Meteo
+        datastream._drop_column('x')
+        datastream._drop_column('t2')
+        #datastream._drop_column('var1')   # remove after CheckRain
+        datastream._drop_column('var2')
+        datastream._drop_column('var3')
+        datastream._drop_column('var4')
+        datastream._drop_column('dx')
+        datastream._drop_column('dy')
+        datastream._drop_column('dz')
+        datastream._drop_column('df')
+
+    print ("      -> Done")
+
+    return datastream
 
 def ValidityCheckDirectories(config={},statusmsg={}, debug=False):
     """
@@ -218,7 +515,7 @@ def ExportData(datastream, config={}, publevel=2):
         print ("     -- Saving one second data - CDF")
         datastream.write(vpathcdf,filenamebegins="wic_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+datastream.header.get('DataPublicationLevel')+'.cdf')
         print ("       -> Done")
-    if 'DBsec' in explist and not int(publevel)==3: # dont save quasidefinitve 1 sec data - memory issues and unnecessary
+    if 'DBsec' in explist:
         print ("     -- Saving one second data - Database")
         oldDataID = datastream.header['DataID']
         oldSensorID = datastream.header['SensorID']
