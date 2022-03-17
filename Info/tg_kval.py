@@ -40,7 +40,7 @@ languagedict = {'english' : {'warnstart': "Possible consequences are", 'msgnew':
                              'msgupdate':'*Update on activity*','msgbody1':'Geomagnetic activity index _k_ of ',
                              'msgbody2':'expected','msgvalid':'Warning is valid until','timezone':'UTC',
                              'msgref':'Based on data from the [Conrad Observatory]','channeltype':'telegram',
-                             'channelconfig':'/etc/martas/telegram.cfg',
+                             'channelconfig':'/etc/martas/tg_space.cfg',
                              'level':{"5":"an aurora at high latitudes.",
                                       "6":"an aurora at high latitudes, weak degradation of radio communication.",
                                       "7":"an aurora at high latitudes, disturbances in radio communication, and weak fluctuations in power grids.",
@@ -50,7 +50,7 @@ languagedict = {'english' : {'warnstart': "Possible consequences are", 'msgnew':
                              'msgupdate':'*Aktivitätsupdate*','msgbody1':'Geomagnetischer Aktivitätsindex _k_=',
                              'msgbody2':'erwwartet','msgvalid':'Warnung ist gültig bis','timezone':'CET',
                              'msgref':'Basierend auf Daten des [Conrad Observatoriums]','channeltype':'telegram',
-                             'channelconfig':'/etc/martas/telegram.cfg',
+                             'channelconfig':'/etc/martas/tg_weltraum.cfg',
                              'level': {"5":"eine Aurora in hohen Breiten.", 
                                        "6":"eine Aurora in hohen Breiten, mögliche Störungen bei Radio-Kommunikation.",
                                        "7":"eine Aurora in hohen Breiten, Beeiträchtigungen der Radio-Kommunikation und schwache Fluktuationen im Stromnetz.",
@@ -104,6 +104,9 @@ def send_kval_message(data, currentvaluepath='', debug=False):
             for language in languagedict:
                 langdic = languagedict.get(language)
                 timezone = langdic.get('timezone','UTC')
+                channelconf = langdic.get('channelconfig')
+                if debug:
+                    channelconf = '/etc/martas/telegram.cfg'
                 if not timezone in ['utc','UTC']:
                     try:
                         from_zone = tz.tzutc()

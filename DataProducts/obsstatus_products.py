@@ -4,23 +4,38 @@
 """
 DESCRIPTION
    Creates a averaged status file for basic observatory parameters making use of a configuration file.
-   obsstatus_products.py creates adjusted data files containing basic stats.
+   gmostatus_products.py creates adjusted data files containing basic stats.
    
    The output files contains the following data:
    x:   timeline of induction coil
-   y:   entrance control (magnetic) GMO
-   z:   CO2 value of SGO - future
+   y:   main power GMO
+   z:   entrance control (magnetic) GMO
    f:   CO2 value of GMO
-   t1:  temperature of the tunnel GMO
-   t2:  temperatur of the tunnel SGO
+   t1:  outside temperature at GMO
+   t2:  lab temperatur at GMO
+   var1: temperature GMO Seg 1
+   var2: temperature GMO Seg 2
+   var3: temperature GMO Seg 3
+   var4: temperature GMO Seg 4
+   var5: temperature GMO Seg 5
+   dx:  temperature of cabinet GMO
+   dy:  temperature of cabinet GMO
+   dz:  pressure in tunnel GMO
+   df:  nS/h GMO
+
+SGO
+   x:   timeline of induction coil
+   y:   main power SGO
+   z:   entrance control SGO
+   f:   CO2 value of SGO
+   t1:  outside temperature in SGO
+   t2:  lab temperatur of the tunnel SGO
    var1: temperature SGO Seg 1
    var2: temperature SGO Seg 2
-   var3: temperature GMO Seg 1
-   var4: temperature GMO Seg 2
-   var5: temperature of cabinet GMO
+   var3: temperature SGO Seg 3
    dx:  temperature of cabinet SGO
-   dy:  main power GMO
-   dz:  main power SGO
+   dy:  temperature of cabinet SGO
+   dz:  pressure in tunnel SGO
    df:  nS/h SGO
    
 PREREQUISITES
@@ -74,6 +89,10 @@ from version import __version__
 # ################################################
 #         Read Methods for specific data sources
 # ################################################
+
+
+tabledictionary = {'Barrier':'', 'GMO light':'', 'GMO CO2' : 'MQ135_20220214_0001_0001', 'GMO T1': , 
+
 
 def combinelists(l1,l2):
     if len(l1) > 0 and len(l2) > 0:

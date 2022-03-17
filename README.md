@@ -2,7 +2,8 @@
 
 ## 1. Introduction
 
-The following README contains an overview about all analysis scripts used at the Conrad Observatory. A short description of each script is accompanied by dependencies and some typical schedules of the respective application.
+The following README contains an overview about all analysis scripts used at the Conrad Observatory. A short description of each script is accompanied by dependencies and some typical schedules of the respective application. A detailed description of how the analysis scripts interact with MARTAS and MARCOS machines at the Conrad Observatory, and how different script are used for consecutive automatic data analysis is to be found in the README.md document of the MarcosScripts repository. While this "ANALYSIS" repository contains detailed descriptions and application examples of individual scripts, the "Marcos" repository README will focus on application examples for testing and production based an optimal usage of various different scripts. 
+
 
 ## 2. Overview
 
