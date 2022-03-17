@@ -2,14 +2,30 @@
 # coding=utf-8
 
 """
+DESCRIPTION
 Appliaction to extract CME information from the CME scoreboard and report such data by mail or telegram
 Data is also provided in a database
 
+REQUIREMENTS 
+
+Python packages: pandas, lxml
+
+IMPORTANT
 Please note: Altough lots of information is read by configuration or option data, this file contains a dictionary with language dependent contents for messages. Please modify if needed.
 
 Please note: e-mail receivers are not yet defined - TODO
 
 If debug is selected (and telegram or email are selected), then a test message is send. 
+
+TODO
+email function not yet working - test martas sm elsewhere and then correct
+
+TESTING
+
+   1. delete one of the json inputs from the memory file in /srv/archive/external/esa-nasa/cme
+   2. run app without file option
+       python3 cme_extractor.py -c /home/cobs/CONF/wic.cfg -o db,telegram -p /srv/archive/external/esa-nasa/cme/
+
 """
 
 
@@ -142,7 +158,7 @@ def _get_cme_data(res):
                 KPrange = line[5].replace('Max Kp Range: ','')
     SCOREamount = len(res)-4 # remove header, comment, CME:, and Average lines 
     if CMEstart:
-        print (CMEname,CMEstartst, CMEarrivalst, KPrange, SCOREamount)
+        #print (CMEname,CMEstartst, CMEarrivalst, KPrange, SCOREamount)
         return CMEname,CMEstartst, CMEarrivalst, KPrange, SCOREamount
     else:
         return '','','','',0
@@ -180,6 +196,16 @@ def _extract_sql_criteria(valuedict, hours_threshold=12):
     else:
         return False,minval,maxval
 
+def _create_k_sql(arrival,maxval):
+    CMEarrival = dparser.parse(arrival,fuzzy=True)
+    valid_from = CMEarrival.replace(hour=0,minute=0,second=0,microsecond=0)
+    valid_until = CMEarrival.replace(hour=23,minute=59,second=59,microsecond=0)
+    active=0
+    if valid_until > datetime.utcnow():
+        active=1
+    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Kp','forecast','geomagactivity','geomag',maxval,valid_from,valid_until,'CMEscoreboard','',datetime.utcnow(),active,'forecast','geomagactivity','geomag',maxval,valid_from,valid_until,'CMEscoreboard','',datetime.utcnow(),active)    
+    return knewsql
+    
 
 def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
     """
@@ -188,9 +214,11 @@ def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
     REQUIRES
         a table called SPACEWEATHER
     """
+    
     # cleanup
     sqllist = []
-    delsql = "DELETE FROM SPACEWEATHER WHERE sw_group LIKE 'cmescore' and validity_end < '{}'".format(datetime.utcnow() - timedelta(hours=hours_threshold))
+    #delsql = "DELETE FROM SPACEWEATHER WHERE sw_group LIKE 'cmescore' and validity_end < '{}'".format(datetime.utcnow() - timedelta(hours=hours_threshold))
+    delsql = "DELETE FROM SPACEWEATHER WHERE sw_type LIKE 'forecast' and validity_end < '{}'".format(datetime.utcnow() - timedelta(hours=hours_threshold))
     sqllist.append(delsql)
     # add new inputs
     for el in new:
@@ -199,6 +227,9 @@ def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
         if cont:
             addsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,value_min,value_max,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},{},'{}','{}','{}','based on {} estimates','{}',{})".format(el,'forecast','cmescore','helio',minval,maxval,valdict.get('start'),valdict.get('arrival'),swsource,valdict.get('N'),datetime.utcnow(),1)
             sqllist.append(addsql)
+            knewsql = _create_k_sql(valdict.get('arrival'),maxval)
+            sqllist.append(knewsql)
+
     # add updates
     for el in up:
         valdict = full.get(el)
@@ -206,6 +237,9 @@ def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
         if cont:
             upsql = "UPDATE SPACEWEATHER SET sw_type = '{}',sw_group = '{}',sw_field = '{}',value_min = {},value_max = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='based on {} estimates',date_added = '{}',active = {} WHERE sw_notation LIKE '{}'".format('forecast','cmescore','helio',minval,maxval,valdict.get('start'),valdict.get('arrival'),swsource,valdict.get('N'),datetime.utcnow(),1,el)
             sqllist.append(upsql)
+            knewsql = _create_k_sql(valdict.get('arrival'),maxval)
+            sqllist.append(knewsql)
+            
     _execute_sql(db,sqllist, debug=debug)
 
 def _execute_sql(db,sqllist, debug=False):
@@ -274,7 +308,7 @@ def main(argv):
     init = False # create table if TRUE
     statusmsg = {}
 
-    receivers = {'deutsch' : {'userid1': {'name':'roman leon', 'email':'roman_leonhardt@web.de'}}}
+    receivers = {'deutsch' : {'userid1': {'name':'roman leon', 'email':'roman_leonhardt@web.de', 'language':'deutsch'}}}
 
     languagedict = {'english' : {'msgheader': "Coronal mass ejection - CME",
                                  'msgnew':'New CME started at ',
@@ -282,7 +316,7 @@ def main(argv):
                                  'msgarrival':'Estimated arrival: ',
                                  'msgpred':'Expected geomagnetic activity (Kp): ',
                                  'timezone':'UTC',
-                                 'msgref':'Based on data from [CMEscoreboard](https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/)',
+                                 'msgref':'Based on experimental data from [CMEscoreboard](https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/)',
                                  'msguncert':'arrival time estimates usually have an uncertainty of +/- 7 hrs',
                                  'channeltype':'telegram',
                                  'channelconfig':'/etc/martas/telegram.cfg',
@@ -293,7 +327,7 @@ def main(argv):
                                  'msgarrival':'Geschätzte Ankunftszeit: ',
                                  'msgpred':'Erwartete geomagnetische Aktivität (Kp): ',
                                  'timezone':'UTC',
-                                 'msgref':'Basierend auf Daten des [CMEscoreboard](https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/)',
+                                 'msgref':'Basierend auf experimentellen Daten des [CMEscoreboard](https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/)',
                                  'msguncert':'geschätzte Ankunftszeiten sind meistens mit Fehlern von +/- 7 hrs behaftet',
                                  'channeltype':'telegram',
                                  'channelconfig':'/etc/martas/telegram.cfg',
@@ -328,7 +362,7 @@ def main(argv):
             print('-------------------------------------')
             print('Examples:')
             print('---------')
-            print('python3 cme_extractor.py -o file,db,telegram,email -p /home/leon/Tmp/cmebib.json -D')
+            print('python3 cme_extractor.py -c /home/cobs/CONF/wic.cfg -o file,db,telegram,email -p /srv/archive/external/esa-nasa/cme/ -D')
             print('---------')
             sys.exit()
         elif opt in ("-c", "--config"):
@@ -373,7 +407,7 @@ def main(argv):
 
     try:
         if swsource.startswith('http'):
-            cmedict = get_cme_dictionary_scoreboard(url=source)
+            cmedict = get_cme_dictionary_scoreboard(url=swsource)
         elif os.path.isfile(swsource):
             cmedict = read_memory(swsource)
         else:
@@ -390,12 +424,14 @@ def main(argv):
 
     # read memory and extract new and updated data
     if path:
+        if os.path.isdir(path): 
+            path = os.path.join(path,"cme_{}.json".format(datetime.strftime(datetime.utcnow(),"%Y"))) 
         # open existing json, extend dictionary, eventually update contents
         data = read_memory(path,debug=False)
         full, new, up = get_new_inputs(data,cmedict)
 
     if debug:
-        #print ('out', full)
+        print ('Saveing to path:', path)
         print ('new:', new)
         print ('update:', up)
 
@@ -408,7 +444,6 @@ def main(argv):
         else:
             statusmsg['CME2file'] = 'failed'
             print (" -> failed")
-        pass
     if 'db' in output and creddb:
         print (" Dealing with job: db")
         # Only add data with arrival time +12h > now to database
@@ -423,14 +458,18 @@ def main(argv):
             connectdict = config.get('conncetedDB')
             if debug:
                 print (" ... done")
+            success = True
         except:
             pass
         try:
-            if init:
-                swtableinit(db)
-            if success:
-                update_database(db,full, new, up, swsource,debug=debug)
-                statusmsg['CME2db'] = 'success'
+            for dbel in connectdict:
+                db = connectdict[dbel]
+                print ("     -- Writing data to DB {}".format(dbel))
+                if init:
+                    swtableinit(db)
+                if success:
+                    update_database(db,full, new, up, swsource,debug=debug)
+            statusmsg['CME2db'] = 'success'
             print (" -> everything fine")
         except:
             print (" -> failed")
@@ -456,10 +495,12 @@ def main(argv):
                     print (msg)
 
                 if not debug and 'email' in output and lang == 'deutsch':
-                    #if 'email' in output:
+                    #if 'email' in output and lang == 'deutsch':
+                    #TODO e-mail is not yet working
                     print ("Now starting e-mail") 
                     # read e-mail receiver list from dictionary
-                    mailcfg = config.get('emailconfig','/etc/martas/mailconrad.cfg')
+                    #try:
+                    mailcfg = config.get('emailconfig','/etc/martas/mail.cfg')
                     maildict = read_meta_data(mailcfg)
                     maildict['Subject'] = msghead
                     # email is a comma separated string
@@ -468,17 +509,21 @@ def main(argv):
                         userdic = reclist[dic]
                         email = userdic.get('email')
                         name = userdic.get('name')
+                        preferedlang = userdic.get('language')
                         maildict['Text'] = msgbody
                         maildict['To'] = email
                         #print ("       receivers are: {}".format(maildict['To']))
                         #### Stop here with debug mode for basic tests without memory and mails
-                        print ("  ... sending mail now", maildict)
-                        sm(maildict)
-                        print ("  ... done")
-                        statusmsg['CME2mail'] = 'success'
+                        if preferedlang == lang:
+                            print ("  ... sending mail in language {} now: {}".format(lang,maildict))
+                            sm(maildict)
+                            print ("  ... done")
+                    statusmsg['CME2mail'] = 'success'
                     print (" -> email fine")
+                    #except:
+                    #statusmsg['CME2mail'] = 'failed'
                 
-                if not debug and 'telegram' in output and lang == 'deutsch':
+                if not debug and 'telegram' in output:
                     print ("Now starting telegram")
                     try:
                         telegram_send.send(messages=[msg],conf=langdic.get('channelconfig'),parse_mode="markdown")
@@ -487,7 +532,7 @@ def main(argv):
                         statusmsg['CME2telegram'] = 'failed'
                         print (" -> telegram failed")
                 if debug and 'telegram' in output and lang == 'deutsch':
-                    telegram_send.send(messages=['Debug of cme-extractor: testmessage'],conf=config.get('notificationconfig'),parse_mode="markdown")
+                    telegram_send.send(messages=[msg],conf=config.get('notificationconfig'),parse_mode="markdown")
                     print (" -> debug telegram fine")
 
     # Logging section

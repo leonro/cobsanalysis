@@ -3,6 +3,7 @@
 
 """
 MagPy - Send ou k value messages
+and update SPACEWEATHER DB
 """
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -153,16 +154,43 @@ def k2sw_database(db, data ,debug=False):
     REQUIRES
         a table called SPACEWEATHER
     """
-    lastvalue = data.ndarray[7][-1]
-    valid_until = num2date(data.ndarray[0][-1]).replace(tzinfo=None)+timedelta(minutes=90)
-    valid_from = num2date(data.ndarray[0][-1]).replace(tzinfo=None)
-    active = 1
-    if valid_until < datetime.utcnow():
+    if data.length()[0]> 0:
+        lastvalue = data.ndarray[7][-1]
+        valid_until = num2date(data.ndarray[0][-1]).replace(tzinfo=None)+timedelta(minutes=90)
+        valid_from = num2date(data.ndarray[0][-1]).replace(tzinfo=None)
+        active = 1
+        if valid_until < datetime.utcnow():
+            active = 0
+    else:
+        lastvalue = float(nan)
+        valid_until = ''
+        valid_from = ''
         active = 0
-    insertsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='based on {} estimates',date_added = '{}',active = {} ".format('Kcobs','nowcast','geomagactivity','geomag',lastvalue,valid_from,valid_until,'Conrad Observatory','based on fmi method',datetime.utcnow(),active,'nowcast','geomagactivity','geomag',lastvalue,valid_from,valid_until,'Conrad Observatory','based on fmi method',datetime.utcnow(),active)
+
+    insertsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='based on {} estimates',date_added = '{}',active = {} ".format('Kcobs','nowcast','geomagactivity','geomag',lastvalue,valid_from,valid_until,'Conrad Observatory','based on fmi method',datetime.utcnow(),active,'nowcast','geomagactivity','geomag',lastvalue,valid_from,valid_until,'Conrad Observatory','based on fmi method',datetime.utcnow(),active)
     print (insertsql)
-    #_execute_sql(db,sqllist, debug=debug)
+    _execute_sql(db,[insertsql], debug=debug)
     
+def _execute_sql(db,sqllist, debug=False):
+    """
+    DESCRIPTION
+        sub method to execute sql requests
+    """
+    if len(sqllist) > 0:
+        cursor = db.cursor()
+        for sql in sqllist:
+            if debug:
+                print ("executing: {}".format(sql))
+            try:
+                cursor.execute(sql)
+            except mysql.Error as e:
+                emsg = str(e)
+                print ("mysql error - {}".format(emsg))
+            except:
+                print ("unknown mysql error when executing {}".format(sql))
+        db.commit()
+        cursor.close()
+
 
 def main(argv):
     version = '1.0.0'
@@ -258,7 +286,10 @@ def main(argv):
     # 4. update Spaceweather database:
     # ###########################
     try:
-        k2sw_database(db, data ,debug=False)
+        for dbel in connectdict:
+            db = connectdict[dbel]
+            print (" -- Writing data to DB {}".format(dbel))
+            k2sw_database(db, data ,debug=False)
         statusmsg['K2SWDB'] = 'fine'
     except:
         statusmsg['K2SWDB'] = 'problem with uploading'
