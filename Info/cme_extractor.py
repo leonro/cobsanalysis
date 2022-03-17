@@ -87,7 +87,6 @@ def read_meta_data(sourcepath, filename = "meta*.txt"):
         """
         DESCRIPTION
              read additional metainformation for the specific observatory
-             
          -> taken from IMBOT
         """
         newhead = {}
@@ -132,8 +131,8 @@ def get_new_inputs(memory,newdict,report='new'):
         for key in C:
             if not key in newlist:
                 updatelist.append(key)
-        print (updatelist)
-        print (newlist)
+        #print (updatelist)
+        #print (newlist)
         full = {**memory,**newdict}
 
         return full, newlist, updatelist
@@ -239,7 +238,7 @@ def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
             sqllist.append(upsql)
             knewsql = _create_k_sql(valdict.get('arrival'),maxval)
             sqllist.append(knewsql)
-            
+
     _execute_sql(db,sqllist, debug=debug)
 
 def _execute_sql(db,sqllist, debug=False):
@@ -415,7 +414,7 @@ def main(argv):
         statusmsg['CMEaccess'] = 'success'
     except:
         statusmsg['CMEaccess'] = 'failed'
-    
+
     if debug:
         print (cmedict)
 
@@ -424,7 +423,7 @@ def main(argv):
 
     # read memory and extract new and updated data
     if path:
-        if os.path.isdir(path): 
+        if os.path.isdir(path):
             path = os.path.join(path,"cme_{}.json".format(datetime.strftime(datetime.utcnow(),"%Y"))) 
         # open existing json, extend dictionary, eventually update contents
         data = read_memory(path,debug=False)
@@ -432,8 +431,8 @@ def main(argv):
 
     if debug:
         print ('Saveing to path:', path)
-        print ('new:', new)
-        print ('update:', up)
+    print ('new:', new)
+    print ('update:', up)
 
     if 'file' in output and (new or up):
         print (" Dealing with job: file")
@@ -479,13 +478,17 @@ def main(argv):
         # Access memory of already send data, send update/new
         statusmsg['CME2telegram'] = 'success'
         statusmsg['CME2mail'] = 'success'
-        for el in new:
+        total = new + up
+        for el in total:
             # Construct markdown message for each language provided
             valdict = full.get(el)
             for lang in languagedict:
                 langdic = languagedict[lang]
                 msghead = "*{}*".format(langdic.get('msgheader'))
-                msgbody = "\n\n{} {}\n".format(langdic.get('msgnew'), valdict.get('start'))
+                if el in new:
+                    msgbody = "\n\n{} {}\n".format(langdic.get('msgnew'), valdict.get('start'))
+                else:
+                    msgbody = "\n\n{} {}\n".format(langdic.get('msgupdate'), valdict.get('start'))
                 msgbody += "\n{} *{}* {}\n".format(langdic.get('msgarrival'), valdict.get('arrival') ,langdic.get('timezone'))
                 msgbody += "{} {}\n".format(langdic.get('msgpred'), valdict.get('KPrange'))
                 msgbody += '{}\n'.format(langdic.get('msgref'))
@@ -522,7 +525,7 @@ def main(argv):
                     print (" -> email fine")
                     #except:
                     #statusmsg['CME2mail'] = 'failed'
-                
+
                 if not debug and 'telegram' in output:
                     print ("Now starting telegram")
                     try:
