@@ -106,6 +106,7 @@ def send_kval_message(data, currentvaluepath='', debug=False):
                 timezone = langdic.get('timezone','UTC')
                 channelconf = langdic.get('channelconfig')
                 if debug:
+                    print ("debug selected - using default channel")
                     channelconf = '/etc/martas/telegram.cfg'
                 if not timezone in ['utc','UTC']:
                     try:
@@ -144,6 +145,24 @@ def send_kval_message(data, currentvaluepath='', debug=False):
             file.write(unicode(json.dumps(fulldict)))
         print ("K warning data has been updated")
 
+
+def k2sw_database(db, data ,debug=False):
+    """
+    DESCRIPTION
+        this method will update the SPACEWEATHER Database
+    REQUIRES
+        a table called SPACEWEATHER
+    """
+    lastvalue = data.ndarray[7][-1]
+    valid_until = num2date(data.ndarray[0][-1]).replace(tzinfo=None)+timedelta(minutes=90)
+    valid_from = num2date(data.ndarray[0][-1]).replace(tzinfo=None)
+    active = 1
+    if valid_until < datetime.utcnow():
+        active = 0
+    insertsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='based on {} estimates',date_added = '{}',active = {} ".format('Kcobs','nowcast','geomagactivity','geomag',lastvalue,valid_from,valid_until,'Conrad Observatory','based on fmi method',datetime.utcnow(),active,'nowcast','geomagactivity','geomag',lastvalue,valid_from,valid_until,'Conrad Observatory','based on fmi method',datetime.utcnow(),active)
+    print (insertsql)
+    #_execute_sql(db,sqllist, debug=debug)
+    
 
 def main(argv):
     version = '1.0.0'
@@ -228,7 +247,7 @@ def main(argv):
         print ("No message channel defined - aborting")
         sys.exit(1)
 
-    # 3. get quakes:
+    # 3. get K values:
     # ###########################
     try:
         data = get_kvals(db, debug=debug)
@@ -236,7 +255,15 @@ def main(argv):
         statusmsg[name1] = 'problem with list generation'
         data = DataStream()
 
-    # 4. sending notification:
+    # 4. update Spaceweather database:
+    # ###########################
+    try:
+        k2sw_database(db, data ,debug=False)
+        statusmsg['K2SWDB'] = 'fine'
+    except:
+        statusmsg['K2SWDB'] = 'problem with uploading'
+
+    # 5. sending notification:
     # ###########################
     if data.length()[0]> 0:
         try:
@@ -246,7 +273,7 @@ def main(argv):
 
     print ("tg_kval successfully finished")
 
-    # 5. Logging section
+    # 6. Logging section
     # ###########################
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
