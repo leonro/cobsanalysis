@@ -329,7 +329,7 @@ def main(argv):
                                  'msgref':'Basierend auf experimentellen Daten des [CMEscoreboard](https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/)',
                                  'msguncert':'geschätzte Ankunftszeiten sind meistens mit Fehlern von +/- 7 hrs behaftet',
                                  'channeltype':'telegram',
-                                 'channelconfig':'/etc/martas/telegram.cfg',
+                                 'channelconfig':'/etc/martas/telegram_cobsnoti.cfg',
                                 }
                     }
 
