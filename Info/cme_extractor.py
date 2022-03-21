@@ -204,7 +204,7 @@ def _create_k_sql(arrival,maxval):
         active=1
     knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Kp','forecast','geomagactivity','geomag',maxval,valid_from,valid_until,'CMEscoreboard','',datetime.utcnow(),active,'forecast','geomagactivity','geomag',maxval,valid_from,valid_until,'CMEscoreboard','',datetime.utcnow(),active)    
     return knewsql
-    
+
 
 def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
     """
@@ -213,7 +213,7 @@ def update_database(db, full,new,up,swsource,hours_threshold=12,debug=False):
     REQUIRES
         a table called SPACEWEATHER
     """
-    
+
     # cleanup
     sqllist = []
     #delsql = "DELETE FROM SPACEWEATHER WHERE sw_group LIKE 'cmescore' and validity_end < '{}'".format(datetime.utcnow() - timedelta(hours=hours_threshold))
@@ -391,7 +391,7 @@ def main(argv):
         print ("Read and check validity of configuration data")
         print (" and activate logging scheme as selected in config")
     config = GetConf(configpath)
-    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-kavl.log', debug=debug)
+    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-cme.log', debug=debug)
     if debug:
         print (" -> Done")
 
@@ -550,5 +550,3 @@ def main(argv):
 
 if __name__ == "__main__":
    main(sys.argv[1:])
-
-
