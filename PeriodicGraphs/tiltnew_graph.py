@@ -59,10 +59,11 @@ debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'],
                             'source' : '/home/leon/Cloud/Daten/',
                             'filenamebegins' : 'LEMI036_1_0002_0002',
                             'color' : ['k','r','k'], 
-                            'flags' : 'drop,quake',
+                            'flags' : 'flag,quake',
                             'fill' : ['y'],
+                            'quakekey' : 'z',
                             'padding' : [0.2,100.0,0.0], 
-                            'annotate' : [False,False,True],
+                            'annotate' : [True,False,True],
                             'columns' : ['H','E','Z'],
                             'units' : ['nT','nT','nT']
                           }
@@ -73,7 +74,7 @@ debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'],
 sensordefs = { 'dataid' : { 'keys' : ['x','y','z'], 
                             'plotsytle' : 'line (or point or bar)', 
                             'color' : ['r','g','b'], 
-                            'flags' : 'drop',  #('' - no flags, 'flags' - show flags from db, 'drop' - load flags and drop flagged, 'coil' - create flags from coil, 'quake' - create flags from quakes)
+                            'flags' : 'drop',  #('' - no flags, 'flag' - show flags from db, 'drop' - load flags and drop flagged, 'coil' - create flags from coil, 'quake' - create flags from quakes)
                             'fill' : ['y'],
                             'columns' : ['H','E','Z'],
                             'units' : ['nT','nT','nT']
@@ -159,31 +160,34 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
     return stream, fl
 
 
-def CreateDiagram(stream=DataStream(), keylist=[], flaglist=[], style='magpy', debug=False):
+
+def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist=None, annotatelist=None, gridcolor='#316931', confinex=True, fullday=True, opacity=0.7,style='magpy',show=False,fullplotpath='',debug=False):
 
     if debug:
-        print (" CREATING DIAGRAM ...")
-        print (" applying flags")
-    if len(flaglist) > 0:
-        stream = stream.flag(flaglist)
-        if debug:
-            print (flaglist)
-
+        show=True
+        
     if style in ['magpy','MagPy','MAGPY']:
-        mp.plotStreams([stream],[keylist], gridcolor='#316931',fill=[], padding=[], annotate=True, confinex=True, fullday=True, opacity=0.7, noshow=True)
+        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
     else:
         print (" -> unkown plot style ... doing nothing")
         return False
 
-    print ("Plot created ...")
-    if not debug:
-        print (" ... saving now")
-        savepath = "/srv/products/graphs/tilt/tilt_%s.png" % date
-        plt.savefig(savepath)
-    else:
-        print (" ... debug mode - showing plot")
+    print ("  ... plotting done")
+    if fullplotpath:
+        print (" ... saving plot to {}")
+        datum = datetime.strftime(datetime.utcnow(),"%Y-%m-%d")
+        savepath = "{}_{}.png".format(fullplotpath,datum)
+        if not debug:
+            plt.savefig(savepath)
+        else:
+            print (" ... debug selected : otherwise would save figure to {}".format(savepath))
+    if show:
+        print (" ... debug mode or show selected - showing plot")
         plt.show()
+
+    print ("  -> finished")
     return True
+
 
 
 def main(argv):
@@ -196,14 +200,12 @@ def main(argv):
     starttime = None
     endtime = None
     newloggername = 'mm-pp-tilt.log'
+    flaglist = []
     debug=False
 
     dropflagged = False
     sensorid='LM_TILT01_0001'
     keylist=None
-    flagsources = ['flagdb','quakes','coil']
-    flagsources = []
-    flaglist = []
 
 
     try:
@@ -302,6 +304,7 @@ def main(argv):
     else:
         try:
             starttime = DataStream()._testtime(starttime)
+            dayrange = int((endtime-starttime).days)
         except:
             print ("Starttime could not be interpreted - Aborting")
             sys.exit(1)
@@ -310,15 +313,6 @@ def main(argv):
     if debug and sensorid == 'travis':
         print (" basic code test successful")
         sys.exit(0)
-
-    """
-
-    # basic flagging treatment
-    if not 'flagdb' in flagsources:
-         # Then drop flagged data directly after reading data
-         print (" will drop data with existing -remove- flags in DB") 
-         dropflagged = True
-    """
 
     print ("1. Read and check validity of configuration data")
     config = GetConf(configpath)
@@ -331,11 +325,16 @@ def main(argv):
 
     print ("4. Read sensordefinitions")
     if not sensordefs:
-        #sensordefs = readjson(sensordefspath)
+        #sensordefs = readjson(sensordefpath)
+        statname = "plot-{}".format(os.path.basename(sensordefpath))
         pass
+    else:
+        statname = "plot-{}".format('debug')
 
     print ("5. Cycle through sensordefinitions")
     for cnt,dataid in enumerate(sensordefs):
+        processname = "{}-{}".format(statname,dataid.replace("_","-"))
+        statusmsg[processname] = "failure"
         streamlist = []
         keylist = []
         filllist = []
@@ -347,84 +346,66 @@ def main(argv):
         dropflagged = False
         sensdict = sensordefs[dataid]
         revision = sensdict.get('revision','0001')
-        print ("5.{}.1 Check SensorID - or whether DataID provided for {}".format(cnt,dataid))
+        print ("5.{}.1 Check SensorID - or whether DataID provided for {}".format(cnt+1,dataid))
         sensorid, revision = CheckSensorID(dataid, revision, debug=debug)
         keys = sensdict.get('keys',[])
         path = sensdict.get('source','')
         flagtreatment = sensdict.get('flags','')
-        if 'flags' in flagtreatment or 'drop' in flagtreatment:
+        if 'flag' in flagtreatment or 'drop' in flagtreatment:
             useflags = True
             if 'drop' in flagtreatment:
                 dropflagged = True
         filenamebegins = sensdict.get('filenamebegins','')
         if keys:
-            print ("5.{}.2 Read datastream for {}".format(cnt,dataid))
-            stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, debug=debug)
-            flaglist = fl
-            print ("5.{}.3 Check out flagging and annotation".format(cnt))
-            if 'quake' in flagtreatment:
-                print ("  6.1 Get flaglist from Quakes")
-                namecheck1 = "{}-extract-quakes".format(config.get('logname'))
-                #try:
-                fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=keys[0], debug=debug)
-                #statusmsg[namecheck1] = "success"
-                #except:
-                #fl = []
-                #statusmsg[namecheck1] = "failure"
-                flaglist = combinelists(flaglist,fl)
-            if len(flaglist) > 0:
-                stream = stream.flag(flaglist)
-
-            print ("5.{}.4 Creating plot configuration lists".format(cnt))
-            streamlist.append(stream)
-            keylist.append(keys)
-            padding = sensdict.get('padding',[])
-            if not padding:
-                padding = [0.0 for el in keys]
-            paddinglist.append(padding)
-            annotate = sensdict.get('annotate',[])
-            if not annotate:
-                annotate = [False for el in keys]
-            annotatelist.append(annotate)
-            color = sensdict.get('color',[])
-            if not color:
-                color = ['k' for el in keys]
-            colorlist.extend(color)
-            fill = sensdict.get('fill',[])
-            filllist.extend(fill)
+            print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
+            try:
+                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, debug=debug)
+                if stream and stream.length()[0]>1:
+                    print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
+                    if 'flag' in flagtreatment:
+                        print ("       -> eventuallyadding existing standard flags from DB")
+                        flaglist = fl
+                    if 'quake' in flagtreatment:
+                        quakekey = sensdict.get('quakekey',keys[0])
+                        print ("       -> eventually adding QUAKES to column {}".format(quakekey))
+                        fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, debug=debug)
+                        flaglist = combinelists(flaglist,fl)
+                    if 'coil' in flagtreatment:
+                        print ("       -> eventually adding COIL data to column xxx")
+                        pass
+                    if len(flaglist) > 0:
+                        print ("       => total amount of {} flags added".format(len(flaglist)))
+                        stream = stream.flag(flaglist)
+                    print ("5.{}.4 Creating plot configuration lists".format(cnt+1))
+                    streamlist.append(stream)
+                    keylist.append(keys)
+                    padding = sensdict.get('padding',[])
+                    if not padding:
+                        padding = [0.0 for el in keys]
+                    paddinglist.append(padding)
+                    annotate = sensdict.get('annotate',[])
+                    if not annotate:
+                        annotate = [False for el in keys]
+                    annotatelist.append(annotate)
+                    color = sensdict.get('color',[])
+                    if not color:
+                        color = ['k' for el in keys]
+                    colorlist.extend(color)
+                    fill = sensdict.get('fill',[])
+                    filllist.extend(fill)
+                    print ("  ==> section 5.{} done".format(cnt+1))
+                    statusmsg[processname] = "success"
+            except:
+                print (" -- seviere error in data treatment")
+                pass
         else:
-            #no keys defined - skipping this sensor
+            print ("  -- no keys defined - skipping this sensor")
             pass
 
     if len(streamlist) > 0:
-        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7)
-
-    #mp.plotStreams(streamlist,keylist, gridcolor='#316931',fill=filllist, padding=paddinglist, annotate=annotatelist, confinex=True, fullday=True, opacity=0.7, noshow=True)
-    """
-    if 'flagdb' in flagsources:
-        # Using flags from DB for annotation
-        flaglist = fl
-    if not keylist:
-        keylist = stream._get_key_headers()
-    print ("KEYS:", keylist)
-
-    print ("6. Getting additional flags")
-    if 'quakes' in flagsources:
-        print ("  6.1 Get flaglist from Quakes")
-        print ("     -> constructing flaglist from QUAKES table")
-        namecheck1 = "{}-extract-quakes".format(config.get('logname'))
-        try:
-            fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=keylist[0], debug=debug)
-            statusmsg[namecheck1] = "success"
-        except:
-            fl = []
-            statusmsg[namecheck1] = "failure"
-        flaglist = combinelists(flaglist,fl)
-
-
-    print ("7. Diagrams")
-    diagram = CreateDiagram(stream=stream, keylist=keylist, flaglist=flaglist, style=plotstyle, debug=debug)
-    """
+        #mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7)
+        print ("6. Creating plot")
+        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7, debug=debug)
 
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
