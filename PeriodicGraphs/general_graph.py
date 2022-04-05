@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# coding=utf-8
+# -*- coding: utf-8 -*-
 
 """
 DESCRIPTION
-   Creates plots for a specific sensor.
+   Creates plots for specific sensor(s).
 PREREQUISITES
    The following packegas are required:
       geomagpy >= 0.9.8
@@ -12,21 +12,26 @@ PREREQUISITES
       analysismethods
 PARAMETERS
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
-    -r range               :   int     :  default  2 (days)
-    -s sensor              :   string  :  sensor or dataid
-    -k keys                :   string  :  comma separated list of keys to be plotted
-    -f flags               :   string  :  flags from other lists e.g. quakes, coil, etc
-    -y style               :   string  :  plot style
+    -i input               :   jsonfile:  sensordefinitions
+    -o output              :   dir/file:  save graph to this one
+    -y style               :   string  :  plot style (i.e. magpy, crazynice
     -l loggername          :   string  :  loggername e.g. mm-pp-tilt.log
+    -s starttime           :   string  :  starttime (plots from endtime-range to endtime)
     -e endtime             :   string  :  endtime (plots from endtime-range to endtime)
+    -r range               :   int     :  use range in days. A given starttime AND endtime will overwrite range 
+
+INPUT fiel example: see bottom
 
 APPLICATION
-    PERMANENTLY with cron:
-        python webpage_graph.py -c /etc/marcos/analysis.cfg
+    Standard - will save the file to tmp with 'magnetism_ENDDATE.png' as filename:
+        python3 general_graph.py -c ../conf/wic.cfg -i ../conf/magnetism_plot.json -e 2020-12-17
     SensorID:
         python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001 -D
-    DataID:
-        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001_0001 -D
+    Testing:
+        python3 general_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17
+
+python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D
+
 """
 
 from magpy.stream import *
@@ -40,6 +45,7 @@ import getopt
 import pwd
 import sys  # for sys.version_info()
 import socket
+import json
 
 import itertools
 from threading import Thread
@@ -53,61 +59,86 @@ from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
 
-#git tag -a 1.0.0 -m 'version 1.0.0'
-#vers=`git describe master`
-#line="__version__ = '$vers'"
-#echo $line > /home/leon/Software/cobsanalysis/core/version.py
+
+debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'], 
+                            'plotstyle' : 'line',
+                            'source' : '/home/leon/Cloud/Daten/',
+                            'filenamebegins' : 'LEMI036_1_0002_0002',
+                            'color' : ['k','r','k'], 
+                            'flags' : 'flag,quake',
+                            'fill' : ['y'],
+                            'quakekey' : 'z',
+                            'padding' : [0.2,100.0,0.0], 
+                            'annotate' : [True,False,True],
+                            'columns' : ['H','E','Z'],
+                            'units' : ['nT','nT','nT']
+                          }
+              }
 
 
+"""
+sensordefs = { 'dataid' : { 'keys' : ['x','y','z'], 
+                            'plotsytle' : 'line (or point or bar)', 
+                            'color' : ['r','g','b'], 
+                            'flags' : 'drop',  #('' - no flags, 'flag' - show flags from db, 'drop' - load flags and drop flagged, 'coil' - create flags from coil, 'quake' - create flags from quakes)
+                            'fill' : ['y'],
+                            'columns' : ['H','E','Z'],
+                            'units' : ['nT','nT','nT']
+                          },
+               'anotherdataid' : { 'keys' : ['t1'], 
+                            'plotsytle' : 'line (or point or bar)', 
+                            'color' : ['r'], 
+                            'source' : '/srv/projects/gravity/tilt/', #(if source == db always use  dbgetlines(db,inst,70000)
+                                                                       lasthour = lasthour.trim(endtime=datetime.utcnow())
+                            'padding' : [[0.2,0.5,0.0],[0.0]], 
+                            'annotate' : [[False,False,True],[False]],
+                            'confinex' : True, 
+                            'fullday' : True,
+                            'opacity' : 0.7, 
+                            'plottitle' : 'Tilts'  
+             }
+                          
 
-def Coil2Flags(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=None, keylist=[], debug=False):
-    """
-    DESCRIPTION
-        Creates a flaglist from Merrit Coil usage data.
-    PARAMETER
-        sensorid  : provide the sensorid to be used in the flagging output 
-        keys      : provide the keys to be used in the flagging output 
-        valuedict : extract specific components from COIL table
+in e.g. tiltplots.cfg
 
-    TESTIT:
-        Coil2Flags(config=config, endtime=datetime(2020,2,14), timerange=5, sensorid=None, keylist=[], debug=True)
+defaultconfig like wic.cfg contains:
 
+gridcolor='#316931',
+fill=['t1','var2'], 
+padding=[[0.2,0.5,0.0],[0.0]], annotate=[[False,False,True],[False]], confinex=True, fullday=True, opacity=0.7, plottitle='Tilts (until %s)'
 
-    COMMENT:
-        Only 2020-02-13 data in database- content unclear, many duplicates 
-    """
+currentvaluepath = '/srv/products/data/current.data'
+"""
 
-    flaglist = []
+def WriteMemory(memorypath, memdict):
+        """
+        DESCRIPTION
+             write memory
+        """
+        try:
+            with open(memorypath, 'w', encoding='utf-8') as f:
+                json.dump(memdict, f, ensure_ascii=False, indent=4)
+        except:
+            return False
+        return True
 
-    print ("  - extracting coil data and construct flaglist")
-    db = config.get('primaryDB')
-
-    if timerange == 0:
-        timerange = 1
-
-    if debug:
-        print ("  - reading COIL table from database for selected time range between {} and {}".format(endtime-timedelta(days=timerange),endtime))
-    st = datetime.strftime(endtime-timedelta(days=timerange), "%Y-%m-%d")
-    et = datetime.strftime(endtime, "%Y-%m-%d")
-    sqlstring = "SELECT * FROM COIL_Status_Log WHERE utc BETWEEN '{}' AND '{}'".format(st,et)
-
-
-    #FIELD100MUX 	14703.9
-    #2020-02-13 23:58:08 	FIELD100MUY 	15544.9
-    #2020-02-13 23:58:08 	FIELD100MUZ 	0
-    #2020-02-13 23:58:08 	COMPCOMPX 	0
-    #2020-02-13 23:58:08 	COMPCOMPY 	0
-    #2020-02-13 23:58:08 	COMPCOMPZ
-    
-    #flagdict = [{"starttime" : el[0], "endtime" : el[1], "components" : el[2].split(','), "flagid" : el[3], "comment" : el[4], "sensorid" : el[5], "modificationdate" : el[6]} for el in flaglist]
-
-    if debug:
-        print (sqlstring)
-    # CREATE a flaglist from this data
-
-    sys.exit()
-    return flaglist
-
+def ReadMemory(memorypath,debug=False):
+        """
+        DESCRIPTION
+             read memory
+        -> Same function as used for imbot (imbotcore)
+        """
+        memdict = {}
+        if os.path.isfile(memorypath):
+            if debug:
+                print ("Reading memory: {}".format(memorypath))
+            with open(memorypath, 'r') as file:
+                memdict = json.load(file)
+        else:
+            print ("Memory path not found - please check (first run?)")
+        if debug:
+            print ("Found in Memory: {}".format([el for el in memdict]))
+        return memdict
 
 def CheckSensorID(sensorid, revision='0001', debug=False):
 
@@ -125,20 +156,24 @@ def CheckSensorID(sensorid, revision='0001', debug=False):
 
     return sensorid, revision
 
-def ReadDatastream(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=None, keylist=[], revision="0001", datapath='', dropflagged=True, debug=False):
+def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
 
     # Read seconds data and create plots
-    starttime=endtime-timedelta(days=timerange)
     dataid = '{}_{}'.format(sensorid,revision)
     db = config.get('primaryDB')
+    fl=[]
 
     if debug:
         print ("READING data stream ...")
-    if datapath:
-        path = os.path.join(datapath,'*')
-        print (" -> fixed path selected: {}".format(path))
+    if datapath and os.path.isdir(datapath):
+        path = os.path.join(datapath,'{}*'.format(filenamebegins))
+        if debug:
+            print (" -> fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
         stream = read(path, starttime=starttime, endtime=endtime) 
-    else:
+    elif datapath and os.path.isfile(datapath):
+        print (" -> fixed file selected: {}".format(path))
+        stream = read(path, starttime=starttime, endtime=endtime) 
+    elif datapath in ['db','DB','database']:
         if starttime < datetime.utcnow()-timedelta(days=15):
             print (" -> reading from archive files ...")
             path = os.path.join(config.get('archivepath'),sensorid,dataid,'*')
@@ -147,9 +182,20 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=N
         else:
             print (" -> reading from database ...")
             stream = readDB(db,dataid,starttime=starttime, endtime=endtime)
+    if columns and len(columns) == len(keylist):
+        for ind,key in enumerate(keylist):
+            coln = 'col-{}'.format(key)
+            stream.header[coln] = columns[ind]
+    if units and len(units) == len(keylist):
+        for ind,key in enumerate(keylist):
+            coln = 'unit-col-{}'.format(key)
+            stream.header[coln] = units[ind]
+    if debug:
+        print (" -> obtained {} datapoints".format(stream.length()[0]))
 
-    fl = db2flaglist(db,stream.header.get('SensorID'),begin=starttime, end=endtime)
-    print (" - obtained {} flags in db".format(len(fl)))
+    if flags:
+        fl = db2flaglist(db,stream.header.get('SensorID'),begin=starttime, end=endtime)
+        print (" - obtained {} flags in db".format(len(fl)))
     if dropflagged:
         print (" - dropping flagged data")    
         stream = stream.flag(fl)
@@ -159,56 +205,65 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=N
 
 
 
-def CreateDiagram(stream=DataStream(), keylist=[], flaglist=[], style='magpy', debug=False):
+def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist=None, annotatelist=None, gridcolor='#316931', confinex=True, fullday=True, opacity=0.7,style='magpy',show=False,fullplotpath='',debug=False):
 
     if debug:
-        print (" CREATING DIAGRAM ...")
-        print (" applying flags")
-    if len(flaglist) > 0:
-        stream = stream.flag(flaglist)
-        if debug:
-            print (flaglist)
-
+        show=True
+        
     if style in ['magpy','MagPy','MAGPY']:
-        mp.plotStreams([stream],[keylist], gridcolor='#316931',fill=[], padding=[], annotate=True, confinex=True, fullday=True, opacity=0.7, noshow=True)
+        # TODO Union colorlist, etc
+        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
     else:
         print (" -> unkown plot style ... doing nothing")
         return False
 
-    print ("Plot created ...")
-    if not debug:
-        print (" ... saving now")
-        savepath = "/srv/products/graphs/tilt/tilt_%s.png" % date
-        plt.savefig(savepath)
-    else:
-        print (" ... debug mode - showing plot")
+    print ("  ... plotting done")
+    if fullplotpath:
+        print (" ... saving plot to {}".format(fullplotpath))
+        if not debug:
+            plt.savefig(fullplotpath)
+        else:
+            print (" ... debug selected : otherwise would save figure to {}".format(fullplotpath))
+    if show:
+        print (" ... debug mode or show selected - showing plot")
         plt.show()
+
+    print ("  -> finished")
     return True
+
 
 
 def main(argv):
     version = __version__
     configpath = ''
     statusmsg = {}
-    path=''
-    dayrange = 5
-    debug=False
-    endtime = None
-    sensorid='LM_TILT01_0001'
-    revision='0001'
-    keylist=None
-    flagsources = ['flagdb','quakes','coil']
-    flagsources = []
-    flaglist = []
+    outpath='/tmp'
+    sensordefpath=''
+    sensordefs = {}
+    dayrange = 3
     plotstyle = 'magpy' # one in magpy, xxx
+    starttime = None
+    endtime = None
     newloggername = 'mm-pp-tilt.log'
+    flaglist = []
+    plotname = 'debug'
+    debug=False
+
+    opacity = 0.7
+    fullday = False
+    show = False
+    confinex = False
+    gridcolor = '#316931'
+
     dropflagged = False
+    sensorid='LM_TILT01_0001'
+    keylist=None
 
 
     try:
-        opts, args = getopt.getopt(argv,"hc:r:p:s:k:f:y:e:l:D",["config=","range=","path=","sensor=","keys=","flags=","style=","endtime=","loggername=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:i:o:y:s:e:r:l:D",["config=","input=","output=","style=","starttime=","endtime=","range=","loggername=","debug=",])
     except getopt.GetoptError:
-        print ('job.py -c <config>')
+        print ('try general_graph.py -h for instructions')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -225,45 +280,40 @@ def main(argv):
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
-            print ('-r            : range in days')
-            print ('-p            : provide a fixed path')
-            print ('-s            : sensor')
-            print ('-k            : keys')
-            print ('-f            : flags from other lists e.g. quakes, coil, etc')
+            print ('-i            : input json file for sensor information')
+            print ('-o            : output directory (or file) to save the graph')
             print ('-y            : plot style')
             print ('-l            : loggername e.g. mm-pp-tilt.log')
+            print ('-s            : starttime')
             print ('-e            : endtime')
+            print ('-r            : range in days')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python general_graph.py -c /etc/marcos/analysis.cfg')
-            print ('python general_graph.py -c /etc/marcos/analysis.cfg')
+            print ('python3 general_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17')
             print ('# debug run on my machine')
-            print ('python3 general_graph.py -c ../conf/wic.cfg -s debug -k x,y,z -f none -D')
+            print ('python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
             configpath = os.path.abspath(arg)
-        elif opt in ("-r", "--range"):
-            # range in days
-            dayrange = int(arg)
-        elif opt in ("-p", "--path"):
+        elif opt in ("-i", "--input"):
             # delete any / at the end of the string
-            path = os.path.abspath(arg)
-        elif opt in ("-s", "--sensor"):
-            # sensor name
-            sensorid = arg
-        elif opt in ("-f", "--flags"):
-            # get a list of tables with flagging sources (quakes, coil)
-            flagsources = arg.split(',')
-        elif opt in ("-k", "--keys"):
-            # select keys
-            keylist = arg.split(',')
+            sensordefpath = os.path.abspath(arg)
+        elif opt in ("-o", "--output"):
+            # delete any / at the end of the string
+            outpath = os.path.abspath(arg)
         elif opt in ("-y", "--style"):
             # define a plotstyle
             plotstyle = arg
+        elif opt in ("-s", "--starttime"):
+            # starttime of the plot
+            starttime = arg
         elif opt in ("-e", "--endtime"):
             # endtime of the plot
             endtime = arg
+        elif opt in ("-r", "--range"):
+            # range in days
+            dayrange = int(arg)
         elif opt in ("-l", "--loggername"):
             # loggername
             newloggername = arg
@@ -279,6 +329,18 @@ def main(argv):
         print ('-- check general_graph.py -h for more options and requirements')
         sys.exit()
 
+    if not os.path.exists(sensordefpath):
+        print ('Sensordefinitions not found...')
+        if debug:
+            print (' ... but debug selected - using dummy values')
+            sensordefs = debugsensor
+            # creating a dummy sensordefs file in tmp        
+            print (' ... and now creating an example in /tmp/sensordefinitions_default.json')
+            WriteMemory('/tmp/sensordefinitions_default.json', sensordefs)
+        else:
+            print ('-- check general_graph.py -h for more options and requirements')
+            sys.exit()
+
     if endtime:
         try:
             endtime = DataStream()._testtime(endtime)
@@ -288,17 +350,20 @@ def main(argv):
     else:
         endtime = datetime.utcnow()
 
-    # basic flagging treatment
-    if not 'flagdb' in flagsources:
-         # Then drop flagged data directly after reading data
-         print (" will drop data with existing -remove- flags in DB") 
-         dropflagged = True
+    if not starttime:
+        starttime = endtime-timedelta(days=dayrange)
+    else:
+        try:
+            starttime = DataStream()._testtime(starttime)
+            dayrange = int((endtime-starttime).days)
+        except:
+            print ("Starttime could not be interpreted - Aborting")
+            sys.exit(1)
         
     # general test environment:
     if debug and sensorid == 'travis':
         print (" basic code test successful")
         sys.exit(0)
-
 
     print ("1. Read and check validity of configuration data")
     config = GetConf(configpath)
@@ -309,42 +374,119 @@ def main(argv):
     print ("3. Connect to databases")
     config = ConnectDatabases(config=config, debug=debug)
 
-    if debug and sensorid == 'debug':
-        print ("DEBUG run with sensor test selected ---")
-        config['archivepath'] = '/home/leon/Cloud/Daten'
-        sensorid = 'LEMI036_1_0002_0002'
-        endtime = datetime(2020,12,17)
+    print ("4. Read sensordefinitions")
+    if not sensordefs:
+        sensordefs = ReadMemory(sensordefpath)
+        plotname = os.path.basename(sensordefpath).replace('.json','').replace('_plot','')
+        print ("Plotname : ", plotname)
+        statname = "plot-{}".format(plotname)
+        pass
+    else:
+        statname = "plot-{}".format('debug')
+    print ("4.1 Extracting some basic definitions from sensor configuartion")
+    senspar = sensordefs.get('parameter',{})
+    if senspar.get('fullday','False') in ['True','true','TRUE',True]:
+        fullday = True
+    try:
+        opacity = float(senspar.get('opacity',0.7))
+    except:
+        pass
+    if senspar.get('show','False') in ['True','true','TRUE',True]:
+        show = True
+    if senspar.get('confinex','False') in ['True','true','TRUE',True]:
+        confinex = True
+    gridcolor = senspar.get('gridcolor','#316931')
+    print ("    Fullday: {}, Opacity: {}, Show: {}, Confinex: {}, Gridcolor: {}".format(fullday,opacity, show,confinex,gridcolor))
 
-    print ("4. Check SensorID - or whether DataID provided")
-    sensorid, revision = CheckSensorID(sensorid, revision, debug=debug)
+    print ("5. Cycle through sensordefinitions")
+    streamlist = []
+    keylist = []
+    filllist = []
+    paddinglist=[]
+    annotatelist =[]
+    colorlist=[]
+    flaglist = []
+    for cnt,dataid in enumerate(sensordefs):
+      if not dataid=='parameter':
+        processname = "{}-{}".format(statname,dataid.replace("_","-"))
+        statusmsg[processname] = "failure"
+        useflags = False
+        dropflagged = False
+        sensdict = sensordefs[dataid]
+        revision = sensdict.get('revision','0001')
+        print ("5.{}.1 Check SensorID - or whether DataID provided for {}".format(cnt+1,dataid))
+        sensorid, revision = CheckSensorID(dataid, revision, debug=debug)
+        keys = sensdict.get('keys',[])
+        columns = sensdict.get('columns',[])
+        units = sensdict.get('units',[])
+        path = sensdict.get('source','')
+        flagtreatment = sensdict.get('flags','')
+        if 'flag' in flagtreatment or 'drop' in flagtreatment:
+            useflags = True
+            if 'drop' in flagtreatment:
+                dropflagged = True
+        filenamebegins = sensdict.get('filenamebegins','')
+        if keys:
+            print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
+            try:
+                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, columns=columns, units=units, debug=debug)
+                if stream and stream.length()[0]>1:
+                    print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
+                    if 'flag' in flagtreatment:
+                        print ("       -> eventuallyadding existing standard flags from DB")
+                        flaglist = fl
+                    if 'quake' in flagtreatment:
+                        quakekey = sensdict.get('quakekey',keys[0])
+                        print ("       -> eventually adding QUAKES to column {}".format(quakekey))
+                        fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, debug=debug)
+                        flaglist = combinelists(flaglist,fl)
+                    if 'coil' in flagtreatment:
+                        print ("       -> eventually adding COIL data to column xxx")
+                        pass
+                    if len(flaglist) > 0:
+                        print ("       => total amount of {} flags added".format(len(flaglist)))
+                        stream = stream.flag(flaglist)
+                    print ("5.{}.4 Creating plot configuration lists".format(cnt+1))
+                    streamlist.append(stream)
+                    keylist.append(keys)
+                    padding = sensdict.get('padding',[])
+                    if not padding:
+                        padding = [0.0 for el in keys]
+                    paddinglist.append(padding)
+                    annotate = sensdict.get('annotate',[])
+                    if not annotate:
+                        annotate = [False for el in keys]
+                    annotatelist.append(annotate)
+                    color = sensdict.get('color',[])
+                    if not color:
+                        color = ['k' for el in keys]
+                    colorlist.extend(color)
+                    fill = sensdict.get('fill',[])
+                    filllist.extend(fill)
+                    print ("  ==> section 5.{} done".format(cnt+1))
+                    statusmsg[processname] = "success"
+            except:
+                print (" -- severe error in data treatment")
+                pass
+        else:
+            print ("  -- no keys defined - skipping this sensor")
+            pass
 
-    print ("5. Read datastream")
-    stream, fl = ReadDatastream(config=config, endtime=endtime, timerange=dayrange,sensorid=sensorid, keylist=keylist, revision=revision, dropflagged=dropflagged, datapath=path, debug=debug)
-    if 'flagdb' in flagsources:
-        # Using flags from DB for annotation
-        flaglist = fl
-    if not keylist:
-        keylist = stream._get_key_headers()
-    print ("KEYS:", keylist)
+    if len(streamlist) > 0:
+        #mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7)
+        print ("6. Creating plot")
+        if os.path.isdir(outpath):
+             # creating file name from sensorsdef input file
+             fullplotpath = os.path.join(outpath,"{}_{}.png".format(plotname,datetime.strftime(endtime,"%Y-%m-%d")))
+             print (" -> Saving graph to {}".format(fullplotpath))
+        elif os.path.isfile(outpath):
+             fullplotpath = outpath
+        else:
+             fullplotpath = ''
+        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, gridcolor=gridcolor, confinex=confinex, opacity=opacity, fullday=fullday, show=show, fullplotpath=fullplotpath, debug=debug)
 
-    print ("6. Getting additional flags")
-    if 'quakes' in flagsources:
-        print ("  6.1 Get flaglist from Quakes")
-        print ("     -> constructing flaglist from QUAKES table")
-        namecheck1 = "{}-extract-quakes".format(config.get('logname'))
-        try:
-            fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=keylist[0], debug=debug)
-            statusmsg[namecheck1] = "success"
-        except:
-            fl = []
-            statusmsg[namecheck1] = "failure"
-        flaglist = combinelists(flaglist,fl)
-
-
-    print ("7. Diagrams")
-    diagram = CreateDiagram(stream=stream, keylist=keylist, flaglist=flaglist, style=plotstyle, debug=debug)
-
-
+    debug = True
+    
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
         martaslog.telegram['config'] = config.get('notificationconfig')
@@ -357,3 +499,73 @@ if __name__ == "__main__":
    main(sys.argv[1:])
 
 
+"""
+Example for a sensordefinitions json-file
+Please use filenames like tilt_plot.json, or spaceweather_plot.json 
+{
+    "LEMI036_1_0002_0002": {
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "LEMI036_1_0002_0002",
+        "color": [
+            "k",
+            "r",
+            "k"
+        ],
+        "flags": "flag,quake",
+        "fill": [
+            "y"
+        ],
+        "quakekey": "z",
+        "padding": [
+            0.2,
+            100.0,
+            0.0
+        ],
+        "annotate": [
+            true,
+            false,
+            true
+        ],
+        "columns": [
+            "H",
+            "E",
+            "Z"
+        ],
+        "units": [
+            "nT",
+            "nT",
+            "nT"
+        ]
+    },
+    "GP20S3NSS2_012201_0001_0001": {
+        "keys": [
+            "f"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "GP20S3NSS2_012201_0001_0001",
+        "color": [
+            "b"
+        ],
+        "flags": "flag",
+        "padding": [
+            100.0
+        ],
+        "annotate": [
+            true
+        ],
+        "columns": [
+            "S"
+        ],
+        "units": [
+            "nT"
+        ]
+    }
+}
+"""

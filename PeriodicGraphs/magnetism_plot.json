@@ -1,0 +1,39 @@
+{
+    "WIC_adjustedmin_0001_0001": {
+        "keys": [
+            "x",
+            "y",
+            "z",
+            "f"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "WIC_adjustedmin",
+        "color": [
+            "k",
+            "b",
+            "k",
+            "k"
+        ],
+        "fill": [
+            "y"
+        ],
+        "padding": [
+            2.0,
+            20.0,
+            2.0
+        ],
+        "columns": [
+            "H",
+            "D",
+            "Z",
+            "F",
+        ],
+        "units": [
+            "nT",
+            "°",
+            "nT",
+            "nT"
+        ]
+    }
+}

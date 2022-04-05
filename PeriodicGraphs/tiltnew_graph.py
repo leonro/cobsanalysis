@@ -13,19 +13,25 @@ PREREQUISITES
 PARAMETERS
     -c configurationfile   :   file    :  too be read from GetConf2 (martas)
     -i input               :   jsonfile:  sensordefinitions
+    -o output              :   dir/file:  save graph to this one
     -y style               :   string  :  plot style (i.e. magpy, crazynice
     -l loggername          :   string  :  loggername e.g. mm-pp-tilt.log
     -s starttime           :   string  :  starttime (plots from endtime-range to endtime)
     -e endtime             :   string  :  endtime (plots from endtime-range to endtime)
     -r range               :   int     :  use range in days. A given starttime AND endtime will overwrite range 
 
+INPUT fiel example: see bottom
+
 APPLICATION
-    PERMANENTLY with cron:
-        python webpage_graph.py -c /etc/marcos/analysis.cfg
+    Standard - will save the file to tmp with 'magnetism_ENDDATE.png' as filename:
+        python3 general_graph.py -c ../conf/wic.cfg -i ../conf/magnetism_plot.json -e 2020-12-17
     SensorID:
         python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001 -D
-    DataID:
-        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001_0001 -D
+    Testing:
+        python3 general_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17
+
+python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D
+
 """
 
 from magpy.stream import *
@@ -104,6 +110,36 @@ padding=[[0.2,0.5,0.0],[0.0]], annotate=[[False,False,True],[False]], confinex=T
 currentvaluepath = '/srv/products/data/current.data'
 """
 
+def WriteMemory(memorypath, memdict):
+        """
+        DESCRIPTION
+             write memory
+        """
+        try:
+            with open(memorypath, 'w', encoding='utf-8') as f:
+                json.dump(memdict, f, ensure_ascii=False, indent=4)
+        except:
+            return False
+        return True
+
+def ReadMemory(memorypath,debug=False):
+        """
+        DESCRIPTION
+             read memory
+        -> Same function as used for imbot (imbotcore)
+        """
+        memdict = {}
+        if os.path.isfile(memorypath):
+            if debug:
+                print ("Reading memory: {}".format(memorypath))
+            with open(memorypath, 'r') as file:
+                memdict = json.load(file)
+        else:
+            print ("Memory path not found - please check (first run?)")
+        if debug:
+            print ("Found in Memory: {}".format([el for el in memdict]))
+        return memdict
+
 def CheckSensorID(sensorid, revision='0001', debug=False):
 
     # Check sensorid:
@@ -120,7 +156,7 @@ def CheckSensorID(sensorid, revision='0001', debug=False):
 
     return sensorid, revision
 
-def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', flags=False, dropflagged=False, columns=None, units=None, debug=False):
+def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
 
     # Read seconds data and create plots
     dataid = '{}_{}'.format(sensorid,revision)
@@ -146,6 +182,14 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
         else:
             print (" -> reading from database ...")
             stream = readDB(db,dataid,starttime=starttime, endtime=endtime)
+    if columns and len(columns) == len(keylist):
+        for ind,key in enumerate(keylist):
+            coln = 'col-{}'.format(key)
+            stream.header[coln] = columns[ind]
+    if units and len(units) == len(keylist):
+        for ind,key in enumerate(keylist):
+            coln = 'unit-col-{}'.format(key)
+            stream.header[coln] = units[ind]
     if debug:
         print (" -> obtained {} datapoints".format(stream.length()[0]))
 
@@ -167,6 +211,7 @@ def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist
         show=True
         
     if style in ['magpy','MagPy','MAGPY']:
+        # TODO Union colorlist, etc
         mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
     else:
         print (" -> unkown plot style ... doing nothing")
@@ -174,13 +219,11 @@ def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist
 
     print ("  ... plotting done")
     if fullplotpath:
-        print (" ... saving plot to {}")
-        datum = datetime.strftime(datetime.utcnow(),"%Y-%m-%d")
-        savepath = "{}_{}.png".format(fullplotpath,datum)
+        print (" ... saving plot to {}".format(fullplotpath))
         if not debug:
-            plt.savefig(savepath)
+            plt.savefig(fullplotpath)
         else:
-            print (" ... debug selected : otherwise would save figure to {}".format(savepath))
+            print (" ... debug selected : otherwise would save figure to {}".format(fullplotpath))
     if show:
         print (" ... debug mode or show selected - showing plot")
         plt.show()
@@ -194,13 +237,16 @@ def main(argv):
     version = __version__
     configpath = ''
     statusmsg = {}
+    outpath='/tmp'
     sensordefpath=''
+    sensordefs = {}
     dayrange = 3
     plotstyle = 'magpy' # one in magpy, xxx
     starttime = None
     endtime = None
     newloggername = 'mm-pp-tilt.log'
     flaglist = []
+    plotname = 'debug'
     debug=False
 
     dropflagged = False
@@ -209,9 +255,9 @@ def main(argv):
 
 
     try:
-        opts, args = getopt.getopt(argv,"hc:i:y:s:e:r:l:D",["config=","input=","style=","starttime=","endtime=","range=","loggername=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:i:o:y:s:e:r:l:D",["config=","input=","output=","style=","starttime=","endtime=","range=","loggername=","debug=",])
     except getopt.GetoptError:
-        print ('job.py -c <config>')
+        print ('try general_graph.py -h for instructions')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -229,6 +275,7 @@ def main(argv):
             print ('Options:')
             print ('-c (required) : configuration data path')
             print ('-i            : input json file for sensor information')
+            print ('-o            : output directory (or file) to save the graph')
             print ('-y            : plot style')
             print ('-l            : loggername e.g. mm-pp-tilt.log')
             print ('-s            : starttime')
@@ -236,10 +283,9 @@ def main(argv):
             print ('-r            : range in days')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python general_graph.py -c /etc/marcos/analysis.cfg')
-            print ('python general_graph.py -c /etc/marcos/analysis.cfg')
+            print ('python3 general_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17')
             print ('# debug run on my machine')
-            print ('python3 tiltnew_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D')
+            print ('python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -247,6 +293,9 @@ def main(argv):
         elif opt in ("-i", "--input"):
             # delete any / at the end of the string
             sensordefpath = os.path.abspath(arg)
+        elif opt in ("-o", "--output"):
+            # delete any / at the end of the string
+            outpath = os.path.abspath(arg)
         elif opt in ("-y", "--style"):
             # define a plotstyle
             plotstyle = arg
@@ -279,13 +328,9 @@ def main(argv):
         if debug:
             print (' ... but debug selected - using dummy values')
             sensordefs = debugsensor
-            """
-            if debug and sensorid == 'debug':
-            print ("DEBUG run with sensor test selected ---")
-            config['archivepath'] = '/home/leon/Cloud/Daten'
-            sensorid = 'LEMI036_1_0002_0002'
-            endtime = datetime(2020,12,17)
-            """
+            # creating a dummy sensordefs file in tmp        
+            print (' ... and now creating an example in /tmp/sensordefinitions_default.json')
+            WriteMemory('/tmp/sensordefinitions_default.json', sensordefs)
         else:
             print ('-- check general_graph.py -h for more options and requirements')
             sys.exit()
@@ -325,23 +370,25 @@ def main(argv):
 
     print ("4. Read sensordefinitions")
     if not sensordefs:
-        #sensordefs = readjson(sensordefpath)
-        statname = "plot-{}".format(os.path.basename(sensordefpath))
+        sensordefs = ReadMemory(sensordefpath)
+        plotname = os.path.basename(sensordefpath).replace('.json','').replace('_plot','')
+        print ("Plotname : ", plotname)
+        statname = "plot-{}".format(plotname)
         pass
     else:
         statname = "plot-{}".format('debug')
 
     print ("5. Cycle through sensordefinitions")
+    streamlist = []
+    keylist = []
+    filllist = []
+    paddinglist=[]
+    annotatelist =[]
+    colorlist=[]
+    flaglist = []
     for cnt,dataid in enumerate(sensordefs):
         processname = "{}-{}".format(statname,dataid.replace("_","-"))
         statusmsg[processname] = "failure"
-        streamlist = []
-        keylist = []
-        filllist = []
-        paddinglist=[]
-        annotatelist =[]
-        colorlist=[]
-        flaglist = []
         useflags = False
         dropflagged = False
         sensdict = sensordefs[dataid]
@@ -349,6 +396,8 @@ def main(argv):
         print ("5.{}.1 Check SensorID - or whether DataID provided for {}".format(cnt+1,dataid))
         sensorid, revision = CheckSensorID(dataid, revision, debug=debug)
         keys = sensdict.get('keys',[])
+        columns = sensdict.get('columns',[])
+        units = sensdict.get('units',[])
         path = sensdict.get('source','')
         flagtreatment = sensdict.get('flags','')
         if 'flag' in flagtreatment or 'drop' in flagtreatment:
@@ -359,7 +408,7 @@ def main(argv):
         if keys:
             print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
             try:
-                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, debug=debug)
+                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, columns=columns, units=units, debug=debug)
                 if stream and stream.length()[0]>1:
                     print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
                     if 'flag' in flagtreatment:
@@ -405,8 +454,19 @@ def main(argv):
     if len(streamlist) > 0:
         #mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7)
         print ("6. Creating plot")
-        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7, debug=debug)
+        if os.path.isdir(outpath):
+             # creating file name from sensorsdef input file
+             fullplotpath = os.path.join(outpath,"{}_{}.png".format(plotname,datetime.strftime(endtime,"%Y-%m-%d")))
+             print (" -> Saving graph to {}".format(fullplotpath))
+        elif os.path.isfile(outpath):
+             fullplotpath = outpath
+        else:
+             fullplotpath = ''
+        show = True
+        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7, show=show, fullplotpath=fullplotpath, debug=debug)
 
+    debug = True
+    
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
         martaslog.telegram['config'] = config.get('notificationconfig')
@@ -419,3 +479,73 @@ if __name__ == "__main__":
    main(sys.argv[1:])
 
 
+"""
+Example for a sensordefinitions json-file
+Please use filenames like tilt_plot.json, or spaceweather_plot.json 
+{
+    "LEMI036_1_0002_0002": {
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "LEMI036_1_0002_0002",
+        "color": [
+            "k",
+            "r",
+            "k"
+        ],
+        "flags": "flag,quake",
+        "fill": [
+            "y"
+        ],
+        "quakekey": "z",
+        "padding": [
+            0.2,
+            100.0,
+            0.0
+        ],
+        "annotate": [
+            true,
+            false,
+            true
+        ],
+        "columns": [
+            "H",
+            "E",
+            "Z"
+        ],
+        "units": [
+            "nT",
+            "nT",
+            "nT"
+        ]
+    },
+    "GP20S3NSS2_012201_0001_0001": {
+        "keys": [
+            "f"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "GP20S3NSS2_012201_0001_0001",
+        "color": [
+            "b"
+        ],
+        "flags": "flag",
+        "padding": [
+            100.0
+        ],
+        "annotate": [
+            true
+        ],
+        "columns": [
+            "S"
+        ],
+        "units": [
+            "nT"
+        ]
+    }
+}
+"""

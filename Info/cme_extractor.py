@@ -306,6 +306,8 @@ def main(argv):
     debug = False
     init = False # create table if TRUE
     statusmsg = {}
+    meankpcrit = 5
+    maxkpcrit = 6.5
 
     receivers = {'deutsch' : {'userid1': {'name':'roman leon', 'email':'roman_leonhardt@web.de', 'language':'deutsch'}}}
 
@@ -480,8 +482,23 @@ def main(argv):
         statusmsg['CME2mail'] = 'success'
         total = new + up
         for el in total:
-            # Construct markdown message for each language provided
-            valdict = full.get(el)
+          # Construct markdown message for each language provided
+          valdict = full.get(el)
+          moveon = True
+          # Test some criteria before sending message (e.g. not too old, k large enough)
+          print ("  Checking notification criteria ...")
+          arr = dparser.parse(valuedict.get('arrival'),fuzzy=True)
+          if arr < datetime.utcnow():
+              print ("   -> arrival time in the past")
+              moveon = False
+          kprange = [float(vl) for vl in valuedict.get('KPrange').split('-')]
+          if mean(kprange) < meankpcrit:
+              print ("   -> expected average activity too small (< {})".format(meankpcrit))
+              moveon = False
+          if max(kprange) < maxkpcrit and el in up:
+              print ("   -> expected maximum activity too small (< {}) - skipping update".format(maxkpcrit))
+              moveon = False
+          if moveon:
             for lang in languagedict:
                 langdic = languagedict[lang]
                 msghead = "*{}*".format(langdic.get('msgheader'))

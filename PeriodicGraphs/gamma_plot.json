@@ -1,0 +1,58 @@
+{
+    "GAMMA_xxx_0001_0001": {
+        "keys": [
+            "x",
+            "t1"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "GAMMA_",
+        "color": [
+            "k",
+            "r"
+        ],
+        "flags": "quake",
+        "fill": [
+            "x",
+            "t1"
+        ],
+        "quakekey": "x",
+        "padding": [
+            100.0,
+            1.0,
+        ],
+        "annotate": [
+            true,
+            false
+        ],
+        "columns": [
+            "counts/min",
+            "T (tunnel)"
+        ],
+        "units": [
+            "",
+            "°C"
+        ]
+    },
+    "METEO_T7_0001_0001": {
+        "keys": [
+            "f"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "METEO_T7",
+        "color": [
+            "b"
+        ],
+        "flags": "drop",
+        "padding": [
+            1.0
+        ],
+        "columns": [
+            "T (outside)"
+        ],
+        "units": [
+            "°C"
+        ]
+    }
+}
