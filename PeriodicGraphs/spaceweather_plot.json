@@ -1,0 +1,71 @@
+{
+    "parameter": {
+        "show": "True",
+        "confinex": "True"
+    },
+    "Kp": {
+        "keys": [
+            "var1"
+        ],
+        "plotstyle": "bar",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "gfzkp",
+        "color": [
+            "k"
+        ],
+        "specialdict": {
+            "var1" : [0,9]
+            },
+        "columns": [
+            "Kp"
+       ],
+        "units": [
+            ""
+       ]
+    },
+    "ACESWEPAM": {
+        "keys": [
+            "var2",
+            "var1"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenameends": "_ace_swepam_1m.txt",
+        "color": [
+            "k",
+            "k"
+        ],
+        "padding": [
+            10.0,
+            10.0
+        ],
+        "columns": [
+            "Solar windspeed",
+            "proton density"
+        ],
+        "units": [
+            "km/s",
+            "p/cc"
+        ]
+    },
+    "ACEMAG": {
+        "keys": [
+            "z"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenameends": "_ace_mag_1m.txt",
+        "color": [
+            "k"
+        ],
+        "padding": [
+            0.1
+        ],
+        "columns": [
+            "Bz"
+        ],
+        "units": [
+            "nT"
+        ]
+    }
+}

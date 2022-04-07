@@ -1,0 +1,66 @@
+{
+    "LEMI036_1_0002_0002": {
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "LEMI036_1_0002_0002",
+        "color": [
+            "k",
+            "r",
+            "k"
+        ],
+        "flags": "flag,quake",
+        "fill": [
+            "y"
+        ],
+        "quakekey": "z",
+        "padding": [
+            2.0,
+            20.0,
+            2.0
+        ],
+        "annotate": [
+            true,
+            false,
+            true
+        ],
+        "columns": [
+            "H",
+            "E",
+            "Z"
+        ],
+        "units": [
+            "nT",
+            "nT",
+            "nT"
+        ]
+    },
+    "GP20S3NSS2_012201_0001_0001": {
+        "keys": [
+            "f"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenamebegins": "GP20S3NSS2_012201_0001_0001",
+        "color": [
+            "b"
+        ],
+        "flags": "drop",
+        "padding": [
+            2.0
+        ],
+        "annotate": [
+            true
+        ],
+        "columns": [
+            "S"
+        ],
+        "units": [
+            "nT"
+        ]
+    }
+}

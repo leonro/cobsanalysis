@@ -156,7 +156,7 @@ def CheckSensorID(sensorid, revision='0001', debug=False):
 
     return sensorid, revision
 
-def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
+def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', filenameends='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
 
     # Read seconds data and create plots
     dataid = '{}_{}'.format(sensorid,revision)
@@ -166,7 +166,7 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
     if debug:
         print ("READING data stream ...")
     if datapath and os.path.isdir(datapath):
-        path = os.path.join(datapath,'{}*'.format(filenamebegins))
+        path = os.path.join(datapath,'{}*{}'.format(filenamebegins,filenameends))
         if debug:
             print (" -> fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
         stream = read(path, starttime=starttime, endtime=endtime) 
@@ -204,15 +204,14 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
     return stream, fl
 
 
-
-def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist=None, annotatelist=None, gridcolor='#316931', confinex=True, fullday=True, opacity=0.7,style='magpy',show=False,fullplotpath='',debug=False):
+def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist=None, annotatelist=None, symbollist=[], specialdict=None, gridcolor='#316931', confinex=True, fullday=True, opacity=0.7, bartrange=0.06, style='magpy',show=False,fullplotpath='',debug=False):
 
     if debug:
         show=True
         
     if style in ['magpy','MagPy','MAGPY']:
         # TODO Union colorlist, etc
-        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
+        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
     else:
         print (" -> unkown plot style ... doing nothing")
         return False
@@ -396,9 +395,12 @@ def main(argv):
     if senspar.get('confinex','False') in ['True','true','TRUE',True]:
         confinex = True
     gridcolor = senspar.get('gridcolor','#316931')
+    bartrange = float(senspar.get('bartrange',0.06))
     print ("    Fullday: {}, Opacity: {}, Show: {}, Confinex: {}, Gridcolor: {}".format(fullday,opacity, show,confinex,gridcolor))
 
     print ("5. Cycle through sensordefinitions")
+    symbollist = []
+    specialdict = []
     streamlist = []
     keylist = []
     filllist = []
@@ -420,16 +422,18 @@ def main(argv):
         columns = sensdict.get('columns',[])
         units = sensdict.get('units',[])
         path = sensdict.get('source','')
+        plotstyle = sensdict.get('plotstyle','line')
         flagtreatment = sensdict.get('flags','')
         if 'flag' in flagtreatment or 'drop' in flagtreatment:
             useflags = True
             if 'drop' in flagtreatment:
                 dropflagged = True
         filenamebegins = sensdict.get('filenamebegins','')
+        filenameends = sensdict.get('filenameends','')
         if keys:
             print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
             try:
-                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, columns=columns, units=units, debug=debug)
+                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends, columns=columns, units=units, debug=debug)
                 if stream and stream.length()[0]>1:
                     print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
                     if 'flag' in flagtreatment:
@@ -461,8 +465,25 @@ def main(argv):
                     if not color:
                         color = ['k' for el in keys]
                     colorlist.extend(color)
+                    if plotstyle == 'line':
+                        symbol = ['-' for el in keys]
+                    elif plotstyle == 'bar':
+                        symbol = ['z' for el in keys]
+                    else:
+                        symbol = ['-' for el in keys]
+                    symbollist.extend(symbol)
                     fill = sensdict.get('fill',[])
                     filllist.extend(fill)
+                    speciald = sensdict.get('specialdict',{})
+                    for el in speciald:
+                        print (el)
+                        print (speciald[el])
+                        vals = speciald[el]
+                        if isinstance(list,vals):
+                            vals = [int(ele) for ele in vals]
+                        speciald[el] = vals
+                        print (speciald[el])
+                    specialdict.extend(speciald)
                     print ("  ==> section 5.{} done".format(cnt+1))
                     statusmsg[processname] = "success"
             except:
@@ -483,7 +504,7 @@ def main(argv):
              fullplotpath = outpath
         else:
              fullplotpath = ''
-        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, gridcolor=gridcolor, confinex=confinex, opacity=opacity, fullday=fullday, show=show, fullplotpath=fullplotpath, debug=debug)
+        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, confinex=confinex, opacity=opacity, fullday=fullday, bartrange=bartrange, show=show, fullplotpath=fullplotpath, debug=debug)
 
     debug = True
     
