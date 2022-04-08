@@ -31,6 +31,8 @@
         "plotstyle": "line",
         "source": "/home/leon/Cloud/Daten/",
         "filenameends": "_ace_swepam_1m.txt",
+        "basesource": "/home/leon/Cloud/Daten/",
+        "basebegins": "DSCOVR_plasma_",
         "color": [
             "k",
             "k"
@@ -40,8 +42,8 @@
             10.0
         ],
         "columns": [
-            "Solar windspeed",
-            "proton density"
+            "Solar\nwindspeed",
+            "proton\ndensity"
         ],
         "units": [
             "km/s",

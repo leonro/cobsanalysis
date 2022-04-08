@@ -32,6 +32,165 @@ APPLICATION
 
 python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D
 
+
+
+EXAMPLE configuration file:
+
+{
+    # general plot parameters are defined within section "parameter"
+    "parameter": {
+        "show": "True",
+        "confinex": "True"
+    },
+    # specific plot parameters for each data set are defined in subsection with dataid
+    "Kp": {
+        "keys": [
+            "var1"
+        ],
+        # supported plotstyles are line and bar
+        "plotstyle": "bar",
+        # possible sources are directories, files or a database. if a database is selected, the section name is used to obtain the dataid
+        "source": "/home/leon/Cloud/Daten/", 
+        "filenamebegins": "gfzkp",
+        "color": [
+            "k"
+        ],
+        "specialdict": {
+            "var1" : [0,9]
+            },
+        "columns": [
+            "Kp"
+       ],
+        "units": [
+            ""
+       ]
+    },
+    "ACESWEPAM": {
+        "keys": [
+            "var2",
+            "var1"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenameends": "_ace_swepam_1m.txt",
+        # if a basesource is provided then the data of "source" is merged into the base. database access is not supported for basesource
+        "basesource": "/home/leon/Cloud/Daten/",
+        "basebegins": "DSCOVR_plasma_",
+        "color": [
+            "k",
+            "k"
+        ],
+        "padding": [
+            10.0,
+            10.0
+        ],
+        "columns": [
+            "Solar windspeed",
+            "proton density"
+        ],
+        "units": [
+            "km/s",
+            "p/cc"
+        ]
+    },
+    "ACEMAG": {
+        "keys": [
+            "z"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/",
+        "filenameends": "_ace_mag_1m.txt",
+        "color": [
+            "k"
+        ],
+        "padding": [
+            0.1
+        ],
+        "columns": [
+            "Bz"
+        ],
+        "units": [
+            "nT"
+        ]
+    },
+    "cobs_sop2": {
+        "keys": [
+            "x",
+            "y"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/Tilt",
+        "filenamebegins": "cobs_sop2",
+        "color": [
+            "k",
+            "k"
+        ],
+        "flags": "quake",
+        "quakekey": "y",
+        "padding": [
+            0.01,
+            0.01
+        ],
+        "annotate": [
+            false,
+            true
+        ],
+        "columns": [
+            "X",
+            "Y"
+        ],
+        "units": [
+            "angle",
+            "angle"
+        ]
+    },
+    "cobs_meteo1": {
+        "keys": [
+            "x",
+            "y",
+            "t1",
+            "var1",
+            "var2"
+        ],
+        "plotstyle": "line",
+        "source": "/home/leon/Cloud/Daten/Tilt",
+        "filenamebegins": "cobs_meteo1",
+        "color": [
+            "r",
+            "r",
+            "r",
+            "b",
+            "c"
+        ],
+        "flags": "drop",
+        "padding": [
+            0.05,
+            0.05,
+            0.05,
+            0.5,
+            1.0
+        ],
+        "fill": [
+            "var1",
+            "var2"
+        ],
+        "columns": [
+            "T (meteo1_1)",
+            "T (meteo1_2)",
+            "T (meteo1_3)",
+            "rh",
+            "P"
+       ],
+        "units": [
+            "°C",
+            "°C",
+            "°C",
+            "per",
+            "hPa"
+        ]
+    }
+}
+
 """
 
 from magpy.stream import *
@@ -76,39 +235,6 @@ debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'],
               }
 
 
-"""
-sensordefs = { 'dataid' : { 'keys' : ['x','y','z'], 
-                            'plotsytle' : 'line (or point or bar)', 
-                            'color' : ['r','g','b'], 
-                            'flags' : 'drop',  #('' - no flags, 'flag' - show flags from db, 'drop' - load flags and drop flagged, 'coil' - create flags from coil, 'quake' - create flags from quakes)
-                            'fill' : ['y'],
-                            'columns' : ['H','E','Z'],
-                            'units' : ['nT','nT','nT']
-                          },
-               'anotherdataid' : { 'keys' : ['t1'], 
-                            'plotsytle' : 'line (or point or bar)', 
-                            'color' : ['r'], 
-                            'source' : '/srv/projects/gravity/tilt/', #(if source == db always use  dbgetlines(db,inst,70000)
-                                                                       lasthour = lasthour.trim(endtime=datetime.utcnow())
-                            'padding' : [[0.2,0.5,0.0],[0.0]], 
-                            'annotate' : [[False,False,True],[False]],
-                            'confinex' : True, 
-                            'fullday' : True,
-                            'opacity' : 0.7, 
-                            'plottitle' : 'Tilts'  
-             }
-                          
-
-in e.g. tiltplots.cfg
-
-defaultconfig like wic.cfg contains:
-
-gridcolor='#316931',
-fill=['t1','var2'], 
-padding=[[0.2,0.5,0.0],[0.0]], annotate=[[False,False,True],[False]], confinex=True, fullday=True, opacity=0.7, plottitle='Tilts (until %s)'
-
-currentvaluepath = '/srv/products/data/current.data'
-"""
 
 def WriteMemory(memorypath, memdict):
         """
@@ -156,12 +282,24 @@ def CheckSensorID(sensorid, revision='0001', debug=False):
 
     return sensorid, revision
 
-def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', filenameends='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
+def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', mergepath='', filenamebegins='', filenameends='', mergebegins='', mergeends='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
 
     # Read seconds data and create plots
     dataid = '{}_{}'.format(sensorid,revision)
     db = config.get('primaryDB')
     fl=[]
+    mstream = None
+
+    if mergepath and os.path.isdir(mergepath):
+        print ("READING stream to which data is merged to...")
+        path = os.path.join(mergepath,'{}*{}'.format(mergebegins,mergeends))
+        if debug:
+            print (" -> fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
+        mstream = read(path, starttime=starttime, endtime=endtime) 
+    elif mergepath and os.path.isfile(mergepath):
+        print ("READING stream to which data is merged to...")
+        print (" -> fixed file selected: {}".format(mergepath))
+        mstream = read(mergepath, starttime=starttime, endtime=endtime) 
 
     if debug:
         print ("READING data stream ...")
@@ -171,8 +309,8 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
             print (" -> fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
         stream = read(path, starttime=starttime, endtime=endtime) 
     elif datapath and os.path.isfile(datapath):
-        print (" -> fixed file selected: {}".format(path))
-        stream = read(path, starttime=starttime, endtime=endtime) 
+        print (" -> fixed file selected: {}".format(datapath))
+        stream = read(datapath, starttime=starttime, endtime=endtime) 
     elif datapath in ['db','DB','database']:
         if starttime < datetime.utcnow()-timedelta(days=15):
             print (" -> reading from archive files ...")
@@ -182,6 +320,8 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
         else:
             print (" -> reading from database ...")
             stream = readDB(db,dataid,starttime=starttime, endtime=endtime)
+    if mstream:
+        stream = mergeStreams(mstream,stream)
     if columns and len(columns) == len(keylist):
         for ind,key in enumerate(keylist):
             coln = 'col-{}'.format(key)
@@ -430,10 +570,13 @@ def main(argv):
                 dropflagged = True
         filenamebegins = sensdict.get('filenamebegins','')
         filenameends = sensdict.get('filenameends','')
+        mergepath = sensdict.get('basesource','')
+        mergebegins = sensdict.get('basebegins','')
+        mergeends = sensdict.get('baseends','')
         if keys:
             print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
             try:
-                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends, columns=columns, units=units, debug=debug)
+                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends,mergepath=mergepath, mergebegins=mergebegins, mergeends=mergeends, columns=columns, units=units, debug=debug)
                 if stream and stream.length()[0]>1:
                     print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
                     if 'flag' in flagtreatment:
