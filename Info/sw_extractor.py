@@ -11,7 +11,8 @@ TESTING
 
    1. delete one of the json inputs from the memory file in /srv/archive/external/esa-nasa/cme
    2. run app without file option
-       python3 cme_extractor.py -c /home/cobs/CONF/wic.cfg -o db,telegram -p /srv/archive/external/esa-nasa/cme/
+       python3 sw_extractor.py -c /home/cobs/CONF/wic.cfg -k /srv/archive/external/gfz/kp/ - s /srv/archive/external/esa-nasa/ace/raw/
+
 
 """
 
@@ -31,26 +32,59 @@ from martas import sendmail as sm
 from acquisitionsupport import GetConf2 as GetConf
 
 
-def read_kpnow_data(source):
+def read_kpnow_data(source, debug=False):
     knewsql = ''
-    kpdata = read(source)
-    start = kpdata.ndarray[0][-1]
+    if debug:
+        print (" Kp: accessing {}".format(source))
+    kpdata = read(source,starttime=datetime.utcnow()-timedelta(days=1))
+    if kpdata.length()[0] < 1:
+        print ("Kp CRITICAL: no data found")
+        return ['']
+    start = kpdata._testtime(kpdata.ndarray[0][-1])
     kpvalue = kpdata._get_column('var1')[-1]
-    knewsql = _create_kpnow_sql(kpval,start,start+timedelta(hours=3))
-    return knewsql
+    if debug:
+        print (" Kp: Obtained {} at {}".format(kpvalue,start))
+    knewsql = _create_kpnow_sql(kpvalue,start,start+timedelta(hours=3))
+    return [knewsql]
 
 
-def read_swpam_data(source, limit=5):
+def read_swepam_data(source, limit=5, debug=False):
     swsql = ''
     pdsql = ''
-    swpam = read(source)
+    if debug:
+        print (" SWE: accessing {}".format(source))
+    swpam = read(source,starttime=datetime.utcnow()-timedelta(days=1))
+    if swpam.length()[0] < 1:
+        print ("SWEPAM CRITICAL: no data found")
+        return ['','']
     # get at least the last 5 individual records 
-    start = kpdata.ndarray[0][-limit]
-    pd = swpam._get_column('var1')[-limit:]
-    sw = swpam._get_column('var2')[-limit:]
+    start = swpam._testtime(swpam.ndarray[0][-limit])
+    pdlst = swpam._get_column('var1')[-limit:]
+    swlst = swpam._get_column('var2')[-limit:]
+    pd = np.nanmean(pdlst)
+    sw = np.nanmean(swlst)
+    if debug:
+        print (" SWE: Obtained {} and {} at {}".format(sw,pd,start))
     swsql = _create_swnow_sql(sw,pd,start)
     pdsql = _create_pdnow_sql(sw,pd,start)
     return [swsql,pdsql]
+
+def read_mag_data(source, limit=5, debug=False):
+    magsql = ''
+    if debug:
+        print (" SWE: accessing {}".format(source))
+    swmag = read(source,starttime=datetime.utcnow()-timedelta(days=1))
+    if swmag.length()[0] < 1:
+        print ("SW MAG CRITICAL: no data found")
+        return ['']
+    # get at least the last 5 individual records 
+    start = swmag._testtime(swmag.ndarray[0][-limit])
+    maglst = swmag._get_column('z')[-limit:]
+    mag = np.nanmean(maglst)
+    if debug:
+        print (" SWE: Obtained {} at {}".format(mag,start))
+    magsql = _create_magnow_sql(mag,start)
+    return [magsql]
 
 
 def _create_kpnow_sql(kpval,start,end):
@@ -67,6 +101,14 @@ def _create_swnow_sql(sw,pd,start):
     if start < datetime.utcnow()-timedelta(hours=1):
         active=0
     knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('SolarWind','nowcast','solarwind','solar',sw,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',sw,start,end,'ACE','',datetime.utcnow(),active)    
+    return knewsql
+
+def _create_magnow_sql(mag,start):
+    end = datetime.utcnow()
+    active=1
+    if start < datetime.utcnow()-timedelta(hours=1):
+        active=0
+    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Bz','nowcast','solarwind','solar',mag,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',mag,start,end,'ACE','',datetime.utcnow(),active)    
     return knewsql
 
 
@@ -120,29 +162,27 @@ def swtableinit(db, debug=True):
 def main(argv):
     """
     METHODS:
-        extract_config()    -> read analysis config
-        get_readlist()      -> get calls to read data chunks
-        get_data()          ->   
-        get_chunk_config()  -> obtain details of chunk
-        get_chunk_feature() -> get statistical features for each chunk
-           - get_emd_features()
-               - obtain_basic_emd_characteristics()
-                   - get_features()
-           - get_wavelet_features()
-
+        read_kpnow_data(source)   
+        read_swpam_data(source, limit=5) 
+        _execute_sql
+        swtableinit()
     """
     version = "1.0.0"
-    kpsource = 'https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/'
-    swsource = 'https://kauai.ccmc.gsfc.nasa.gov/CMEscoreboard/'
+    kpsource = '/srv/archive/external/gfz/kp/'
+    swsource = '/srv/archive/external/esa-nasa/ace/raw/'
+    kpname = 'gfzkp*'
+    swename = '*_swepam_1m.txt'
+    magname = '*_mag_1m.txt'
     configpath = '' # is only necessary for monitoring
+    sqllist = []
     debug = False
     init = False # create table if TRUE
     statusmsg = {}
 
 
-    usage = 'sw-extractor.py -c <config> -s <source> -o <output> -p <path> -b <begin> -e <end>'
+    usage = 'sw_extractor.py -c <config> -k <kpsource> -s <swesource> '
     try:
-        opts, args = getopt.getopt(argv,"hc:s:o:p:b:e:ID",["config=","source=","output=","path=","begin=","end=","init=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:k:s:o:p:b:e:ID",["config=","kpsource=","swesource=","init=","debug=",])
     except getopt.GetoptError:
         print(usage)
         sys.exit(2)
@@ -157,28 +197,33 @@ def main(argv):
             print('-------------------------------------')
             print('Options:')
             print('-c            : configuration data ')
-            print('-s            : source - default is ')
-            print('-o            : output (list like db,file)')
+            print('-k            : Kp source - default is ')
+            print('-s            : SWE source - default is ')
             print('-------------------------------------')
             print('Examples:')
             print('---------')
-            print('python3 sw_extractor.py -c /home/cobs/CONF/wic.cfg -o file,db,telegram,email -p /srv/archive/external/esa-nasa/cme/ -D')
+            print('python3 sw_extractor.py -c /home/cobs/CONF/wic.cfg -k /srv/archive/external/gfz/kp/gfzkp* -s /srv/archive/external/esa-nasa/ace/raw/ -D')
             print('---------')
             sys.exit()
         elif opt in ("-c", "--config"):
             configpath = os.path.abspath(arg)
-        elif opt in ("-s", "--source"):
-            swsource = arg
-        elif opt in ("-o", "--output"):
-            output = arg.split(',')
+        elif opt in ("-k", "--kpsource"):
+            kpsource = os.path.abspath(arg)
+        elif opt in ("-s", "--swesource"):
+            swsource = os.path.abspath(arg)
+        elif opt in ("-n", "--kpname"):
+            kpname = arg
+        elif opt in ("-w", "--swename"):
+            swname = arg
+        elif opt in ("-m", "--magname"):
+            magname = arg
         elif opt in ("-I", "--init"):
             init = True
         elif opt in ("-D", "--debug"):
             debug = True
 
     if debug:
-        print ("Running cme-extractor version:", version)
-        print ("Selected output:", output)
+        print ("Running sw-extractor version:", version)
 
     # 1. conf and logger:
     # ###########################
@@ -202,23 +247,36 @@ def main(argv):
     # 3. Read Kp data:
     # ###########################
     try:
-        sqllist = read_kpnow_data(kpsource)
+        sqllist = read_kpnow_data(os.path.join(kpsource,kpname),debug=debug)
         statusmsg['Kp access'] = 'success'
     except:
         statusmsg['Kp access'] = 'failed'
 
-    # 4. Read ACE data:
+    # 4. Read ACE swepam data:
     # ###########################
     try:
-        newsql = read_kpnow_data(kpsource)
+        newsql = read_swepam_data(os.path.join(swsource,swename),debug=debug)
         sqllist.extend(newsql)
-        statusmsg['ACE access'] = 'success'
+        statusmsg['ACE swepam access'] = 'success'
     except:
-        statusmsg['ACE access'] = 'failed'
+        statusmsg['ACE swepam access'] = 'failed'
+
+    # 5. Read ACE mag data:
+    # ###########################
+    try:
+        newsql = read_mag_data(os.path.join(swsource,magname),debug=debug)
+        sqllist.extend(newsql)
+        statusmsg['ACE mag access'] = 'success'
+    except:
+        statusmsg['ACE mag access'] = 'failed'
     
     sqllist = [el for el in sqllist if el]
 
-    for dbel in connectdict:
+    if debug:
+        print ("Debug selected - sql call looks like:")
+        print (sqllist)
+    else:
+      for dbel in connectdict:
         db = connectdict[dbel]
         print ("     -- Writing data to DB {}".format(dbel))
         if init:
