@@ -76,7 +76,7 @@ def read_gicnow_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debu
 
     gicnewsql = _create_gicnow_sql(gicval,start,active, comment)
 
-    return gicnewsql
+    return [gicnewsql]
 
 def read_kpnow_data(source, debug=False):
     knewsql = ''
