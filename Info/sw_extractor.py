@@ -31,6 +31,43 @@ from martas import martaslog as ml
 from martas import sendmail as sm
 from acquisitionsupport import GetConf2 as GetConf
 
+def read_xrs_data(source, debug=False):
+
+    key = 'x' # contains flux in 1-8Angström range
+    xrsdata = read(source,starttime=datetime.utcnow()-timedelta(hours=6))
+    if xrsdata.length()[0] < 1:
+        print ("XRS CRITICAL: no data found")
+        active = 0
+    else:
+        t0,tend = xrsdata._find_t_limits()
+        if tend < datetime.utcnow()-timedelta(minutes=30):
+            active = 0
+        else:
+            active = 1
+
+    m,t = xrsdata._get_max(key, returntime=True)
+    comment = "data from {}".format(xrsdata.header.get('SensorID'))
+
+    if debug:
+         thresholdtable = [0.00005,0.0005]
+         print (" maximum value during the last 6 hours: ", m)
+         print (" at ", num2date(t))
+         if m > thresholdtable[1]:
+             print (" X5 warning reached - > X5")
+         elif m > thresholdtable[0]:
+             print (" M5 warning reached - > M5")
+
+    sql = _create_xrsnow_sql(m,num2date(t).replace(tzinfo=None),active,comment)
+
+    return [sql]
+
+
+def _create_xrsnow_sql(xrsval,start,active,comment):
+    now = datetime.utcnow()
+    xrsnewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('XRS-6h','nowcast','x-ray 1-8A','goes',xrsval,start,start,'NASA GOES',comment,now,active,'nowcast','x-ray 1-8A','goes',xrsval,start,start,'NASA GOES',comment,now,active)
+    return xrsnewsql
+
+
 def read_gicnow_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debug=False):
     knewsql = ''
     gicdata = []
@@ -329,6 +366,18 @@ def main(argv):
         statusmsg['GIC data access'] = 'success'
     except:
         statusmsg['GIC data access'] = 'failed'
+
+    # 7. Read GOES data:
+    # ###########################
+    try:
+        if debug:
+            print ("Running GOES")
+        goespath = '/srv/archive/external/esa-nasa/goes'
+        newsql = read_xrs_data(os.path.join(goespath,'XRS_GOES16*'), debug=debug)
+        sqllist.extend(newsql)
+        statusmsg['XRS data access'] = 'success'
+    except:
+        statusmsg['XRS data access'] = 'failed'
 
     
     sqllist = [el for el in sqllist if el]

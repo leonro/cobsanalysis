@@ -34,7 +34,8 @@ def readXRAY(source,debug=False):
 
     with urllib.request.urlopen(source) as url:
         data = json.loads(url.read().decode())
-        print(data)
+        if debug:
+            print(data)
         pos1 = KEYLIST.index('x')
         pos2 = KEYLIST.index('var1')
         for element in data:
@@ -75,41 +76,6 @@ def readXRAY(source,debug=False):
         stream2 = DataStream([LineStruct()], header, np.asarray([np.asarray(el) for el in array2],dtype=object))
         return mergeStreams(stream1,stream2)
 
-
-def read_xrs_data(source, debug=False):
-
-    key = 'x' # contains flux in 1-8Angström range
-    xrsdata = read(source,starttime=datetime.utcnow()-timedelta(hours=6))
-    if xrsdata.length()[0] < 1:
-        print ("XRS CRITICAL: no data found")
-        active = 0
-    else:
-        t0,tend = xrsdata._find_t_limits()
-        if tend < datetime.utcnow()-timedelta(minutes=30):
-            active = 0
-        else:
-            active = 1
-
-    m,t = xrsdata._get_max(key, returntime=True)
-    comment = "data from {}".format(xrsdata.header.get('SensorID'))
-
-    if debug:
-         print (" maximum value during the last 6 hours: ", m)
-         print (" at ", num2date(t))
-         if m > thresholdtable[1]:
-             print (" X5 warning reached - > X5")
-         elif m > thresholdtable[0]:
-             print (" M5 warning reached - > M5")
-
-    sql = _create_xrsnow_sql(m,num2date(t).replace(tzinfo=None),active,comment)
-
-    return [sql]
-
-
-def _create_xrsnow_sql(gicval,start,active,comment):
-    now = datetime.utcnow()
-    xrsnewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('XRS-6h','nowcast','x-ray 1-8A','goes',gicval,start,start,'NASA GOES',comment,now,active,'nowcast','x-ray 1-8A','goes',gicval,start,start,'NASA GOES',comment,now,active)
-    return xrsnewsql
 
 def main(argv):
     """
@@ -181,21 +147,17 @@ def main(argv):
     else:
         print ("no config file found - skipping logger")
         config = False
-    
 
-    # 6. Read GIC data:
+
+    # 6. Read and Write GOES data:
     # ###########################
     try:
-        data = readXRAY(xraypath)
+        data = readXRAY(xraypath,debug=debug)
         data.write(outpath, filenamebegins="{}_".format(data.header.get('SensorID')), format_type='PYCDF', mode='replace')
         statusmsg['XRS Download'] = 'success'
     except:
         statusmsg['XRS Download'] = 'failed'
 
-
-    print (read_xrs_data(os.path.join(outpath,'*.cdf')))
-    
-    mp.plot(data)
 
     # Logging section
     # ###########################
