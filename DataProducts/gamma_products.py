@@ -150,6 +150,8 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
             meteo.header['unit-col-t2'] = 'deg C'
             meteo.header['col-var3'] = 'rain'
             meteo.header['unit-col-var3'] = 'mm/h'
+            # dropping potential string columns
+            meteo._drop_column('str2')
             print ("     -> Done")
         else:
             statusmsg[name] = 'no meteo data'
@@ -160,6 +162,7 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
 
     # 2. join with other data from meteo
     if gammasca.length()[0] > 0 and meteo.length()[0] > 0:
+        #meteo = meteo.filter()
         result = mergeStreams(gammasca,meteo)
     elif gammasca.length()[0] > 0:
         result = gammasca.copy()
