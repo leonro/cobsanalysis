@@ -288,7 +288,8 @@ def DoVarioCorrections(db, variostream, variosens='', starttimedt=datetime.utcno
         variostream = variostream.offset(offdict)
         print ("     -- rotation")
         rotstring = variostream.header.get("DataRotationAlpha","0")
-        # Apply rotation data
+        betastring = variostream.header.get("DataRotationBeta","0")
+        # alpha rotation data
         try:
             rotdict = string2dict(rotstring,typ='listofdict')[0]
         except:
@@ -296,16 +297,29 @@ def DoVarioCorrections(db, variostream, variosens='', starttimedt=datetime.utcno
                 rotdict = string2dict(rotstring,typ='listofdict')
             except:
                 rotdict = {}
-        #print ("     -> rotation dict: {}".format(rotdict))
         try:
             lastrot = sorted(rotdict)[-1]
             rotangle = float(rotdict.get(lastrot,0))
         except:
             rotangle = 0.0
             lastrot = '0000'
-        print ("        -> found rotation angle of {}".format(rotangle))
-        variostream = variostream.rotation(alpha=rotangle)
-        print ('     -- applying rotation: alpha={} determined in {}'.format(rotangle,lastrot))
+        # beta rotation data
+        try:
+            betadict = string2dict(betastring,typ='listofdict')[0]
+        except:
+            try:
+                betadict = string2dict(betastring,typ='listofdict')
+            except:
+                betadict = {}
+        try:
+            lastbeta = sorted(betadict)[-1]
+            betaangle = float(betadict.get(lastbeta,0))
+        except:
+            betaangle = 0.0
+            lastbeta = '0000'
+        print ("        -> found rotation angles: alpha={}, beta={}".format(rotangle,betaangle))
+        variostream = variostream.rotation(alpha=rotangle,beta=betaangle)
+        print ('     -- applying rotation: alpha={} determined in {} and beta={} determined in {}'.format(rotangle,lastrot,betaangle,lastbeta))
         #convert latlong
         print ("     -- concerting lat and long to epsg 4326")
         try:
