@@ -160,10 +160,10 @@ def read_gicnow_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debu
             if len(gicdat) > 0:
                 amount += 1
                 addcommlist.append(sn)
-            gicdata.extend(gicdat)        
+            gicdata.extend(gicdat)
         except:
             pass
-    
+
     # remove nans and using absolutes
     cleangicdata = [np.abs(x) for x in gicdata if not np.isnan(x)]
     if debug:
@@ -179,7 +179,7 @@ def read_gicnow_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debu
         gicval = np.median(gicvals)
     else:
         active = 0
-        gicval = float(nan)
+        gicval = 0.0
     if debug:
         print (gicval, active, amount)
     comment = "median of {} largest absolut values from {} stations ({})".format(maxvals, amount, ",".join(addcommlist))
