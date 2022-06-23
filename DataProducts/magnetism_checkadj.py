@@ -108,6 +108,7 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
                 vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple',endtime=endtime)
                 config['primaryVario'] = pvario
                 variomin = vario.filter()
+                variomin = variomin.hdz2xyz()
                 print ("    -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
                 streamlist.append(variomin)
                 variochecklist.append(varioinst)
@@ -142,8 +143,12 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
     try: # getting means
         if len(streamlist) > 1:
             # Get the means
-            print (streamlist[0].ndarray[1][0])
-            print (streamlist[1].ndarray[1][0])
+            print (" A total of {} datastreams contain valid data:".format(len(streamlist)))
+            for s in streamlist:
+                ta,te = s._find_t_limits()
+                print ("   - {} with {} datapoints covering {} to {}".format(s.header.get("SensorID"),s.length()[0],ta,te))
+            print (streamlist[0].ndarray[1][0],streamlist[0].ndarray[2][0])
+            print (streamlist[1].ndarray[1][0],streamlist[1].ndarray[2][0])
             meanstream = stackStreams(streamlist,get='mean',uncert='True')
             #mp.plot(meanstream)
             mediandx = meanstream.mean('dx',meanfunction='median')
