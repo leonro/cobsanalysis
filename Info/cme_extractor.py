@@ -306,8 +306,8 @@ def main(argv):
     debug = False
     init = False # create table if TRUE
     statusmsg = {}
-    meankpcrit = 5
-    maxkpcrit = 6.5
+    meankpcrit = 4.5
+    maxkpcrit = 6.0
 
     receivers = {'deutsch' : {'userid1': {'name':'roman leon', 'email':'roman_leonhardt@web.de', 'language':'deutsch'}}}
 
@@ -487,11 +487,11 @@ def main(argv):
           moveon = True
           # Test some criteria before sending message (e.g. not too old, k large enough)
           print ("  Checking notification criteria ...")
-          arr = dparser.parse(valuedict.get('arrival'),fuzzy=True)
+          arr = dparser.parse(valdict.get('arrival'),fuzzy=True)
           if arr < datetime.utcnow():
               print ("   -> arrival time in the past")
               moveon = False
-          kprange = [float(vl) for vl in valuedict.get('KPrange').split('-')]
+          kprange = [float(vl) for vl in valdict.get('KPrange').split('-')]
           if mean(kprange) < meankpcrit:
               print ("   -> expected average activity too small (< {})".format(meankpcrit))
               moveon = False
