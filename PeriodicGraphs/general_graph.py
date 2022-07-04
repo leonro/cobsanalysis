@@ -25,10 +25,17 @@ INPUT fiel example: see bottom
 APPLICATION
     Standard - will save the file to tmp with 'magnetism_ENDDATE.png' as filename:
         python3 general_graph.py -c ../conf/wic.cfg -i ../conf/magnetism_plot.json -e 2020-12-17
-    SensorID:
-        python3 general_graph.py -c ../conf/wic.cfg -e 2019-01-15 -s GP20S3NSS2_012201_0001 -D
     Testing:
         python3 general_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17
+
+WORKING EXAMPLES:
+
+    Creating a Gamma plot of 10 days 
+        python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/radon_plot.json -r 20 -o /srv/products/graphs/radon/ -l mm-pp-radon.log -D
+    SpaceWeatherplot
+        python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/solarwindact_plot.json -r 5 -o /srv/products/graphs/spaceweather/ -l mm-pp-sw.log
+        
+python3 /home/cobs/ANALYSIS/PeriodicGraphs/general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/radon_plot.json -r 20 -o /srv/products/graphs/radon/ -l mm-pp-radon.log
 
 python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D
 
@@ -235,7 +242,6 @@ debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'],
               }
 
 
-
 def WriteMemory(memorypath, memdict):
         """
         DESCRIPTION
@@ -247,6 +253,10 @@ def WriteMemory(memorypath, memdict):
         except:
             return False
         return True
+
+
+#WriteMemory("/home/cobs/ANALYSIS/PeriodicGraphs/mytest_plot.json", test)
+
 
 def ReadMemory(memorypath,debug=False):
         """
@@ -515,6 +525,7 @@ def main(argv):
 
     print ("4. Read sensordefinitions")
     if not sensordefs:
+        print (sensordefpath)
         sensordefs = ReadMemory(sensordefpath)
         plotname = os.path.basename(sensordefpath).replace('.json','').replace('_plot','')
         print ("Plotname : ", plotname)
@@ -618,16 +629,17 @@ def main(argv):
                     fill = sensdict.get('fill',[])
                     filllist.extend(fill)
                     speciald = sensdict.get('specialdict',{})
-                    for el in speciald:
-                        print (el)
-                        print (speciald[el])
-                        vals = speciald[el]
-                        if isinstance(list,vals):
-                            vals = [int(ele) for ele in vals]
-                        speciald[el] = vals
-                        print (speciald[el])
-                    specialdict.extend(speciald)
+                    print (speciald)
+                    #for el in speciald:
+                    #    vals = speciald[el]
+                    #    if isinstance(vals,list):
+                    #        vals = [int(ele) for ele in vals]
+                    #    speciald[el] = vals
+                    #    print (speciald[el])
+                    #print (specialdict)
+                    #specialdict.extend(speciald)
                     print ("  ==> section 5.{} done".format(cnt+1))
+                    #print (specialdict)
                     statusmsg[processname] = "success"
             except:
                 print (" -- severe error in data treatment")

@@ -1,11 +1,11 @@
 {
-    "GAMMA_xxx_0001_0001": {
+    "GAMMA_SFB867_0001_0001": {
         "keys": [
             "x",
             "t1"
         ],
         "plotstyle": "line",
-        "source": "/home/leon/Cloud/Daten/",
+        "source": "/srv/archive/SGO/GAMMA_SFB867_0001/GAMMA_SFB867_0001_0001/",
         "filenamebegins": "GAMMA_",
         "color": [
             "k",
@@ -19,7 +19,7 @@
         "quakekey": "x",
         "padding": [
             100.0,
-            1.0,
+            1.0
         ],
         "annotate": [
             true,
@@ -39,7 +39,7 @@
             "f"
         ],
         "plotstyle": "line",
-        "source": "/home/leon/Cloud/Daten/",
+        "source": "/srv/archive/SGO/METEO_T7_0001/METEO_T7_0001_0001/",
         "filenamebegins": "METEO_T7",
         "color": [
             "b"
