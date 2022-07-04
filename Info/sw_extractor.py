@@ -5,7 +5,7 @@
 DESCRIPTION
 Appliaction to extract SolarWind Parameters from ACE (or DSCOVR) and Kp from the GFZ
 
-REQUIREMENTS 
+REQUIREMENTS
 
 TESTING
 
@@ -30,6 +30,7 @@ from analysismethods import DefineLogger, ConnectDatabases, load_current_data_su
 from martas import martaslog as ml
 from martas import sendmail as sm
 from acquisitionsupport import GetConf2 as GetConf
+from datetime import time as dttime
 
 def read_predstorm_data(source,starttime=datetime.utcnow(),debug=False):
 
@@ -213,7 +214,7 @@ def read_swepam_data(source, limit=5, debug=False):
     if swpam.length()[0] < 1:
         print ("SWEPAM CRITICAL: no data found")
         return ['','']
-    # get at least the last 5 individual records 
+    # get at least the last 5 individual records
     start = swpam._testtime(swpam.ndarray[0][-limit])
     pdlst = swpam._get_column('var1')[-limit:]
     swlst = swpam._get_column('var2')[-limit:]
@@ -233,7 +234,7 @@ def read_mag_data(source, limit=5, debug=False):
     if swmag.length()[0] < 1:
         print ("SW MAG CRITICAL: no data found")
         return ['']
-    # get at least the last 5 individual records 
+    # get at least the last 5 individual records
     start = swmag._testtime(swmag.ndarray[0][-limit])
     maglst = swmag._get_column('z')[-limit:]
     mag = np.nanmean(maglst)
@@ -251,7 +252,7 @@ def _create_kpnow_sql(kpval,start,end):
     active=0
     if end > datetime.utcnow()-timedelta(hours=3):
         active=1
-    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Kp','nowcast','geomagactivity','geomag',kpval,start,end,'GFZ Potsdam','',datetime.utcnow(),active,'nowcast','geomagactivity','geomag',kpval,start,end,'GFZ Potsdam','',datetime.utcnow(),active)    
+    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Kp','nowcast','geomagactivity','geomag',kpval,start,end,'GFZ Potsdam','',datetime.utcnow(),active,'nowcast','geomagactivity','geomag',kpval,start,end,'GFZ Potsdam','',datetime.utcnow(),active)
     return knewsql
 
 
@@ -260,7 +261,7 @@ def _create_swnow_sql(sw,pd,start):
     active=1
     if start < datetime.utcnow()-timedelta(hours=1):
         active=0
-    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('SolarWind','nowcast','solarwind','solar',sw,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',sw,start,end,'ACE','',datetime.utcnow(),active)    
+    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('SolarWind','nowcast','solarwind','solar',sw,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',sw,start,end,'ACE','',datetime.utcnow(),active)
     return knewsql
 
 def _create_magnow_sql(mag,start):
@@ -268,7 +269,7 @@ def _create_magnow_sql(mag,start):
     active=1
     if start < datetime.utcnow()-timedelta(hours=1):
         active=0
-    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Bz','nowcast','solarwind','solar',mag,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',mag,start,end,'ACE','',datetime.utcnow(),active)    
+    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('Bz','nowcast','solarwind','solar',mag,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',mag,start,end,'ACE','',datetime.utcnow(),active)
     return knewsql
 
 
@@ -277,7 +278,7 @@ def _create_pdnow_sql(sw,pd,start):
     active=1
     if start < datetime.utcnow()-timedelta(hours=1):
         active=0
-    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('ProtonDensity','nowcast','solarwind','solar',pd,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',pd,start,end,'ACE','',datetime.utcnow(),active)    
+    knewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format('ProtonDensity','nowcast','solarwind','solar',pd,start,end,'ACE','',datetime.utcnow(),active,'nowcast','solarwind','solar',pd,start,end,'ACE','',datetime.utcnow(),active)
     return knewsql
 
 
@@ -318,12 +319,26 @@ def swtableinit(db, debug=True):
     createtablesql = "CREATE TABLE IF NOT EXISTS SPACEWEATHER ({})".format(sqlstr)
     _execute_sql(db,[createtablesql], debug=debug)
 
+def time_between(now,start,end):
+    """
+    now needs to be like datetime.now().time()
+    start is a datetime.time for the starthour
+    end is a datetime.time for the endhour
+    """
+    from datetime import time as dttime
+    if start < end:
+        if now >= start and now <= end:
+            return True
+    else:
+        if now >= start or now <= end:
+            return True
+    return False
 
 def main(argv):
     """
     METHODS:
-        read_kpnow_data(source)   
-        read_swpam_data(source, limit=5) 
+        read_kpnow_data(source)
+        read_swpam_data(source, limit=5)
         _execute_sql
         swtableinit()
     """
@@ -462,8 +477,12 @@ def main(argv):
         sqllist.extend(psql)
         statusmsg['PREDSTORM data access'] = 'success'
     except:
+        # no predstorm data between 23:00 and 2:00 MET
+        # just put success message if hitting except in this time range
         statusmsg['PREDSTORM data access'] = 'failed'
-    
+        if time_between(datetime.utcnow().time(),dttime(21,0),dttime(0,0)):
+            statusmsg['PREDSTORM data access'] = 'success'
+
     sqllist = [el for el in sqllist if el]
 
     if debug:
