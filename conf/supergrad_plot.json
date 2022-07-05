@@ -1,0 +1,42 @@
+{
+    "parameter": {
+        "show": "True",
+        "confinex": "True"
+    },
+    "GP20S3NS_012201": {
+        "keys": [
+            "dx",
+            "dy",
+            "dz"
+        ],
+        "plotstyle": "line",
+        "source": "/srv/archive/WIC/GP20S3NS_012201_0001/raw",
+        "filenamebegins": "GP20S3NS_012201",
+        "color": [
+            "k",
+            "k",
+            "k"
+        ],
+        "flags": "outlier",
+        "padding": [
+            5.0,
+            5.0,
+            5.0
+        ],
+        "annotate": [
+            false,
+            false,
+            true
+        ],
+        "columns": [
+            "S-NS",
+            "N-S",
+            "N-NS"
+        ],
+        "units": [
+            "pT",
+            "pT",
+            "pT"
+        ]
+    }
+}

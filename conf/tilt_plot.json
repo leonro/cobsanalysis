@@ -9,7 +9,7 @@
             "y"
         ],
         "plotstyle": "line",
-        "source": "/home/leon/Cloud/Daten/Tilt",
+        "source": "/srv/projects/gravity/TSOP_papp_0001/raw",
         "filenamebegins": "cobs_sop2",
         "color": [
             "k",
@@ -43,8 +43,8 @@
             "var2"
         ],
         "plotstyle": "line",
-        "source": "/home/leon/Cloud/Daten/Tilt",
-        "filenamebegins": "cobs_meteo1",
+        "source": "/srv/projects/gravity/TSOP_papp_0001/raw",
+        "filenamebegins": "cobs_meteo2",
         "color": [
             "r",
             "r",
@@ -65,9 +65,9 @@
             "var2"
         ],
         "columns": [
-            "T (meteo1_1)",
-            "T (meteo1_2)",
-            "T (meteo1_3)",
+            "T (meteo2_1)",
+            "T (meteo2_2)",
+            "T (meteo2_3)",
             "rh",
             "P"
        ],

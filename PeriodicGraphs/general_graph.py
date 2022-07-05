@@ -34,10 +34,13 @@ WORKING EXAMPLES:
         python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/radon_plot.json -r 20 -o /srv/products/graphs/radon/ -l mm-pp-radon.log -D
     SpaceWeatherplot
         python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/solarwindact_plot.json -r 5 -o /srv/products/graphs/spaceweather/ -l mm-pp-sw.log
-        
-python3 /home/cobs/ANALYSIS/PeriodicGraphs/general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/radon_plot.json -r 20 -o /srv/products/graphs/radon/ -l mm-pp-radon.log
-
-python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D
+    Tilt plot
+        python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/tilt_plot.json -r 5 -o /srv/products/graphs/tilt/ -l mm-pp-tilt.log -D
+    Supergrad plot
+          python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/supergrad_plot.json -l mm-pp-supergrad.log
+          
+    Testing
+          python3 general_graph.py -c ../conf/wic.cfg -i ../conf/supergrad_plot.json -l mm-pp-supergrad.log -D 
 
 
 
@@ -132,7 +135,7 @@ EXAMPLE configuration file:
             "k",
             "k"
         ],
-        "flags": "quake",
+        "flags": "quake",    # Supported flags are 'flag' - flags from db applied, 'drop' - flags from db dropped, 'outlier' - outlier removed, 'quake' - flags taken from quake list
         "quakekey": "y",
         "padding": [
             0.01,
@@ -292,7 +295,7 @@ def CheckSensorID(sensorid, revision='0001', debug=False):
 
     return sensorid, revision
 
-def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', mergepath='', filenamebegins='', filenameends='', mergebegins='', mergeends='', flags=False, dropflagged=False, columns=[], units=[], debug=False):
+def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', mergepath='', filenamebegins='', filenameends='', mergebegins='', mergeends='', flags=False, outlier=False, dropflagged=False, columns=[], units=[], debug=False):
 
     # Read seconds data and create plots
     dataid = '{}_{}'.format(sensorid,revision)
@@ -345,6 +348,9 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
 
     if flags:
         fl = db2flaglist(db,stream.header.get('SensorID'),begin=starttime, end=endtime)
+        print (" - obtained {} flags in db".format(len(fl)))
+    if outlier:
+        ofl = stream.flag_outlier(threshold=3, timerange=timedelta(seconds=180))
         print (" - obtained {} flags in db".format(len(fl)))
     if dropflagged:
         print (" - dropping flagged data")    
@@ -564,6 +570,7 @@ def main(argv):
         processname = "{}-{}".format(statname,dataid.replace("_","-"))
         statusmsg[processname] = "failure"
         useflags = False
+        outlier = False
         dropflagged = False
         sensdict = sensordefs[dataid]
         revision = sensdict.get('revision','0001')
@@ -575,6 +582,9 @@ def main(argv):
         path = sensdict.get('source','')
         plotstyle = sensdict.get('plotstyle','line')
         flagtreatment = sensdict.get('flags','')
+        if 'outlier' in flagtreatment:
+            outlier = True
+            dropflagged = True
         if 'flag' in flagtreatment or 'drop' in flagtreatment:
             useflags = True
             if 'drop' in flagtreatment:
@@ -587,7 +597,7 @@ def main(argv):
         if keys:
             print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
             try:
-                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends,mergepath=mergepath, mergebegins=mergebegins, mergeends=mergeends, columns=columns, units=units, debug=debug)
+                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, outlier=outlier, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends,mergepath=mergepath, mergebegins=mergebegins, mergeends=mergeends, columns=columns, units=units, debug=debug)
                 if stream and stream.length()[0]>1:
                     print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
                     if 'flag' in flagtreatment:
@@ -661,8 +671,6 @@ def main(argv):
              fullplotpath = ''
         CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, confinex=confinex, opacity=opacity, fullday=fullday, bartrange=bartrange, show=show, fullplotpath=fullplotpath, debug=debug)
 
-    debug = True
-    
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
         martaslog.telegram['config'] = config.get('notificationconfig')
