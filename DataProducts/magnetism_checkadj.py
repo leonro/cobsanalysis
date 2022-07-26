@@ -64,7 +64,6 @@ def GetDirections(datastream, debug=False):
     f = float(nan)
     hourly = datastream.filter(filter_width=timedelta(minutes=60), resampleoffset=timedelta(minutes=30), filter_type='flat', missingdata='iaga')
     if hourly.length()[0] > 0:
-        hourly = hourly.hdz2xyz()
         hourly = hourly.xyz2idf()
         dec = hourly._get_column('y')[-1]
         inc = hourly._get_column('x')[-1]
@@ -103,15 +102,18 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             if vario.length()[0] > 0 and db:
                 vario = DoVarioCorrections(db, vario, variosens=variosens, starttimedt=endtime-timedelta(days=daystodeal))
                 pvario = config.get('primaryVario') # TODO DoBaseLine read primary instruments basevalues
-                print (pvario)
+                #print (pvario)
                 config['primaryVario'] = variosens
                 vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple',endtime=endtime)
                 config['primaryVario'] = pvario
                 variomin = vario.filter()
                 variomin = variomin.hdz2xyz()
-                print ("    -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
-                streamlist.append(variomin)
-                variochecklist.append(varioinst)
+                if "successful" in msg:
+                    print ("    -> Adding variometer data from {} with length {} to streamlist".format(variosens,variomin.length()[0]))
+                    streamlist.append(variomin)
+                    variochecklist.append(varioinst)
+                else:
+                    print ("    -> Skipping variometer data from {} as baseline adoption failed".format(variosens))
                 if variosens == config.get('primaryVario'):
                     # Calculate dif
                     (dec,inc,f) = GetDirections(variomin)
@@ -147,8 +149,9 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             for s in streamlist:
                 ta,te = s._find_t_limits()
                 print ("   - {} with {} datapoints covering {} to {}".format(s.header.get("SensorID"),s.length()[0],ta,te))
-            print (streamlist[0].ndarray[1][0],streamlist[0].ndarray[2][0])
-            print (streamlist[1].ndarray[1][0],streamlist[1].ndarray[2][0])
+            if debug:
+                for st in streamlist:
+                    print ("   - {}: X={}, Y={}, Z={}".format(st.header.get('SensorID'),st.ndarray[1][0],st.ndarray[2][0],st.ndarray[3][0]))
             meanstream = stackStreams(streamlist,get='mean',uncert='True')
             #mp.plot(meanstream)
             mediandx = meanstream.mean('dx',meanfunction='median')

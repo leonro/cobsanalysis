@@ -211,7 +211,7 @@ def GetPrimaryInstruments(config={}, statusmsg={}, fallback=True, debug=False):
                 QDenddate = ''
             try:
                 lastdec = valdict.get('Declination','')[0]  # format 2019-11-22
-                lastinc = valdict.get('Incliniation','')[0]  # format 2019-11-22
+                lastinc = valdict.get('Inclination','')[0]  # format 2019-11-22
                 lastf = valdict.get('Fieldstrength','')[0]  # format 2019-11-22
             except:
                 lastdec = ''

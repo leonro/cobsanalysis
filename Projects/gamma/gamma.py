@@ -201,7 +201,7 @@ def singlespecanalysis(data,roi=[],plot=False,name='example',background=None,ene
     else:
         print (" - skipped")
 
-    if plot:
+    if plot:        
         # Plot spectra
         if not plotname:
             plotname = 'Spectra'
@@ -614,17 +614,17 @@ def analyse_mca(path, startdate=None, enddate=None, config={}):
             print ("# -------------------------------------------------------------------------")
             print (" - Analysis of spectrum")
 
-            try:
-                if i in plotselection:
+            #try:
+            if i in plotselection:
                     print ("  --> Plotting")
                     #result[str(i)] = singlespecanalysis(data2,roi=roi,plot=True,name=str(i))
                     singlespecanalysis(data2,roi=roi,plot=True,name=str(i))
                     plt.show()
-                else:
+            else:
                     #result[str(i)] = singlespecanalysis(data2,roi=roi,plot=False,name=str(i))
                     singlespecanalysis(data2,roi=roi,plot=False,name=str(i))
-            except:
-                singlespecanalysis(data2,roi=roi,plot=False,name=str(i))
+            #except:
+            #    singlespecanalysis(data2,roi=roi,plot=False,name=str(i))
 
 
             print ("# -------------------------------------------------------------------------")
@@ -839,6 +839,8 @@ def main(argv):
             print ("Rois:", roi)
         confdict['roi'] = roi
 
+        stream = analyse_mca(path, startdate=starttime, enddate=endtime, config=confdict)
+        sys.exit()
         try:
             stream = analyse_mca(path, startdate=starttime, enddate=endtime, config=confdict)
 
@@ -860,7 +862,7 @@ def main(argv):
         except:
             statusmsg[name] = 'gamma analysis failed'
         martaslog = ml(logfile=logpath,receiver='telegram')
-        martaslog.telegram['config'] = '/home/cobs/SCRIPTS/telegram_notify.conf'
+        martaslog.telegram['config'] = '/etc/martas/telegram.cfg'
         martaslog.msg(statusmsg)
 
 
