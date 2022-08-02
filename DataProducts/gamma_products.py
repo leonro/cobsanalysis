@@ -122,8 +122,8 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
         print ("     -> Reading SCA Gamma data...")
         gammasca = read(os.path.join(rawdatapath,'COBSEXP_2_*'), starttime=start, endtime=end)
         if gammasca.length()[0] > 0:
-            gammasca.header['col-t1'] = 'T (tunnel)'
-            gammasca.header['unit-col-t1'] = 'deg C'
+            gammasca.header['col-t1'] = 'T(tunnel)'
+            gammasca.header['unit-col-t1'] = 'degC'
         if debug:
              print (gammasca._get_key_headers())
         print ("     -> Done")
@@ -146,8 +146,8 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
             meteo._move_column('f','t2')   #temp - keep -> add unit and description
             meteo._drop_column('f')
             meteo._drop_column('var2')     # wind direction - remove
-            meteo.header['col-t2'] = 'T (outside)'
-            meteo.header['unit-col-t2'] = 'deg C'
+            meteo.header['col-t2'] = 'T(outside)'
+            meteo.header['unit-col-t2'] = 'degC'
             meteo.header['col-var3'] = 'rain'
             meteo.header['unit-col-var3'] = 'mm/h'
             # dropping potential string columns
