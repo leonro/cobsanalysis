@@ -60,7 +60,7 @@ import urllib.request
 import json
 
 
-def GetDIF(config={}, settime=datetime.utcnow(), offset=None,  debug=False):
+def GetDIF(config={}, settime=datetime.utcnow(), offset=None, realF=True, debug=False):
 
     baseaddress = "http://{}".format(config.get('igrfmodel'))
     #baseaddress = 'http://geomag.bgs.ac.uk/web_service/GMModels/igrf/13/'  # take from config
@@ -68,11 +68,11 @@ def GetDIF(config={}, settime=datetime.utcnow(), offset=None,  debug=False):
     print (" Getting Reference DIF values for your location from IGRF and F record")
     offsets = {"D" : 0.0, "I": 0.0, "Figrf" : 0.0, "Flocal" : 0.0 }
     if offset:
-        print ("offset provided", offset)
+        print ("Applying the provided offset: {}", offset)
         for off in offset:
             if off in offsets:
                 offsets[off] = offset.get(off)
-        print ("   Applying offsets: ", offsets)
+        print ("   -> offset dictionary looks like: ", offsets)
 
     db = config.get('primaryDB',None)
     # 1. get stationcode from config
@@ -103,23 +103,23 @@ def GetDIF(config={}, settime=datetime.utcnow(), offset=None,  debug=False):
     DIFsource = '{}{}'.format(model,modelrevision)
     print ("  -> Done: obtained D = {} deg, I = {} deg and F = {} nT from IGRF".format(D,I,F))
     # 5. read primaryScalar
-    try:
-        print ("  Trying to get reference F value from real measurement")
-        scalar = config.get('primaryScalar')
-        print (scalar)
-        endtime = datetime.strptime(datetime.strftime(settime+timedelta(days=1),"%Y-%m-%d"),"%Y-%m-%d")
-        revision = '0001'
-        print ("   -> check sensor")
-        scalar, revision = CheckSensorID(scalar, revision, debug=debug)
-        print ("   -> read datastream")
-        stream = ReadDatastream(config=config, endtime=endtime, timerange=1, sensorid=scalar, revision=revision, debug=debug)
-        # subtract offset
-        stream = DoScalarCorrections(db, stream, scalarsens=scalar, starttimedt=endtime-timedelta(days=1), debug=debug)
-        idx, line =  stream.findtime(settime)
-        F = stream.ndarray[4][idx] + float(offsets.get("Flocal",0.0))
-        print ("   -> Done: using F = {} nT from scalar magnetometer {}".format(F,scalar))
-    except:
-        pass
+    if realF:
+        try:
+            print ("  Trying to get reference F value from real measurement")
+            scalar = config.get('primaryScalar')
+            endtime = datetime.strptime(datetime.strftime(settime+timedelta(days=1),"%Y-%m-%d"),"%Y-%m-%d")
+            revision = '0001'
+            print ("   -> check sensor {}".format(scalar))
+            scalar, revision = CheckSensorID(scalar, revision, debug=debug)
+            print ("   -> read datastream")
+            stream = ReadDatastream(config=config, endtime=endtime, timerange=1, sensorid=scalar, revision=revision, debug=debug)
+            # subtract offset
+            stream = DoScalarCorrections(db, stream, scalarsens=scalar, starttimedt=endtime-timedelta(days=1), debug=debug)
+            idx, line =  stream.findtime(settime)
+            F = stream.ndarray[4][idx] + float(offsets.get("Flocal",0.0))
+            print ("   -> Done: using F = {} nT from scalar magnetometer {}".format(F,scalar))
+        except:
+            print ("   -> Failed: could not access scalar data")
 
     return [I,D,F], DIFsource
 
@@ -270,6 +270,7 @@ def main(argv):
     statusmsg = {}
     debug=False
     settime = None
+    realF=True
     fieldvector = None
     newloggername = 'mm-dp-gams.log'
     DIFsource="UserValue"
@@ -277,7 +278,7 @@ def main(argv):
     offset = {}
 
     try:
-        opts, args = getopt.getopt(argv,"hc:v:t:o:l:D",["config=","vector=","time=","offset=","loggername=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:v:t:o:l:fD",["config=","vector=","time=","offset=","loggername=","igrf","debug=",])
     except getopt.GetoptError:
         print ('baseline_generator.py -c <config>')
         sys.exit(2)
@@ -300,6 +301,7 @@ def main(argv):
             print ('              :  - if not provided, IGRF data will be used')
             print ('-t            : time')
             print ('-o            : offset  - e.g. -o Flocal:-15.51,Figrf:100,D:0.00001')
+            print ('-f            : use IGRF for F and NOT any available scalar data ')
             print ('-l            : loggername')
             print ('-------------------------------------')
             print ('Application:')
@@ -319,6 +321,9 @@ def main(argv):
         elif opt in ("-o", "--offset"):
             # define a point in time for the current analysis
             off = arg
+        elif opt in ("-f", "--igrf"):
+            # define a point in time for the current analysis
+            realF = False
         elif opt in ("-l", "--loggername"):
             # define an endtime for the current analysis - default is now
             newloggername = arg
@@ -384,7 +389,7 @@ def main(argv):
     name5 = "{}-getIDF".format(config.get('logname'))
     if not fieldvector:
         try:
-            fieldvector, DIFsource = GetDIF(config=config, settime=settime, offset=offset, debug=debug)  # return [I,D,F]
+            fieldvector, DIFsource = GetDIF(config=config, settime=settime, offset=offset, realF=realF, debug=debug)  # return [I,D,F]
             statusmsg[name5] = 'field vector obtained from IGRF model'
         except:
             statusmsg[name5] = 'field vector could not be obtained from IGRF model'

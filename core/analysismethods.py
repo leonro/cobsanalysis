@@ -387,7 +387,10 @@ def DoBaselineCorrection(db, variostream, config={}, baselinemethod='simple', en
         try:
             print ("     -- reading BLV data from file")
             starttime = endtime-timedelta(days=ndays)
-            absr = read(blvpath, starttime=starttime)
+            #print ("     -- starttime looks like {}, path={}".format(starttime,blvpath))
+            absr = read(blvpath)
+            absr = absr.trim(starttime=starttime)
+            print ("     -- found {} basevalues".format(absr.length()[0]))
             blvflagdata = blvdata.replace("comp","")
             blvflaglist = db2flaglist(db,blvflagdata, begin=datetime.strftime(starttime,"%Y-%m-%d %H:%M:%S"))
             print ("     -- found {} flags for baseline values of the last {} days".format(len(blvflaglist),ndays))
