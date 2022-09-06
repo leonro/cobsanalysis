@@ -718,7 +718,7 @@ def ExportData(datastream, onlyarchive=False, config={}):
         if meteoproductpath:
             # save result to products
             print (" Writing meteo data to file ...")
-            datastream.write(meteoproductpath,filenamebegins=meteofilename,dateformat='%Y',coverage='year', mode='replace',format_type='PYCDF')
+            datastream.write(meteoproductpath,filenamebegins=meteofilename,dateformat='%Y%m',coverage='month', mode='replace',format_type='PYCDF')
             print ("  -> METEO_adjusted data successfully written to yearly file")
 
         if len(connectdict) > 0 and not onlyarchive:
