@@ -174,6 +174,7 @@ def new_quakes(relquakes, memorypath='',debug=False):
             if debug:
                 print (memorypath, lq)
             ind, tmp = np.where(np.asarray(relquakes)==lq[0])
+            #ind = [3] # force reselection
             if len(ind) > 0:
                 ind = ind[0]
                 print (" -> Found last quake at index", ind)
@@ -189,7 +190,8 @@ def new_quakes(relquakes, memorypath='',debug=False):
     if debug:
         print (" selection", ind, len(relquakes))
     if (ind >= 0 and len(relevantquakes) > ind+1) or firstrun:
-        #print ("Found new earthquakes")
+        if debug:
+            print ("Found new earthquakes")
         relevantquakes = relquakes[ind+1:]
     if debug:
         print (" after checking memory: {} earthquakes".format(len(relevantquakes)))
@@ -341,6 +343,8 @@ def main(argv):
         msg = 'problem with selecting relavant quakes'
         relevantquakes = select_relevant_quakes(lastquakes, criteria={}, debug=debug)
         msg = 'problem with new quakes'
+        if debug:
+            print (" the following quakes appear relevant:", relevantquakes)
         relevantquakes = new_quakes(relevantquakes, memorypath=memorypath, debug=debug)
     except:
         statusmsg[name1] = msg
