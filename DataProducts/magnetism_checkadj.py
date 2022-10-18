@@ -100,9 +100,12 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             t1,t2 = vario._find_t_limits()
             print (" Coverage from {} to {}".format(t1,t2))
             if vario.length()[0] > 0 and db:
+                if debug:
+                    print ("Vario before corr: time {}  - {}: X={}, Y={}, Z={}".format(vario.ndarray[0][0], vario.header.get('SensorID'),vario.ndarray[1][0],vario.ndarray[2][0],vario.ndarray[3][0]))
                 vario = DoVarioCorrections(db, vario, variosens=variosens, starttimedt=endtime-timedelta(days=daystodeal))
                 pvario = config.get('primaryVario') # TODO DoBaseLine read primary instruments basevalues
-                #print (pvario)
+                if debug:
+                    print ("Vario after corr: time {}  - {}: X={}, Y={}, Z={}".format(vario.ndarray[0][0], vario.header.get('SensorID'),vario.ndarray[1][0],vario.ndarray[2][0],vario.ndarray[3][0]))
                 config['primaryVario'] = variosens
                 vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple',endtime=endtime)
                 config['primaryVario'] = pvario
@@ -278,6 +281,7 @@ def main(argv):
     if debug:
         print ("Running magnetism_checkadj version {} - debug mode".format(version))
         print ("---------------------------------------")
+        print ("  by using MagPy {}".format(magpyversion))
 
     if not os.path.exists(configpath):
         print ('Specify a valid path to configuration information')
