@@ -162,8 +162,8 @@ def CompareAdjustedVario(config={}, endtime=datetime.utcnow(), debug=False):
             mediandz = meanstream.mean('dz',meanfunction='median')
             print ("Median differences between variometers (in x,y,z):", mediandx,mediandy,mediandz)
             maxmedian = max([mediandx,mediandy,mediandz])
-            if maxmedian > 0.2:
-                msg = "variometer check - significant differences between instruments exceeding 0.2 nT - please check"
+            if maxmedian > 0.5:
+                msg = "variometer check - significant differences between instruments exceeding 0.5 nT - please check"
         elif len(streamlist) > 0:
             print ("Only one data set found")
             msg = "variometer check failed - only one data set available"
