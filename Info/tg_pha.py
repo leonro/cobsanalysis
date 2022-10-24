@@ -18,6 +18,8 @@ import telegram_send
 # Get new data from API
 import json
 from urllib import request as urlrequest
+# date conversion
+from dateutil.parser import parse
 
 import sys
 import getopt
@@ -116,7 +118,8 @@ def check_new_PHA(alldata, existalldata, field, existname, languagedict={}, exce
             # Add new data to list
             existalldata.append(elem)
             # Creating new message if approach date is in the future:
-            approachdate = datetime.strptime(elem[field.index('cd')],"%Y-%b-%d %H:%M") #TDB
+            #approachdate = datetime.strptime(elem[field.index('cd')],"%Y-%b-%d %H:%M") #TDB # did not work anymore in cronjob
+            approachdate = parse(elem[field.index('cd')])
             print (" Got approachdate", approachdate)
             if approachdate >= datetime.utcnow()-timedelta(days=pastrange):  # ~30 secs diff between UTC and TDB
                 for language in languagedict:
