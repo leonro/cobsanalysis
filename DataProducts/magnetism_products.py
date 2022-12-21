@@ -210,36 +210,36 @@ def ExportData(datastream, config={}, publevel=2):
     print ("  -> Exporting {} data ".format(pubtype))
     if 'IAGA' in explist:
         print ("     -- Saving one second data - IAGA - to {}".format(vpathsec))
-        datastream.write(vpathsec,filenamebegins="wic",dateformat="%Y%m%d",filenameends="{}sec.sec".format(pubshort),format_type='IAGA')
+        datastream.write(vpathsec,filenamebegins=obscode.lower(),dateformat="%Y%m%d",filenameends="{}sec.sec".format(pubshort),format_type='IAGA')
         # supported keys of IMAGCDF -> to IMF format
         #supkeys = ['time','x','y','z','f','df']
         print ("       -> Done")
     if 'CDF' in explist:
         print ("     -- Saving one second data - CDF")
-        datastream.write(vpathcdf,filenamebegins="wic_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+datastream.header.get('DataPublicationLevel')+'.cdf')
+        datastream.write(vpathcdf,filenamebegins=obscode.lower()+"_",dateformat="%Y%m%d_%H%M%S",format_type='IMAGCDF',filenameends='_'+datastream.header.get('DataPublicationLevel')+'.cdf')
         print ("       -> Done")
     if 'DBsec' in explist and not int(publevel)==3: # dont save quasidefinitve 1 sec data - memory issues and unnecessary
         print ("     -- Saving one second data - Database")
         oldDataID = datastream.header['DataID']
         oldSensorID = datastream.header['SensorID']
-        datastream.header['DataID'] = "WIC_{}sec_0001_0001".format(pubtype)
-        datastream.header['SensorID'] = "WIC_{}sec_0001".format(pubtype)
+        datastream.header['DataID'] = "{}_{}sec_0001_0001".format(obscode.upper(),pubtype)
+        datastream.header['SensorID'] = "{}_{}sec_0001".format(obscode.upper(),pubtype)
         # save
         for dbel in connectdict:
             db = connectdict[dbel]
             print ("     -- Writing {} data to DB {}".format(pubtype,dbel))
-            writeDB(db,datastream,tablename="WIC_{}sec_0001_0001".format(pubtype))
+            writeDB(db,datastream,tablename="{}_{}sec_0001_0001".format(obscode.upper(),pubtype))
         datastream.header['DataID'] = oldDataID
         datastream.header['SensorID'] = oldSensorID
     if 'IAGA' in explist:
         print ("     -- Saving one minute data - IAGA")
         prelimmin = datastream.filter()
-        prelimmin.write(vpathmin,filenamebegins="wic",dateformat="%Y%m%d",filenameends="{}min.min".format(pubshort),format_type='IAGA')
+        prelimmin.write(vpathmin,filenamebegins=obscode.lower(),dateformat="%Y%m%d",filenameends="{}min.min".format(pubshort),format_type='IAGA')
         #mp.plot(prelimmin)
     if 'DBmin' in explist:
         print ("     -- Saving one minute {} data to database".format(pubtype))
-        prelimmin.header['DataID'] = "WIC_{}min_0001_0001".format(pubtype)
-        prelimmin.header['SensorID'] = "WIC_{}min_0001".format(pubtype)
+        prelimmin.header['DataID'] = "{}_{}min_0001_0001".format(obscode.upper(),pubtype)
+        prelimmin.header['SensorID'] = "{}_{}min_0001".format(obscode.upper(),pubtype)
         variocol = np.asarray([varioinst for el in prelimmin.ndarray[0]])
         scalacol = np.asarray([scalainst for el in prelimmin.ndarray[0]])
         prelimmin = prelimmin._put_column(variocol, 'str1')
@@ -247,7 +247,7 @@ def ExportData(datastream, config={}, publevel=2):
         for dbel in connectdict:
             db = connectdict[dbel]
             print ("     -- Writing {} data to DB {}".format(pubtype,dbel))
-            writeDB(db,prelimmin,tablename="WIC_{}min_0001_0001".format(pubtype))
+            writeDB(db,prelimmin,tablename="{}_{}min_0001_0001".format(obscode.upper(),pubtype))
 
     return prelimmin
 
@@ -271,6 +271,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=
     primpier = config.get('primarypier')
     daystodeal = config.get('daystodeal')
     db = config.get('primaryDB')
+    obscode = config.get('obscode')
     try:
         dbcoverage = int(config.get('dbcoverage',10))
     except:
@@ -290,7 +291,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=
     print ("  Primary variometer {}:".format(varioinst))
     print ("  ----------------------")
 
-    name1b = "{}-AdjustedVarioData".format(config.get('logname'))
+    name1b = "{}-AdjustedVarioData-{}".format(config.get('logname'),obscode.upper())
     if not varioinst == '':
         if st < datetime.utcnow()-timedelta(days=dbcoverage): 
             print ("  -> reading archive data")
@@ -314,7 +315,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=
 
     print ("  Primary scalar magnetometer {}:".format(scalarinst))
     print ("  ----------------------")
-    name1c = "{}-AdjustedScalarData".format(config.get('logname','Dummy'))
+    name1c = "{}-AdjustedScalarData-{}".format(config.get('logname','Dummy'),obscode.upper())
     if not scalarinst == '':
         if st < datetime.utcnow()-timedelta(days=dbcoverage):
             print ("  -> reading archive data")
@@ -339,7 +340,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=
     print ("  ----------------------")
     print ("  Instruments: {} and {}".format(varioinst, scalarinst))
 
-    name1d = "{}-AdjustedBaselineData".format(config.get('logname','Dummy'))
+    name1d = "{}-AdjustedBaselineData-{}".format(config.get('logname','Dummy'),obscode.upper())
     vario, msg = DoBaselineCorrection(db, vario, config=config, baselinemethod='simple',endtime=endtime)
     statusmsg[name1d] = msg
     if not msg == 'baseline correction successful':
@@ -350,7 +351,7 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=
 
     print ("  Combining all data sets")
     print ("  ----------------------")
-    name1e = "{}-AdjustedDataCombination".format(config.get('logname','Dummy'))
+    name1e = "{}-AdjustedDataCombination-{}".format(config.get('logname','Dummy'),obscode.upper())
     try:
         prelim = DoCombination(db, vario, scalar, config=config, publevel=2, date=datetime.strftime(endtime,"%Y-%m-%d"), debug=debug)
         statusmsg[name1e] = 'combination finished'
@@ -360,13 +361,16 @@ def AdjustedData(config={},statusmsg = {}, endtime=datetime.utcnow(), starttime=
 
     print ("  Exporting data sets")
     print ("  ----------------------")
-    name1f = "{}-AdjustedDataExport".format(config.get('logname','Dummy'))
+    name1f = "{}-AdjustedDataExport-{}".format(config.get('logname','Dummy'),obscode.upper())
     statusmsg[name1f] = 'export of adjusted data successful'
     if debug:
         print ("     for time range: {}".format(prelim._find_t_limits()))
     if not debug:
         #try:
-        prelimmin = ExportData(prelim, config=config, publevel=2)
+        if prelim.length()[0] > 0:
+            prelimmin = ExportData(prelim, config=config, publevel=2)
+        else:
+            statusmsg[name1f] = 'empty data - cannot export'
         #except:
         #    statusmsg[name1f] = 'export of adjusted data failed'
     else:

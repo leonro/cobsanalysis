@@ -133,7 +133,7 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
 
     try:
         print ("     -> Reading meteo data ...")
-        meteo = read(os.path.join(meteopath,'meteo-1min_*'), starttime=start, endtime=end)
+        meteo = read(os.path.join(meteopath,'METEOSGO_*'), starttime=start, endtime=end)
         if debug:
             print (meteo._get_key_headers())
         if meteo.length()[0] > 0:

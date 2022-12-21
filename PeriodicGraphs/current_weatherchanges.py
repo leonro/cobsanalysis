@@ -256,11 +256,13 @@ def weather_change(db,config={},starttime=datetime.utcnow()-timedelta(days=3),en
         ax1.set_ylim([ min( [axarr[1].get_ylim()[0], 0]), max( [axarr[1].get_ylim()[1],max1a])]) # SETTING LIMITS FOR TWINPLOT AFTER RESETING ALL OTHER PLOTS
         print( 'Setting axes limits successful. Placing average valus as text in plot successful.')
         savepath = os.path.join(imagepath,'MeteoChange_0_'+filedate+'.png')
+        savepathlatest = os.path.join(imagepath,'MeteoChange_0.png')
         if debug:
             plt.show()
         else:
             plt.savefig( savepath)
             print( 'File {} saved.'.format( savepath))
+            plt.savefig(savepathlatest)
     except:
         print ("failed")
         succ = False

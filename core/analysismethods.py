@@ -381,11 +381,13 @@ def DoBaselineCorrection(db, variostream, config={}, baselinemethod='simple', en
     blvdata2 = 'BLV_{}_{}_{}'.format(variosens,scalarsens,primpier)
     if os.path.isfile(os.path.join(dipath,blvdata1+'.txt')):
         blvpath = os.path.join(dipath,blvdata1+'.txt')
+        blvdata = blvdata1
     elif os.path.isfile(os.path.join(dipath,blvdata2+'.txt')):
         blvpath = os.path.join(dipath,blvdata2+'.txt')
+        blvdata = blvdata2
     else:
         print ("     -- could not identify an appropriate BLV file - method will fail")
-    print ("     -- using BLV data in {}".format(blvdata))
+    print ("     -- using BLV data in {}".format(blvpath))
     # Check if such a baseline is existing - if not abort and inform
     msg = 'baseline correction successful'
 
