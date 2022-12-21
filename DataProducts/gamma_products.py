@@ -107,7 +107,7 @@ def CreateWebserviceTable(config={}, statusmsg={}, start=datetime.utcnow()-timed
 
     # 1. read data
     rawdatapath = config.get('gammarawdata')
-    meteopath = config.get('meteoproducts')
+    meteopath = config.get('meteoarchive')
     result = DataStream()
     rcsg0path = config.get('rcsg0rawdata')
     name = "{}-servicetables".format(config.get('logname'))
