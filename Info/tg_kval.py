@@ -49,7 +49,7 @@ languagedict = {'english' : {'warnstart': "Possible consequences are", 'msgnew':
                                       "9":"an aurora visible at mid latitudes, significant disturbances in radio communication, outages in navigation signals, and strong power grid fluctuations."}},
                 'deutsch' : {'warnstart': "Mögliche Auswirkungen:", 'msgnew':'*Hohe geomagnetische Aktivität*',
                              'msgupdate':'*Aktivitätsupdate*','msgbody1':'Geomagnetischer Aktivitätsindex _k_=',
-                             'msgbody2':'erwwartet','msgvalid':'Warnung ist gültig bis','timezone':'CET',
+                             'msgbody2':'erwartet','msgvalid':'Warnung ist gültig bis','timezone':'CET',
                              'msgref':'Basierend auf Daten des [Conrad Observatoriums]','channeltype':'telegram',
                              'channelconfig':'/etc/martas/tg_weltraum.cfg',
                              'level': {"5":"eine Aurora in hohen Breiten.", 
