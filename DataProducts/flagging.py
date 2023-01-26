@@ -447,8 +447,11 @@ def main(argv):
                     print ("  Dateformat problem for {}".format(sensor))
             print (" d) Flagging data")
             for idx,sensor in enumerate(validsensors):
-                lines = int(timerange/validsr[idx])
-                lastdata = dbgetlines(db,sensor,lines)
+                try:
+                     lines = int(timerange/validsr[idx])
+                     lastdata = dbgetlines(db,sensor,lines)
+                except:
+                     lastdata = DataStream()
                 print ("    - got {} datapoints".format(lastdata.length()[0]))
                 if lastdata.length()[0] > 0:
                     sensorid = "_".join(sensor.split('_')[:-1])
@@ -697,7 +700,7 @@ def main(argv):
         if currentyear-3 > minyear:
              yearlist = [i for i in range(minyear,currentyear-2)]
         else:
-             yearlist = [2015]        
+             yearlist = [2015]
         flaglist_tmp = []
         for year in yearlist:
             startyear = 2000
