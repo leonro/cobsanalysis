@@ -667,8 +667,8 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
         print (" Running QD analysis")
         print (" ----------------------")
         print ("  Obtained the following information of previous analyses: ")
-        print ("  Previous analyses using data until (QDenddate): {}".format(QDenddate))
-        print ("  Previous analyses performed on (lastQDdate): {}".format(lastQDdate))
+        print ("  Previous analyses performed on (QDenddate): {}".format(QDenddate))
+        print ("  Previous analyses covers data until (lastQDdate): {}".format(lastQDdate))
         try:
             qddata = DataStream()
             if forcecond:
@@ -677,11 +677,10 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
             else:
                  # first time condition
                 qdendtime = datetime.strptime(newQDenddate,"%Y-%m-%d") + timedelta(days=1)
-                if not QDenddate == '':
-                    # QDenddate is 8 days before newQDenddate
-                    qdstarttime = datetime.strptime(QDenddate,"%Y-%m-%d") - timedelta(days=1)
+                if lastQDdate:
+                    qdstarttime = datetime.strptime(lastQDdate,"%Y-%m-%d") - timedelta(days=1)
                 else:
-                    qdstarttime = datetime.strptime(newQDenddate,"%Y-%m-%d") - timedelta(days=8)
+                    qdstarttime = datetime.strptime(datetime.utcnow(),"%Y-%m-%d") - timedelta(days=14)
                 print ("  -> all conditions met - running QD analysis")
             print ("     -- Effectively analyzing data between:")
             print ("     -- Start: {}".format(qdstarttime))
