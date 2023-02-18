@@ -38,16 +38,16 @@ from magpy.stream import *
 from magpy.database import *
 from magpy.transfer import *
 import magpy.mpplot as mp
-import magpy.opt.emd as emd
+#import magpy.opt.emd as emd
 import magpy.opt.cred as mpcred
-import io, pickle
+#import io, pickle
 import getopt
-import pwd
+#import pwd
 import sys  # for sys.version_info()
-import socket
+#import socket
 
-import itertools
-from threading import Thread
+#import itertools
+#from threading import Thread
 from subprocess import check_output   # used for checking whether send process already finished
 
 scriptpath = os.path.dirname(os.path.realpath(__file__))
@@ -612,13 +612,8 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
     rotangle = 0.0
     runqd = False
     forcecond = False
-
-    if debug:
-        print ("----------------------------------------------------------------")
-        print ("Determine quasidefinite data")
-        print ("----------------------------------------------------------------")
-        p3start = datetime.utcnow()
-
+    newQDenddate = None
+    p3start = datetime.utcnow()
 
     # Messages:
     # name3a: {}-QDanalysis
@@ -633,8 +628,9 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
     name3b = "{}-QDanalysis-performance".format(config.get('logname','Dummy'))
 
     if force and starttime and endtime:
-        print ("  Force anaysis selected - running QD analysis")
+        print ("  Force analysis selected - running QD analysis")
         print ("  ----------------------")
+        print ("  current.data values are not updated")
         runqd = True
         forcecond = True
     else:
@@ -644,18 +640,37 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
         name3a = "{}-QDanalysis".format(config.get('logname','Dummy'))
         statusmsg[name3a] = "last suitability-test for quasidefinitive finished"
         try:
-            runqd = GetQDTimeslot(config=config, debug=debug)
+            if not force:
+                runqd = GetQDTimeslot(config=config, debug=debug)
+            else:
+                runqd = True
+            if runqd:
+                print(" Is it time for QD analysis? - yes")
+            else:
+                print(" Is it time for QD analysis? - no")
+        except:
+            statusmsg[name3a] = "suitable timerange test for quasidefinitive failed"
+
+        try:
             if runqd:
                 runqd, newQDenddate = GetQDFlagcondition(db, lastQDdate=lastQDdate, variosens=variosens, scalasens=scalarsens, debug=debug)
+                print(" Flag condition tested: continue? {}, suggested new enddate {}".format(runqd,newQDenddate))
             if runqd:
                 runqd = GetQDDonealready(lastQDdate=lastQDdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
+                print(" Testing whether analysis has been done already. Continue? {}".format(runqd))
         except:
-            statusmsg[name3a] = "suitability-test for quasidefinitive failed"
+            statusmsg[name3a] = "suitable flagging condition for quasidefinitive failed"
 
-    if runqd:
-        print ("  Running QD analysis")
-        print ("  ----------------------")
+    if not runqd:
+        print (" Condition tests for QD analysis not satisfied - stopping here")
+    else:
+        print (" Running QD analysis")
+        print (" ----------------------")
+        print ("  Obtained the following information of previous analyses: ")
+        print ("  Previous analyses using data until (QDenddate): {}".format(QDenddate))
+        print ("  Previous analyses performed on (lastQDdate): {}".format(lastQDdate))
         try:
+            qddata = DataStream()
             if forcecond:
                 qdstarttime = starttime
                 qdendtime = endtime
@@ -668,7 +683,7 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
                 else:
                     qdstarttime = datetime.strptime(newQDenddate,"%Y-%m-%d") - timedelta(days=8)
                 print ("  -> all conditions met - running QD analysis")
-            print ("     -- Analyzing data between:")
+            print ("     -- Effectively analyzing data between:")
             print ("     -- Start: {}".format(qdstarttime))
             print ("     -- End:   {}".format(qdendtime))
 
@@ -752,7 +767,7 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
             print ("  -> Exporting data sets")
             name3h = "{}-QDDataExport".format(config.get('logname','Dummy'))
             statusmsg[name3h] = 'export of adjusted data successful'
-            if not debug:
+            if not debug and qddata:
                 try:
                     qdmin = ExportData(qddata, config=config, publevel=3)
                 except:
@@ -791,7 +806,7 @@ def main(argv):
     try:
         version = __version__
     except:
-        version = "1.0.1"
+        version = "1.0.2"
     configpath = ''
     statusmsg = {}
     debug=False
@@ -887,6 +902,11 @@ def main(argv):
     print ("1. Read and check validity of configuration data")
     config = GetConf(configpath)
     success = ValidityCheckConfig(config)
+
+    if starttime and endtime:
+        print (" updating days-to-deal parameter in config")
+        days = (endtime-starttime).days
+        config['daystodeal'] = days
 
     #if not success:
     #    sys.exit(1)
