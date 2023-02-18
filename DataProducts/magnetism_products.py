@@ -597,7 +597,7 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
         Done here to be as close as possible to data acquisition
     """
 
-    lastQDdate = config.get('lastQDdate')
+    QDanalysisdate = config.get('lastQDdate')
     QDenddate = config.get('QDenddate')
     currentvaluepath = config.get('currentvaluepath')
     archivepath = config.get('archivepath')
@@ -653,10 +653,10 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
 
         try:
             if runqd:
-                runqd, newQDenddate = GetQDFlagcondition(db, lastQDdate=lastQDdate, variosens=variosens, scalasens=scalarsens, debug=debug)
+                runqd, newQDenddate = GetQDFlagcondition(db, lastQDdate=QDenddate, variosens=variosens, scalasens=scalarsens, debug=debug)
                 print(" Flag condition tested: continue? {}, suggested new enddate {}".format(runqd,newQDenddate))
             if runqd:
-                runqd = GetQDDonealready(lastQDdate=lastQDdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
+                runqd = GetQDDonealready(lastQDdate=QDanalysisdate, QDenddate=QDenddate, newQDenddate=newQDenddate, debug=debug)
                 print(" Testing whether analysis has been done already. Continue? {}".format(runqd))
         except:
             statusmsg[name3a] = "suitable flagging condition for quasidefinitive failed"
@@ -667,8 +667,8 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
         print (" Running QD analysis")
         print (" ----------------------")
         print ("  Obtained the following information of previous analyses: ")
-        print ("  Previous analyses performed on (QDenddate): {}".format(QDenddate))
-        print ("  Previous analyses covers data until (lastQDdate): {}".format(lastQDdate))
+        print ("  Previous analyses covers data until (QDenddate): {}".format(QDenddate))
+        print ("  Previous analyses performed on (lastQDdate): {}".format(QDanalysisdate))
         try:
             qddata = DataStream()
             if forcecond:
@@ -677,8 +677,8 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
             else:
                  # first time condition
                 qdendtime = datetime.strptime(newQDenddate,"%Y-%m-%d") + timedelta(days=1)
-                if lastQDdate:
-                    qdstarttime = datetime.strptime(lastQDdate,"%Y-%m-%d") - timedelta(days=1)
+                if QDenddate:
+                    qdstarttime = datetime.strptime(QDenddate,"%Y-%m-%d") - timedelta(days=1)
                 else:
                     qdstarttime = datetime.strptime(datetime.utcnow(),"%Y-%m-%d") - timedelta(days=14)
                 print ("  -> all conditions met - running QD analysis")
@@ -784,7 +784,7 @@ def QuasidefinitiveData(config={}, statusmsg={}, starttime=None, endtime=None, f
                         fulldict[u'magnetism'] = valdict
                     with open(currentvaluepath, 'w',encoding="utf-8") as file:
                         file.write(unicode(json.dumps(fulldict)))
-                        print ("    -- last QD analysis date has been updated from {} to {}".format(lastQDdate,date))
+                        print ("    -- last QD analysis date has been updated from {} to {}".format(QDanalysisdate,date))
             else:
                 print ("Debug (or Force) selected: current data remains unchanged")
 
