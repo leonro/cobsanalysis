@@ -165,8 +165,17 @@ def read_gicnow_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debu
         except:
             pass
 
+    def is_number(var):
+        try:
+            var = float(var)
+            if np.isnan(var):
+                return False
+            return True
+        except:
+            return False
+
     # remove nans and using absolutes
-    cleangicdata = [np.abs(x) for x in gicdata if not np.isnan(x)]
+    cleangicdata = [np.abs(x) for x in gicdata if is_number(x)]
     if debug:
         print ("GIC data", cleangicdata)
     if len(cleangicdata) > 5:

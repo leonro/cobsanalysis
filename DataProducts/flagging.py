@@ -711,6 +711,7 @@ def main(argv):
             flagfile = os.path.join(flagfilearchivepath,'flags_{}-{}.json'.format(startyear,year))
             beg = '{}-01-01'.format(startyear)
             end = '{}-01-01'.format(year)
+            print ("  -> Checking database contents (flags) between {} and {}".format(beg,end))
             flaglist_tmp = db2flaglist(db,'all',begin=beg, end=end)
             if len(flaglist_tmp) > 0:
                 print ("   -> Found {} flags in database between {} and {}".format(len(flaglist_tmp),startyear,year))
@@ -722,6 +723,8 @@ def main(argv):
                 print ("  - Saving flag archive to {}".format(flagfilepath))
                 succ = saveflags(flaglist_tmp, flagfile, overwrite=True)
                 print ("   -> Done")
+            else:
+                print ("    -> DB empty")
 
         if succ:
             # drop all flags from flaglist
