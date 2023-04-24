@@ -126,6 +126,162 @@ def consecutive_check(flaglist, sr=1, overlap=True, singular=False, remove=False
         print ("Found an old flaglist type - aborting")
         return flaglist
 
+    ok = True
+    if ok:
+        newflaglist = []
+        for name in uniquenames:
+            if debug:
+                print (" Dealing with {}".format(name))
+            cflaglist = [el for el in flaglist if el[5] == name]
+            # if singular, extract flags with identical start and endtime
+            if singular:
+                nonsingularflaglist = [el for el in flaglist if el[0] != el[1]]
+                testlist = [el for el in flaglist if el[0] == el[1]]
+                newflaglist.extend(nonsingularflaglist)
+            else:
+                testlist = cflaglist
+
+            uniquecomponents = list(set([el[2] for el in testlist]))
+            if debug:
+                print (" - found flags for components", uniquecomponents)
+
+            for comp in uniquecomponents:
+                extendedcomplist = []
+                extlistlenend = 0
+                for unid in uniqueids:
+                    idlist = [el for el in testlist if el[3] == unid]
+                    complist = [el for el in idlist if comp == el[2]]
+                    if debug:
+                        print ("Inputs for component {} and ID {}: {}".format(comp,unid,len(complist)))
+                        print (complist)
+                    extlistlenstart = extlistlenend
+                    for line in complist:
+                        tdiff = (line[1]-line[0]).total_seconds()
+                        if tdiff > sr:
+                            # add steps
+                            firstt = line[0]
+                            lastt = line[1]
+                            steps = int(np.ceil(tdiff/float(sr)))
+                            for step in range(0,steps):
+                                val0 = firstt+timedelta(seconds=step*sr)
+                                extendedcomplist.append([val0,val0,line[2],line[3],line[4],line[5],line[6]])
+                            extendedcomplist.append([lastt,lastt,line[2],line[3],line[4],line[5],line[6]])
+                        else:
+                            extendedcomplist.append(line[:7])
+                    extlistlenend = len(extendedcomplist)
+                    if debug:
+                        print (" - Individual time stamps in second resolution: {} (appended {} elements in this run)".format(len(extendedcomplist),extlistlenend-extlistlenstart))
+                if overlap:
+                    if debug:
+                        print ("removing overlaps")
+                    # Now sort the extendedlist according to modification date
+                    extendedcomplist.sort(key=lambda x: x[-1], reverse=True)
+                    #print (extendedcomplist[0])
+                    # Now remove all overlapping data
+                    seen = set()
+                    new1list = []
+                    for item in extendedcomplist:
+                        try:
+                            ti = np.round((item[0]-datetime(1900, 1, 1)).total_seconds(),0)
+                        except:
+                            ti = np.round((item[0]-datetime.datetime(1900, 1, 1)).total_seconds(),0)
+                        # use a second resolution for identifying identical inputs
+                        if ti not in seen:
+                            new1list.append(item)
+                            seen.add(ti)
+                    extendedcomplist = new1list
+                    if debug:
+                        print (" - After overlap removal - time stamps: {}".format(len(extendedcomplist)))
+
+                # now combine all subsequent time steps below sr with identical id to single inputs again
+                extendedcomplist.sort(key=lambda x: x[0])
+                new2list = []
+                startt = None
+                endt = None
+                tmem = None
+                for idx,line in enumerate(extendedcomplist):
+                    idnum0 = line[3]
+                    if idx < len(extendedcomplist)-1:
+                        t0 = line[0]
+                        t1 = extendedcomplist[idx+1][0]
+                        idnum1 = extendedcomplist[idx+1][3]
+                        tdiff = (t1-t0).total_seconds()
+                        if tdiff <= sr and idnum0 == idnum1:
+                            if not tmem:
+                                tmem = t0
+                            endt = None
+                        else:
+                            startt = t0
+                            if tmem:
+                                startt = tmem
+                            endt = t0
+                    else:
+                        t0 = line[0]
+                        startt = t0
+                        if tmem:
+                            startt = tmem
+                        endt = t0
+                    if startt and endt:
+                        # add new line
+                        if not remove:
+                            new2list.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
+                            newflaglist.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
+                        else:
+                            if idnum0 == 1 and (endt-startt).total_seconds()/float(sr) >= critamount:
+                                # do not add subsequent automatic flags
+                                pass
+                            else:
+                                new2list.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
+                                newflaglist.append([startt,endt,line[2],line[3],line[4],line[5],line[6]])
+                        tmem = None
+                if debug:
+                    print (" - After recombination: {}".format(len(new2list)))
+
+    return newflaglist
+
+def consecutive_check_old(flaglist, sr=1, overlap=True, singular=False, remove=False, critamount=20, flagids=None, debug=False):
+    """
+    DESCRIPTION:
+        Method to inspect a flaglist and check for consecutive elements
+    PARAMETER:
+        sr           (float) :  [sec] Sampling rate of underlying flagged data sequence
+        critamount   (int)   :  Amount of maximum allowed consecutive (to be used when removing consecutive data)
+        result       (BOOL)  :  True will replace consecutive data with a new flag, False will remove consecutive data from flaglist
+        overlap      (BOOL)  :  if True than overlapping flags will also be combined, comments from last modification will be used
+        singular     (BOOL)  :  if True than only single time stamp flags will be investigated (should be spikes)
+    INPUT:
+        flaglist with line like
+        [datetime.datetime(2016, 4, 13, 16, 54, 40, 32004), datetime.datetime(2016, 4, 13, 16, 54, 40, 32004), 't2', 3,
+         'spike and woodwork', 'LEMI036_1_0002', datetime.datetime(2016, 4, 28, 15, 25, 41, 894402)]
+    OUTPUT:
+        flaglist
+
+    """
+    if flagids:
+        if isinstance(flagids, list):
+            uniqueids = flagids
+        elif isinstance(flagids, int):
+            uniqueids = [flagids]
+        else:
+            uniqueids = [0,1,2,3,4]
+    else:
+        uniqueids = [0,1,2,3,4]
+
+    if not len(flaglist) > 0:
+        return flaglist
+
+    # Ideally flaglist is a list of dictionaries:
+    # each dictionary consists of starttime, endtime, components, flagid, comment, sensorid, modificationdate
+    flagdict = [{"starttime" : el[0], "endtime" : el[1], "components" : el[2].split(','), "flagid" : el[3], "comment" : el[4], "sensorid" : el[5], "modificationdate" : el[6]} for el in flaglist]
+
+    ## Firstly extract all flagging IDs from flaglst
+    if len(flaglist[0]) > 6:
+        ids = [el[5] for el in flaglist]
+        uniquenames = list(set(ids))
+    else:
+        print ("Found an old flaglist type - aborting")
+        return flaglist
+
     newflaglist = []
     for name in uniquenames:
         cflaglist = [el for el in flaglist if el[5] == name]
