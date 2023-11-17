@@ -8,36 +8,37 @@ The following README contains an overview about all analysis scripts used at the
 ## 2. Overview
 
 
-Script                        | Location        |  Schedule         |  Config        |   Monitor         |  Dependencies  | Comments
------------------------------ | --------------- | ----------------- | -------------- | ----------------- | -------------- | --------
-magnetism\_products.py        | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-weather\_products.py          | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-getprimary.py                 | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-flagging.py                   | DataProducts    | analysis_5min     | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-gamma\_products.py            | DataProducts    | analysis_hourly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-magnetism\_checkadj.py        | DataProducts    | analysis_daily    | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
-baseline\_generator.py        | DataProducts    | to daily          | gam.cfg/swz.cfg |  MARTAS telegram  |                | py2 and py3
-convert\_data.py              | DataProducts    | hourly            | wic.cfg        |  MARTAS telegram  |                | py2 and py3
-tg\_pha.py                    | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
-tg\_kval.py                   | Info            | analysis_5min     |                |  MARTAS telegram  |                | 
-tg\_quake.py                  | Info            | analysis_20min    |                |  MARTAS telegram  |                | 
-tg\_base.py                   | Info            | analysis_weekly   | CONF/wic.cfg   |  MARTAS telegram  |                | py3 
-logfiledate.py                | Info            | analysis_weekly   | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
-quakes\_import.py             | DataImport      |                   | CONF/wic.cfg   |  MARTAS telegram  |                | py3
-dscovr\_download\_broker.py   | DataImport      |                   | -              |  Logfile monitor  |                | running on broker
-gfzkp\_download\_broker.py    | DataImport      |                   | -              |  Logfile monitor  |                | running on broker
-ace\_conversion.py            | DataImport      |                   |                |  MARTAS telegram  |                | 
-mag\_graph.py                 | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
-weather\_graph.py             | TitleGraphs     | analysis_20min    |                |  MARTAS telegram  |                | 
-general\_graph.py             | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | py2 and py3
-tilt\_graph.py                | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
-supergrad\_graph.py           | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
-gamma\_graph.py               | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
-spaceweather\_graph.p         | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
-current\_weatherchanges.py    | PeriodicGraphs  | analysis_hourly   |                |  MARTAS telegram  |                | 
-gamma.py                      | Projects/gamma/ | analysis_daily    |                |  MARTAS telegram  |                | 
-iono\_analysis.py             | Projects/ionit  | analysis_monthly  |                |  MARTAS telegram  |                | 
-GeoelekTimeSeries.py          | Projects/geoelectric/wenner\_sgo/ | analysis_monthly  |                |  MARTAS telegram  |                |
+Script                        | Location        |  Schedule |  Config        |   Monitor         |  Dependencies  | Comments
+----------------------------- | --------------- | ---- | -------------- | ----------------- | -------------- | --------
+magnetism\_products.py        | DataProducts    | 5min | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+weather\_products.py          | DataProducts    | hourly | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+getprimary.py                 | DataProducts    | 5min | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+flagging.py                   | DataProducts    | 5min | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+gamma\_products.py            | DataProducts    | hourly | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+magnetism\_checkadj.py        | DataProducts    | daily | CONF/wic.cfg   |  MARTAS telegram  |                | py2 and py3
+baseline\_generator.py        | DataProducts    | to daily | gam.cfg/swz.cfg |  MARTAS telegram  |                | py2 and py3
+convert\_data.py              | DataProducts    | hourly | wic.cfg        |  MARTAS telegram  |                | py2 and py3
+tg\_pha.py                    | Info            | analysis_20min |                |  MARTAS telegram  |                | 
+tg\_kval.py                   | Info            | analysis_5min |                |  MARTAS telegram  |                | 
+tg\_quake.py                  | Info            | analysis_20min |                |  MARTAS telegram  |                | 
+tg\_base.py                   | Info            | analysis_weekly | CONF/wic.cfg   |  MARTAS telegram  |                | py3 
+logfiledate.py                | Info            | analysis_weekly | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+quakes\_import.py             | DataImport      |      | CONF/wic.cfg   |  MARTAS telegram  |                | py3
+dscovr\_download\_broker.py   | DataImport      |      | -              |  Logfile monitor  |                | running on broker
+gfzkp\_download\_broker.py    | DataImport      |      | -              |  Logfile monitor  |                | running on broker
+ace\_conversion.py            | DataImport      |      |                |  MARTAS telegram  |                | 
+wbvimport.py            | DataImport      |      |                |  MARTAS telegram  |                | 
+mag\_graph.py                 | TitleGraphs     | analysis_20min |                |  MARTAS telegram  |                | 
+weather\_graph.py             | TitleGraphs     | analysis_20min |                |  MARTAS telegram  |                | 
+general\_graph.py             | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | py2 and py3
+tilt\_graph.py                | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | 
+supergrad\_graph.py           | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | 
+gamma\_graph.py               | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | 
+spaceweather\_graph.p         | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | 
+current\_weatherchanges.py    | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | 
+gamma.py                      | Projects/gamma/ | analysis_daily |                |  MARTAS telegram  |                | 
+iono\_analysis.py             | Projects/ionit  | analysis_monthly |                |  MARTAS telegram  |                | 
+GeoelekTimeSeries.py          | Projects/geoelectric/wenner\_sgo/ | analysis_monthly |                |  MARTAS telegram  |                |
 
 
 >bash /home/cobs/ANALYSIS/DataProducts/GIC/cleanup_tempfiles.sh
@@ -426,6 +427,21 @@ PARAMETERS
 APPLICATION
     PERMANENTLY with cron:
         python3 python quakes_import.py -c /home/user/CONF/wic.cfg -p /srv/archive/external/neic/neic_quakes.d
+
+### 7.4 wbvimport.py
+
+Please note: This script requires the following python packages
+pandas
+
+DESCRIPTION
+    Import raw data from csv and excel files provided for warmbad villach measurements
+PREREQUISITES
+   The following packegas are required:
+      geomagpy >= 0.9.8
+      pandas
+COMMENTS
+   The script joins excel and csv data (exl is only used if no csv data is present)
+   Corrections i.e. in 2017 are hardcoded and need to be cited in the database
 
 
 ## 8. CRONTAB on ANALYSIS
