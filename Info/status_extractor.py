@@ -261,7 +261,7 @@ def main(argv):
         db = config.get('primaryDB')
         connectdict = config.get('conncetedDB')
     except:
-        statusmsg[name1] = 'database failed'
+        statusmsg['database'] = 'database failed'
 
 
     # 3. Read job json list:

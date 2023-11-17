@@ -16,10 +16,13 @@ def DefineLogger(config={}, category="DataProducts", job='anaylsismethods', newn
     # extract loggingpath from config
     if not newname == '':
         logdir = config.get('loggingdirectory')
-        logpath = os.path.join(logdir,newname)
-        config['logfile'] = logpath
-        if debug:
-            print ("    - Saving logs to {}".format(logpath))
+        if logdir:
+            logpath = os.path.join(logdir,newname)
+            config['logfile'] = logpath
+            if debug:
+                print ("    - Saving logs to {}".format(logpath))
+        else:
+            print ("    - no logging directory specified - skipping logging")
     # add name to config dict
     config['logname'] = name.replace('_','')
 
