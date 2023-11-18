@@ -215,7 +215,7 @@ def main(argv):
     statusmsg={}
     extlist=[]
     extdict={}
-    mpath = "/Users/leon/GeoSphereCloud/Daten/WBV"
+    mpath = ''
     begin = datetime(2023, 1, 1)
     end = datetime.utcnow()
     debug = False
@@ -280,7 +280,7 @@ def main(argv):
         print ("Read and check validity of configuration data")
         print (" and activate logging scheme as selected in config")
     config = GetConf(configpath)
-    config = DefineLogger(config=config, category = "Info", job=os.path.basename(__file__), newname='mm-info-status.log', debug=debug)
+    config = DefineLogger(config=config, category = "Import", job=os.path.basename(__file__), newname='mm-wbvimport-status.log', debug=debug)
     if debug:
         print (" -> Done")
 
@@ -296,6 +296,8 @@ def main(argv):
 
     if not destination:
         destination = config.get("gammadatadestination")
+        if isinstance(destination, list):
+             destination = ",".join(destination)
     if not destination:
         extlist = ["CDF"]
     else:
@@ -321,6 +323,9 @@ def main(argv):
                 extdict[el] = config.get("gammaresults")
             if el == "DB":
                 extdict[el] = config.get("dbcredentials")
+
+    if debug:
+        print ("Source: {}, Destination: {}".format(mpath,extdict))
 
     if debug:
         print ("Reading all existing CSV data...")

@@ -19,15 +19,15 @@ magnetism\_checkadj.py        | DataProducts    | daily | CONF/wic.cfg   |  MART
 baseline\_generator.py        | DataProducts    | to daily | gam.cfg/swz.cfg |  MARTAS telegram  |                | py2 and py3
 convert\_data.py              | DataProducts    | hourly | wic.cfg        |  MARTAS telegram  |                | py2 and py3
 tg\_pha.py                    | Info            | analysis_20min |                |  MARTAS telegram  |                | 
-tg\_kval.py                   | Info            | analysis_5min |                |  MARTAS telegram  |                | 
+tg\_kval.py                   | Info            | 5min |                |  MARTAS telegram  |                | 
 tg\_quake.py                  | Info            | analysis_20min |                |  MARTAS telegram  |                | 
-tg\_base.py                   | Info            | analysis_weekly | CONF/wic.cfg   |  MARTAS telegram  |                | py3 
-logfiledate.py                | Info            | analysis_weekly | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
+tg\_base.py                   | Info            | weekly | CONF/wic.cfg   |  MARTAS telegram  |                | py3 
+logfiledate.py                | Info            | weekly | CONF/wic.cfg   |  MARTAS telegram  |                | py2 ... py3
 quakes\_import.py             | DataImport      |      | CONF/wic.cfg   |  MARTAS telegram  |                | py3
 dscovr\_download\_broker.py   | DataImport      |      | -              |  Logfile monitor  |                | running on broker
 gfzkp\_download\_broker.py    | DataImport      |      | -              |  Logfile monitor  |                | running on broker
 ace\_conversion.py            | DataImport      |      |                |  MARTAS telegram  |                | 
-wbvimport.py            | DataImport      |      |                |  MARTAS telegram  |                | 
+wbvimport.py            | DataImport      |      |                |  MARTAS telegram  | pandas, xlrd               | py3
 mag\_graph.py                 | TitleGraphs     | analysis_20min |                |  MARTAS telegram  |                | 
 weather\_graph.py             | TitleGraphs     | analysis_20min |                |  MARTAS telegram  |                | 
 general\_graph.py             | PeriodicGraphs  | analysis_hourly |                |  MARTAS telegram  |                | py2 and py3
@@ -430,15 +430,28 @@ APPLICATION
 
 ### 7.4 wbvimport.py
 
-Please note: This script requires the following python packages
-pandas
+Please note: This script makes use of a configuration file in ~/CONF
+It can be run however also in standalone mode by providing all necessary options.
+If options are provided together with cfg data, options will override configuration
+data.
 
 DESCRIPTION
-    Import raw data from csv and excel files provided for warmbad villach measurements
+    Import raw data from csv and excel files provided for warmbad villach measurements.
+    Imported data will be written to provided databases and/or as files within the selected
+    directory. A subdirectory consitisting of DataID/data.cdf will be established. If file
+    output is selected a MagPy PYCDF structure will be established. 
+    
 PREREQUISITES
-   The following packegas are required:
-      geomagpy >= 0.9.8
+   The following packages are required:
       pandas
+      xlrd
+      geomagpy >= 1.1.6
+      martas.martaslog
+      martas.acquisitionsupport
+      analysismethods
+APPLICATION
+      python3 wbvimport.py -h
+      python3 wbvimport.py -c /home/cobs/CONF/wbv.cfg -b 2023-04-01 -D
 COMMENTS
    The script joins excel and csv data (exl is only used if no csv data is present)
    Corrections i.e. in 2017 are hardcoded and need to be cited in the database
