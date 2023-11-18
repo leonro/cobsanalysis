@@ -120,7 +120,59 @@ def read_xls_since(mpath="/home/leon/GeoSphereCloud/Daten/WBV",fn = "Freibad*.xl
     fulldf.sort_values(by='Time', inplace=True)
     return fulldf.drop_duplicates()
 
-def pd2datastream(dataframe,sensorid="radonwbv_9500_0001", columns=[], units=[], dateformat=None):
+def read_xlsrow_since(mpath="/home/leon/GeoSphereCloud/Daten/WBV",fn = "Freibad*.xls", dt = datetime(1900,1,1),debug=False):
+    """
+    Description:
+    reads excel files with data organized in rows instead of columns
+    """
+    tf = "ctime"
+    paths = walk_dir(mpath,fn, dt,tf)
+    fulldf = pd.DataFrame()
+    for path in paths:
+        if debug:
+            print (path)
+        try:
+            df = pd.read_excel(path)
+            succ = True
+        except:
+            succ = False
+        if succ:
+            ll = df.values.tolist()
+            #print (ll)
+            til,ral,tel,ntil =[],[],[],[]
+            if len(ll)>0:
+                for l in ll:
+                    colname = str(l[0])
+                    #print (colname)
+                    if colname.find("Anzeige") >= 0:
+                        sp=colname.split()
+                        dt = None
+                        for el in sp:
+                            try:
+                                dt = dparser.parse(el,fuzzy=True)
+                            except:
+                                pass
+                        year = dt.year
+                        month = dt.month
+                    if colname.find("Temperatur") >= 0:
+                        tel = l[1:]
+                    if (colname.find("Radon") >= 0 or colname.find("RADON") >= 0) and len(til) > 0:
+                        #after time row
+                        ral = l[1:]
+                    if colname.find("TT.MM") >= 0:
+                        til = l[1:]
+                        ntil = [datetime.strftime(datetime(year,month,int(el.split(".")[0]),int(el.split()[1])),"%d.%m.%Y %H") for el in til]
+            if not tel:
+                tel = [np.nan] * len(ral)
+            if ntil:
+                if debug:
+                    print ("Adding", len(ntil))
+                df = pd.DataFrame(list(zip(ntil, ral, tel)), columns =['Time', 'Count', 'Temp'])
+                fulldf = pd.concat([fulldf,df])
+    fulldf.sort_values(by='Time', inplace=True)
+    return fulldf.drop_duplicates()
+
+def pd2datastream(dataframe,sensorid="RADONWBV_9500_0001", columns=[], units=[], dateformat=None):
     array = dataframe.to_numpy()
     if not columns:
         columns = list(dataframe.columns)
@@ -352,14 +404,25 @@ def main(argv):
     stream = joinStreams(tmpstream, stream)
 
     if debug:
-        print ("Reading all existing XLS data...")
+        print ("Reading all existing XLS data organized in columns...")
     xlsdf = read_xls_since(mpath=mpath, fn="Freibad*.xls", dt=begin)
     xstream = pd2datastream(xlsdf, columns=['', 'Count', 'Temp'], units=['', '', 'deg C'], dateformat="%d.%m.%Y %H")
     xstream = xstream.sorting()
     if debug:
         print ("    XLS - obtained {} datapoints".format(xstream.length()[0]))
 
-    nstream = joinStreams(xstream, stream)
+    mstream = joinStreams(xstream, stream)
+
+    if debug:
+        print ("Reading all existing XLS data organized in rows...")
+    xlsrdf = read_xlsrow_since(mpath=mpath, fn="[hH]*.xls", dt=begin)
+    xrstream = pd2datastream(xlsrdf, columns=['', 'Count', 'Temp'], units=['', '', 'deg C'], dateformat="%d.%m.%Y %H")
+    xrstream = xrstream.sorting()
+    if debug:
+        print ("    XLS - obtained {} datapoints".format(xrstream.length()[0]))
+
+    nstream = joinStreams(xrstream, mstream)
+
     nstream.header["SensorID"] = "RADONWBV_9500_0001"
     nstream.header["StationID"] = "WBV"
     nstream.header["DataID"] = "RADONWBV_9500_0001_0001"
