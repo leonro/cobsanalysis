@@ -459,6 +459,7 @@ COMMENTS
 
 ## 8. CRONTAB on ANALYSIS
 
+'''
 # prevent cron mails and overflow
 MAILTO=""
 # other commands
@@ -554,5 +555,5 @@ LOGPATH=/var/log/magpy
 # YEARLY ANALYSIS JOBS
 # ------------------------------
 #30  2  1  2  *    $PYTHON /home/cobs/ANALYSIS/DataProducts/flagging.py -c /home/cobs/CONF/wic.cfg -j archive > $LOGPATH/cron-db-flagarchive 2>&1
-
+'''
 

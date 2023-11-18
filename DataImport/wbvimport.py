@@ -189,7 +189,7 @@ def export_data(datastream, config={}, exportdict={}, publevel=1, debug=False):
                 print (" DEBUG: Would write to ", exportdict.get(extyp))
                 print (datastream.header.get("DataID"))
             else:
-                datastream.write(os.path.join(exportdict.get(extyp),datastream.header.get("SensorID")),filenamebegins=datastream.header.get("DataID")+"_",format_type='PYCDF')
+                datastream.write(os.path.join(exportdict.get(extyp),datastream.header.get("DataID")),filenamebegins=datastream.header.get("DataID")+"_",format_type='PYCDF',coverage='month')
             print ("       -> Done")
         if extyp == 'DB':
             print("     -- Saving data to Database")
@@ -197,10 +197,10 @@ def export_data(datastream, config={}, exportdict={}, publevel=1, debug=False):
                 # save
                 for dbel in connectdict:
                     if debug:
-                        print (" DEBUG: Would write to {} in table {}".format(dbel,datastream.header("DataID")))
+                        print (" DEBUG: Would write to {} in table {}".format(dbel,datastream.header.get("DataID")))
                     else:
                         db = connectdict[dbel]
-                        print ("     -- Writing {} data to DB {}".format(pubtype,dbel))
+                        print ("     -- Writing {} data to DB {}".format(datastream.header.get("DataID"),dbel))
                         writeDB(db,datastream,tablename=datastream.header.get("DataID"))
                 print ("       -> Done")
             else:
@@ -365,6 +365,7 @@ def main(argv):
     nstream.header["DataID"] = "RADONWBV_9500_0001_0001"
     if debug:
         print (" -> Done - obtained {} unique datapoints in total".format(nstream.length()[0]))
+        statusmsg['WBV amount'] = '{} data points'.format(nstream.length()[0])
 
     # 3. database:
     # ###########################
@@ -372,18 +373,18 @@ def main(argv):
         print ("Connect to databases")
     try:
         config = ConnectDatabases(config=config, debug=debug)
-        statusmsg['destination database'] = 'database ok'
+        statusmsg['WBV destination database'] = 'database ok'
     except:
-        statusmsg['destination database'] = 'no database credentials'
+        statusmsg['WBV destination database'] = 'no database credentials'
 
     if debug:
         print("Writing data to selected output channel ...")
 
     try:
         succ = export_data(nstream, config=config, exportdict=extdict, publevel=1, debug=debug)
-        statusmsg['exporting data'] = 'export fine'
+        statusmsg['WBV export'] = 'export fine'
     except:
-        statusmsg['exporting data'] = 'export failed'
+        statusmsg['WBV export'] = 'export failed'
 
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
