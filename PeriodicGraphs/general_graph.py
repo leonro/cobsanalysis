@@ -608,6 +608,11 @@ def main(argv):
                         print ("       -> eventually adding QUAKES to column {}".format(quakekey))
                         fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, debug=debug)
                         flaglist = combinelists(flaglist,fl)
+                    if 'quakenew' in flagtreatment:
+                        quakekey = sensdict.get('quakekey',keys[0])
+                        print ("       -> eventually adding QUAKES to column {}".format(quakekey))
+                        fl = quakes2flags_new(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, a=2.4, c=-0.43, debug=debug)
+                        flaglist = combinelists(flaglist,fl)
                     if 'coil' in flagtreatment:
                         print ("       -> eventually adding COIL data to column xxx")
                         pass

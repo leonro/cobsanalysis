@@ -483,8 +483,8 @@ def Quakes2Flags(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=Non
     DESCRIPTION
         Creates a flaglist from earthquakes using a distance/strength selector.
     PARAMETER
-        sensorid : provide the sensorid to be used in the flagging output 
-        keys     : provide the keys to be used in the flagging output 
+        sensorid : provide the sensorid to be used in the flagging output
+        keys     : provide the keys to be used in the flagging output
         distancedict : extract all earthquakes below magitude and above secondmag at distances below x km
         e.g.   {"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] }
 
@@ -501,7 +501,7 @@ def Quakes2Flags(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=Non
     if debug:
         print ("    -> found {} records".format(stream.length()[0]))
 
-    #distancedict = {"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] } #, "near" : [3,1,50] 
+    #distancedict = {"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] } #, "near" : [3,1,50]
 
     def ExtractValues(stream, distancelist, debug=False):
         if debug:
@@ -569,3 +569,37 @@ def distancefilter(stream,distancecolumn,magnitudecolumn,func,a=2.0,c=-0.43,debu
         print ("Remaining Quakes", res.length()[0])
     return res
 
+def quakes2flags_new(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=None, keylist=[], a=2.0, c=-0.43, debug=False):
+    """
+    DESCRIPTION
+        Creates a flaglist from earthquakes using a distance/strength selector.
+    PARAMETER
+        sensorid : provide the sensorid to be used in the flagging output
+        keys     : provide the keys to be used in the flagging output
+        distancedict : extract all earthquakes below magitude and above secondmag at distances below x km
+        e.g.   {"global" : [12,7,40000], "strong": [7,6,6000], "moderate": [6,4.5,3000], "significant" : [4.5, 3.0, 500] }
+
+    """
+
+    flaglist = []
+
+    print ("  - extracting quakes and construct flaglist")
+    db = config.get('primaryDB')
+
+    if debug:
+        print ("  - reading QUAKES table from database for selected time range between {} and {}".format(endtime-timedelta(days=timerange),endtime))
+    stream = readDB(db,'QUAKES',starttime=endtime-timedelta(days=timerange), endtime=endtime)
+    if debug:
+        print ("    -> found {} records".format(stream.length()[0]))
+
+    st = distancefilter(quakes,"var5","f",magn,a=a,c=c)
+
+    if st.length()[0] > 0:
+        if debug:
+            print ("  - creating flaglist from the quakelist")
+        flaglist = st.stream2flaglist(comment='f,str3',sensorid=sensorid, userange=False, keystoflag=keylist)
+        print ("  - new flaglist with {} inputs created  - finished".format(len(flaglist)))
+        return flaglist
+    else:
+        print ("  - no quakes found - finished")
+        return flaglist
