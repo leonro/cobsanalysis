@@ -534,3 +534,38 @@ def Quakes2Flags(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=Non
         print ("  - no quakes found - finished")
         return flaglist
 
+def magn(d, a=2.4,c=-0.43):
+    # (Hauksson and Goddard, 1981, JGR)
+    return a*np.log10(d) + c
+
+def distancefilter(stream,distancecolumn,magnitudecolumn,func,a=2.0,c=-0.43,debug=False):
+    """
+    Application
+        fquakes = distancefilter(quakes,"var5","f",magn,a=2.4)
+        # Flagging data sets
+        fl = fquakes.stream2flaglist(comment='f,str3',sensorid=nstream.header["SensorID"], userange=False, keystoflag="x")
+    """
+    if debug:
+        print ("All data", len(stream.ndarray[0]))
+    res = stream.copy()
+    droplist = []
+    for idx, el in enumerate(stream.ndarray[0]):
+        distind = KEYLIST.index("var5")
+        magnind = KEYLIST.index("f")
+        d = stream.ndarray[distind][idx]
+        m = stream.ndarray[magnind][idx]
+        minmagn = func(d,a=a,c=c)
+        if m < minmagn:
+            droplist.append(idx)
+    if debug:
+        print ("Dropping", len(droplist))
+
+    array = [np.asarray([]) for elem in KEYLIST]
+    for index,tkey in enumerate(KEYLIST):
+        if len(stream.ndarray[index]) > 0:
+            array[index] = np.delete(stream.ndarray[index], droplist)
+    res.ndarray = np.asarray(array, dtype=object)
+    if debug:
+        print ("Remaining Quakes", res.length()[0])
+    return res
+
