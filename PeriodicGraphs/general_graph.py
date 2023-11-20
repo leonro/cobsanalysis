@@ -38,7 +38,7 @@ WORKING EXAMPLES:
         python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/tilt_plot.json -r 5 -o /srv/products/graphs/tilt/ -l mm-pp-tilt.log -D
     Supergrad plot
           python3 general_graph.py -c /home/cobs/CONF/wic.cfg -i /home/cobs/CONF/plots/supergrad_plot.json -l mm-pp-supergrad.log
-          
+
     Testing
           python3 general_graph.py -c ../conf/wic.cfg -i ../conf/supergrad_plot.json -l mm-pp-supergrad.log -D 
 
@@ -223,7 +223,7 @@ from subprocess import check_output   # used for checking whether send process a
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
-from analysismethods import DefineLogger, ConnectDatabases, Quakes2Flags, combinelists
+from analysismethods import DefineLogger, ConnectDatabases, Quakes2Flags, combinelists, quakes2flags_new
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
@@ -353,7 +353,7 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
         ofl = stream.flag_outlier(threshold=3, timerange=timedelta(seconds=180))
         print (" - obtained {} flags in db".format(len(fl)))
     if dropflagged:
-        print (" - dropping flagged data")    
+        print (" - dropping flagged data")
         stream = stream.flag(fl)
         stream = stream.remove_flagged()
 
@@ -364,7 +364,7 @@ def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist
 
     if debug:
         show=True
-        
+
     if style in ['magpy','MagPy','MAGPY']:
         # TODO Union colorlist, etc
         mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
@@ -489,7 +489,7 @@ def main(argv):
         if debug:
             print (' ... but debug selected - using dummy values')
             sensordefs = debugsensor
-            # creating a dummy sensordefs file in tmp        
+            # creating a dummy sensordefs file in tmp
             print (' ... and now creating an example in /tmp/sensordefinitions_default.json')
             WriteMemory('/tmp/sensordefinitions_default.json', sensordefs)
         else:
@@ -514,7 +514,7 @@ def main(argv):
         except:
             print ("Starttime could not be interpreted - Aborting")
             sys.exit(1)
-        
+
     # general test environment:
     if debug and sensorid == 'travis':
         print (" basic code test successful")
@@ -596,22 +596,24 @@ def main(argv):
         mergeends = sensdict.get('baseends','')
         if keys:
             print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
-            try:
+            #try:
+            ok = True
+            if ok:
                 stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, outlier=outlier, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends,mergepath=mergepath, mergebegins=mergebegins, mergeends=mergeends, columns=columns, units=units, debug=debug)
                 if stream and stream.length()[0]>1:
                     print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
                     if 'flag' in flagtreatment:
                         print ("       -> eventuallyadding existing standard flags from DB")
                         flaglist = fl
-                    if 'quake' in flagtreatment:
+                    if 'quake' in flagtreatment and not 'quakenew' in flagtreatment:
                         quakekey = sensdict.get('quakekey',keys[0])
                         print ("       -> eventually adding QUAKES to column {}".format(quakekey))
                         fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, debug=debug)
                         flaglist = combinelists(flaglist,fl)
                     if 'quakenew' in flagtreatment:
                         quakekey = sensdict.get('quakekey',keys[0])
-                        print ("       -> eventually adding QUAKES to column {}".format(quakekey))
-                        fl = quakes2flags_new(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, a=2.4, c=-0.43, debug=debug)
+                        print ("       -> eventually adding NEWQUAKES to column {}".format(quakekey))
+                        fl = quakes2flags_new(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, a=2.0, c=-0.43, debug=debug)
                         flaglist = combinelists(flaglist,fl)
                     if 'coil' in flagtreatment:
                         print ("       -> eventually adding COIL data to column xxx")
@@ -656,9 +658,9 @@ def main(argv):
                     print ("  ==> section 5.{} done".format(cnt+1))
                     #print (specialdict)
                     statusmsg[processname] = "success"
-            except:
-                print (" -- severe error in data treatment")
-                pass
+            #except:
+            #    print (" -- severe error in data treatment")
+            #    pass
         else:
             print ("  -- no keys defined - skipping this sensor")
             pass

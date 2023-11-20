@@ -588,9 +588,9 @@ def quakes2flags_new(config={}, endtime=datetime.utcnow(), timerange=5, sensorid
 
     if debug:
         print ("  - reading QUAKES table from database for selected time range between {} and {}".format(endtime-timedelta(days=timerange),endtime))
-    stream = readDB(db,'QUAKES',starttime=endtime-timedelta(days=timerange), endtime=endtime)
+    quakes = readDB(db,'QUAKES',starttime=endtime-timedelta(days=timerange), endtime=endtime)
     if debug:
-        print ("    -> found {} records".format(stream.length()[0]))
+        print ("    -> found {} records".format(quakes.length()[0]))
 
     st = distancefilter(quakes,"var5","f",magn,a=a,c=c)
 
