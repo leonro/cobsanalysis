@@ -236,7 +236,8 @@ debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'],
                             'source' : '/home/leon/Cloud/Daten/',
                             'filenamebegins' : 'LEMI036_1_0002_0002',
                             'savenameattribute' : 'date',
-                            'color' : ['k','r','k'], 
+                            'color' : ['k','r','k'],
+                            'bgcolor' : 'white',
                             'flags' : 'flag,quake',
                             'fill' : ['y'],
                             'quakekey' : 'z',
@@ -363,14 +364,14 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
     return stream, fl
 
 
-def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist=None, annotatelist=None, symbollist=[], specialdict=None, gridcolor='#316931', confinex=True, fullday=True, opacity=0.7, bartrange=0.06, style='magpy',show=False,fullplotpath='',debug=False):
+def CreateDiagram(streamlist,keylist, filllist=None, colorlist=None, paddinglist=None, annotatelist=None, symbollist=[], specialdict=None, gridcolor='#316931', bgcolor='white', confinex=True, fullday=True, opacity=0.7, bartrange=0.06, style='magpy',show=False,fullplotpath='',debug=False):
 
     if debug:
         show=True
 
     if style in ['magpy','MagPy','MAGPY']:
         # TODO Union colorlist, etc
-        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
+        mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, bgcolor=bgcolor, confinex=confinex, fullday=fullday, opacity=opacity, noshow=True)
     else:
         print (" -> unkown plot style ... doing nothing")
         return False
@@ -412,6 +413,7 @@ def main(argv):
     show = False
     confinex = False
     gridcolor = '#316931'
+    bgcolor = 'white'
 
     dropflagged = False
     sensorid='LM_TILT01_0001'
@@ -555,6 +557,7 @@ def main(argv):
     if senspar.get('confinex','False') in ['True','true','TRUE',True]:
         confinex = True
     gridcolor = senspar.get('gridcolor','#316931')
+    bgcolor = senspar.get('bgcolor','white')
     bartrange = float(senspar.get('bartrange',0.06))
     print ("    Fullday: {}, Opacity: {}, Show: {}, Confinex: {}, Gridcolor: {}".format(fullday,opacity, show,confinex,gridcolor))
 
@@ -684,7 +687,7 @@ def main(argv):
              fullplotpath = outpath
         else:
              fullplotpath = ''
-        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, confinex=confinex, opacity=opacity, fullday=fullday, bartrange=bartrange, show=show, fullplotpath=fullplotpath, debug=debug)
+        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, bgcolor=bgcolor, confinex=confinex, opacity=opacity, fullday=fullday, bartrange=bartrange, show=show, fullplotpath=fullplotpath, debug=debug)
 
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
