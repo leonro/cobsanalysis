@@ -68,6 +68,8 @@ EXAMPLE configuration file:
         "specialdict": {
             "var1" : [0,9]
             },
+        # possible name attributes are "date" - will be replaced by date or any string like "latest"
+        "savenameattribute": "date",
         "columns": [
             "Kp"
        ],
@@ -233,6 +235,7 @@ debugsensor = { 'LEMI036_1_0002_0002' : { 'keys' : ['x','y','z'],
                             'plotstyle' : 'line',
                             'source' : '/home/leon/Cloud/Daten/',
                             'filenamebegins' : 'LEMI036_1_0002_0002',
+                            'savenameattribute' : 'date',
                             'color' : ['k','r','k'], 
                             'flags' : 'flag,quake',
                             'fill' : ['y'],
@@ -594,6 +597,7 @@ def main(argv):
         mergepath = sensdict.get('basesource','')
         mergebegins = sensdict.get('basebegins','')
         mergeends = sensdict.get('baseends','')
+        savenameattribute = sensdict.get('savenameattribute','date')
         if keys:
             print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
             #try:
@@ -669,9 +673,13 @@ def main(argv):
         #mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7)
         print ("6. Creating plot")
         if os.path.isdir(outpath):
-             # creating file name from sensorsdef input file
-             fullplotpath = os.path.join(outpath,"{}_{}.png".format(plotname,datetime.strftime(endtime,"%Y-%m-%d")))
-             print (" -> Saving graph to {}".format(fullplotpath))
+            if savenameattribute in ['date','DATE','Date']:
+                # creating file name from sensorsdef input file
+                fullplotpath = os.path.join(outpath,"{}_{}.png".format(plotname,datetime.strftime(endtime,"%Y-%m-%d")))
+            else:
+                fullplotpath = os.path.join(outpath,
+                                            "{}_{}.png".format(plotname, savenameattribute))
+            print (" -> Saving graph to {}".format(fullplotpath))
         elif os.path.isfile(outpath):
              fullplotpath = outpath
         else:
