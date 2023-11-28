@@ -7,7 +7,7 @@ import magpy.opt.cred as mpcred
 import socket
 
 
-print ("Importing anaylsis methods")
+print ("Importing analysis methods")
 
 def DefineLogger(config={}, category="DataProducts", job='anaylsismethods', newname='', debug=False):
     host = socket.gethostname()
@@ -75,6 +75,41 @@ def writecurrentdata(path,dic):
     with open(currentvaluepath, 'w',encoding="utf-8") as file:
         file.write(unicode(json.dumps(dic)))
 
+
+
+def WriteMemory(memorypath, memdict):
+        """
+        DESCRIPTION
+             write memory
+        """
+        try:
+            with open(memorypath, 'w', encoding='utf-8') as f:
+                json.dump(memdict, f, ensure_ascii=False, indent=4)
+        except:
+            return False
+        return True
+
+
+#WriteMemory("/home/cobs/ANALYSIS/PeriodicGraphs/mytest_plot.json", test)
+
+
+def ReadMemory(memorypath,debug=False):
+        """
+        DESCRIPTION
+             read memory
+        -> Same function as used for imbot (imbotcore)
+        """
+        memdict = {}
+        if os.path.isfile(memorypath):
+            if debug:
+                print ("Reading memory: {}".format(memorypath))
+            with open(memorypath, 'r') as file:
+                memdict = json.load(file)
+        else:
+            print ("Memory path not found - please check (first run?)")
+        if debug:
+            print ("Found in Memory: {}".format([el for el in memdict]))
+        return memdict
 
 def load_current_data_sub(currentvaluepath, group):
     """
