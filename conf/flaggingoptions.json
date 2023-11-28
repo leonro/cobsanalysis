@@ -1,0 +1,82 @@
+{
+    "LEMI036" : {
+        "timerange": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 6,
+        "markall" : "True"
+    },
+    "LEMI025" : {
+        "timerange": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 6,
+        "markall" : "True"
+    },
+    "FGE" : {
+        "timerange": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 5,
+        "markall" : "True"
+    },
+    "GSM90_14245" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5
+    },
+    "GSM90_6" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5,
+        "window: : 300
+    },
+    "GSM90_3" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5,
+        "window: : 300
+    },
+    "GP20S3NSS" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5,
+        "lowerlimit" : 45000,
+        "upperlimit" : 51000
+    },
+    "POS1" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 4,
+        "window: : 100
+    },
+    "BM35" : {
+        "timerange": 7200,
+        "keys": [
+            "var3"
+        ],
+        "threshold": 5,
+        "window: : 300,
+        "lowerlimit" : 750,
+        "upperlimit" : 1000
+    }
+}

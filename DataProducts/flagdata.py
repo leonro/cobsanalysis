@@ -50,6 +50,107 @@ APPLICATION
     DELETE data all flags for key "f":
         python flagging.py -c /etc/marcos/analysis.cfg -j delete -s MYSENSORID -o "f"
 
+FLAGGING STRUCTURE:
+flagdict =
+{
+    "LEMI036" : {
+        "timerange": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 6,
+        "markall" : "True"
+    },
+    "LEMI025" : {
+        "timerange": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 6,
+        "markall" : "True"
+    },
+    "FGE" : {
+        "timerange": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 5,
+        "markall" : "True"
+    },
+    "GSM90_14245" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5
+    },
+    "GSM90_6" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5,
+        "window: : 300
+    },
+    "GSM90_3" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5,
+        "window: : 300
+    },
+    "GP20S3NSS" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 5,
+        "lowerlimit" : 45000,
+        "upperlimit" : 51000
+    },
+    "POS1" : {
+        "timerange": 7200,
+        "keys": [
+            "f"
+        ],
+        "threshold": 4,
+        "window: : 100
+    },
+    "BM35" : {
+        "timerange": 7200,
+        "keys": [
+            "var3"
+        ],
+        "threshold": 5,
+        "window: : 300,
+        "lowerlimit" : 750,
+        "upperlimit" : 1000
+    }
+}
+
+{
+    # Sensors"
+    "SENSORNAME_OR_PART": {
+        "timerange": 7200, # data window in seconds from now into the past
+        "keys": [          # if empty, than all available keys are selected
+            "x",
+            "y",
+            "z"
+        ],
+        "threshold": 6,
+        "window: : 300,
+        "markall" : "True",
+        "lowerlimit" : "None",
+        "upperlimit" : "None"
+    }
+}
 """
 
 from magpy.stream import *
@@ -71,57 +172,18 @@ import sys  # for sys.version_info()
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
 sys.path.insert(0, anacoredir)
-from analysismethods import DefineLogger, ConnectDatabases, getstringdate, combinelists
+from analysismethods import DefineLogger, ConnectDatabases, getstringdate, combinelists, ReadMemory
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
 
-
-
-def WriteMemory(memorypath, memdict):
-        """
-        DESCRIPTION
-             write memory
-        """
-        try:
-            with open(memorypath, 'w', encoding='utf-8') as f:
-                json.dump(memdict, f, ensure_ascii=False, indent=4)
-        except:
-            return False
-        return True
-
-
-#WriteMemory("/home/cobs/ANALYSIS/PeriodicGraphs/mytest_plot.json", test)
-
-
-def ReadMemory(memorypath,debug=False):
-        """
-        DESCRIPTION
-             read memory
-        -> Same function as used for imbot (imbotcore)
-        """
-        memdict = {}
-        if os.path.isfile(memorypath):
-            if debug:
-                print ("Reading memory: {}".format(memorypath))
-            with open(memorypath, 'r') as file:
-                memdict = json.load(file)
-        else:
-            print ("Memory path not found - please check (first run?)")
-        if debug:
-            print ("Found in Memory: {}".format([el for el in memdict]))
-        return memdict
-
-
-# ################################################
-#            Flagging dictionary
-# ################################################
-
 def main(argv):
-    version = '1.0.0'
+    version = '1.1.0'
     configpath = ''
+    flagoptions = ""
     statusmsg = {}
     debug=False
     endtime = datetime.utcnow()
+    begin = endtime - timedelta(seconds=7200)
     joblist = []
     varioinst = ''
     scalainst = ''
@@ -135,7 +197,7 @@ def main(argv):
 
     # each input looks like:
     # { SensorNamePart : [timerange, keys, threshold, window, markall, lowlimit, highlimit]
-    flagdict = {'LEMI036':[7200,'x,y,z',6,'Default',True,'None','None'],
+    flagdict_fallback = {'LEMI036':[7200,'x,y,z',6,'Default',True,'None','None'],
             'LEMI025':[7200,'x,y,z',6,'Default',True,'None','None'],
             'FGE':[7200,'x,y,z',5,'Default',True,'None','None'],
             'GSM90_14245':[7200,'f',5,'default',False,'None','None'],
@@ -147,7 +209,7 @@ def main(argv):
 
 
     try:
-        opts, args = getopt.getopt(argv,"hc:e:j:p:s:o:D",["config=","endtime=","joblist=","path=","sensor=","comment=","debug="])
+        opts, args = getopt.getopt(argv,"hc:b:e:j:p:s:o:D",["config=","flaggingoptions=","begin=","endtime=","joblist=","path=","sensor=","comment=","debug="])
     except getopt.GetoptError:
         print ('flagging.py -c <config>')
         sys.exit(2)
@@ -166,6 +228,7 @@ def main(argv):
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
+            print ('-f            : flagging options (json) - can be provided with config')
             print ('-e            : endtime, default is now')
             print ('-j            : joblist: flag,clean,archive,update,delete; default is flag,clean')
             print ('-p            : update - path to json files which end with flags.json')
@@ -184,6 +247,12 @@ def main(argv):
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
             configpath = os.path.abspath(arg)
+        elif opt in ("-f", "--flaggingoptions"):
+            # get an endtime
+            flagoptions = os.path.abspath(arg)
+        elif opt in ("-b", "--begin"):
+            # get an endtime
+            endtime = arg.split(',')
         elif opt in ("-e", "--endtime"):
             # get an endtime
             endtime = arg.split(',')
@@ -205,36 +274,61 @@ def main(argv):
     print ("Running flagging version {}".format(version))
     print ("--------------------------------")
 
+    if debug:
+        print ("1. checking validity of input parameter and preparations")
     if not os.path.exists(configpath):
         print ('Specify a valid path to configuration information')
         print ('-- check magnetism_products.py -h for more options and requirements')
         sys.exit()
 
-    print ("1. Read and check validity of configuration data")
-    config = GetConf(configpath)
+    if debug:
+        print ("1a) Read and check validity of configuration data")
+        config = GetConf(configpath)
 
-    print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-flagging.log', debug=debug)
-
+    if debug:
+        print ("1b) Activate logging scheme as selected in config and asign status names")
+    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-dp-flagdata.log', debug=debug)
     name1 = "{}-flag".format(config.get('logname'))
     name2 = "{}-flag-lemitest".format(config.get('logname'))
     name3 = "{}-cleaning".format(config.get('logname'))
     name4 = "{}-archive".format(config.get('logname'))
     name5 = "{}-upload".format(config.get('logname'))
+
+    if debug:
+        print ("1c) getting flagging options as defined in config or by option")
+    flagoptionspath = config.get('flaggingoptions',"")
+    if os.path.exists(flagoptions):
+        flagoptionspath = flagoptions
+
+    if flagoptionspath:
+        if debug:
+            print ("    -> using flagging options from {}".format(flagoptionspath))
+        flagdict = ReadMemory(flagoptionspath, debug=debug)
+    else:
+        if debug:
+            print ("    -> could not detect valid flagging options")
+        flagdict = flagdict_fallback
+
+    if debug:
+        print ("1d) getting archive and save file paths")
+    flagfilearchivepath = config.get('flagarchive','')
+    if debug:
+        print ("    -> using archive path for flags: {}".format(flagfilearchivepath))
+    if not os.path.isdir(flagfilearchivepath):
+        flagfilearchivepath = ''
+    if not os.path.isdir(flagfilepath):
+        flagfilepath = ''
+
+    if debug:
+        print ("1e) initializing status messages")
     statusmsg[name1] = 'flagging data sets successful'
     statusmsg[name2] = 'Lemitest not performed'
     statusmsg[name3] = 'Cleanup: cleaning database successful'
     statusmsg[name4] = 'Archive: not time for archiving'
     statusmsg[name5] = 'Upload: nothing to do'
 
-    flagfilearchivepath = config.get('flagarchive','')
-    print (flagfilearchivepath)
-    if not os.path.isdir(flagfilearchivepath):
-        flagfilearchivepath = ''
-    if not os.path.isdir(flagfilepath):
-        flagfilepath = ''
-
-    print ("3. Connect databases and select first available")
+    if debug:
+        print ("1f) Connecting databases and select first available")
     try:
         config = ConnectDatabases(config=config, debug=debug)
         db = config.get('primaryDB')
@@ -242,8 +336,13 @@ def main(argv):
     except:
         statusmsg[name1] = 'database failed'
 
+    if debug:
+        print ("2. Running joblist ...")
+
+    sys.exit()
+
     if 'flag' in joblist:
-      print ("4. Dealing with flagging dictionary")
+      print ("2 - flag: Dealing with flagging dictionary")
       try:
         #ok = True
         #if ok:
@@ -351,7 +450,7 @@ def main(argv):
                            print ("MARK all: ",  markall)
                        flagls = lastdata.flag_outlier(keys=keys,threshold=threshold,timerange=window,returnflaglist=True,markall=markall)
                        # now check flaglist---- if more than 20 consecutive flags... then drop them
-                       flaglist = consecutive_check(flagls, remove=True)
+                       flaglist = fl.union(flagls, remove=True)
                        #if len(flagls) > len(flaglist)+1 and sensor.startswith("LEMI036_1"):   #+1 to add some room
                        #    statusmsg[name2] = 'Step1: removed consecutive flags for {}: Found {}, Clean: {}'.format(sensor, len(flagls), len(flaglist))
                        print ("  - new outlier flags: {}; after combination: {}".format(len(flagls),len(flaglist)))
@@ -437,7 +536,7 @@ def main(argv):
                     flaglist = DataStream().flaglistclean(fileflaglist)
                     print (" - {} flags remaining after cleaning. Delete {} replicates".format( len(flaglist),len(fileflaglist)-len(flaglist) ))
                     print (" - Combining consecutives")
-                    flaglist = consecutive_check(flaglist)
+                    flaglist = fl.union(flaglist)
                     print (" - {} flags remaining after joining consecutives.".format(len(flaglist)))
                     # copy file to ...json.uploaded
                     date = datetime.strftime(datetime.utcnow(), "%Y%m%d%H%M")
@@ -523,9 +622,8 @@ def main(argv):
                     clflaglist_tmp = stream.flaglistclean(flaglist_tmp,progress=True)
                     print ("   -> {} flags remaining".format(len(clflaglist_tmp)))
                     if len(clflaglist_tmp) < consecutivethreshold:
-                        # TODO this method leads to a killed process sometimes...
                         print ("  - Combining consecutives")
-                        coflaglist_tmp = consecutive_check(clflaglist_tmp) #debug=debug)
+                        coflaglist_tmp = fl.union(clflaglist_tmp) #debug=debug)
                     else:
                         coflaglist_tmp = clflaglist_tmp
                     print ("   -> {} flags remaining".format(len(coflaglist_tmp)))
