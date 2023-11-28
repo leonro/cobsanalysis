@@ -42,7 +42,7 @@
             "f"
         ],
         "threshold": 5,
-        "window: : 300
+        "window" : 300
     },
     "GSM90_3" : {
         "timerange": 7200,
@@ -50,7 +50,7 @@
             "f"
         ],
         "threshold": 5,
-        "window: : 300
+        "window" : 300
     },
     "GP20S3NSS" : {
         "timerange": 7200,
@@ -67,7 +67,7 @@
             "f"
         ],
         "threshold": 4,
-        "window: : 100
+        "window" : 100
     },
     "BM35" : {
         "timerange": 7200,
@@ -75,7 +75,7 @@
             "var3"
         ],
         "threshold": 5,
-        "window: : 300,
+        "window" : 300,
         "lowerlimit" : 750,
         "upperlimit" : 1000
     }

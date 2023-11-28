@@ -51,90 +51,6 @@ APPLICATION
         python flagging.py -c /etc/marcos/analysis.cfg -j delete -s MYSENSORID -o "f"
 
 FLAGGING STRUCTURE:
-flagdict =
-{
-    "LEMI036" : {
-        "timerange": 7200,
-        "keys": [
-            "x",
-            "y",
-            "z"
-        ],
-        "threshold": 6,
-        "markall" : "True"
-    },
-    "LEMI025" : {
-        "timerange": 7200,
-        "keys": [
-            "x",
-            "y",
-            "z"
-        ],
-        "threshold": 6,
-        "markall" : "True"
-    },
-    "FGE" : {
-        "timerange": 7200,
-        "keys": [
-            "x",
-            "y",
-            "z"
-        ],
-        "threshold": 5,
-        "markall" : "True"
-    },
-    "GSM90_14245" : {
-        "timerange": 7200,
-        "keys": [
-            "f"
-        ],
-        "threshold": 5
-    },
-    "GSM90_6" : {
-        "timerange": 7200,
-        "keys": [
-            "f"
-        ],
-        "threshold": 5,
-        "window: : 300
-    },
-    "GSM90_3" : {
-        "timerange": 7200,
-        "keys": [
-            "f"
-        ],
-        "threshold": 5,
-        "window: : 300
-    },
-    "GP20S3NSS" : {
-        "timerange": 7200,
-        "keys": [
-            "f"
-        ],
-        "threshold": 5,
-        "lowerlimit" : 45000,
-        "upperlimit" : 51000
-    },
-    "POS1" : {
-        "timerange": 7200,
-        "keys": [
-            "f"
-        ],
-        "threshold": 4,
-        "window: : 100
-    },
-    "BM35" : {
-        "timerange": 7200,
-        "keys": [
-            "var3"
-        ],
-        "threshold": 5,
-        "window: : 300,
-        "lowerlimit" : 750,
-        "upperlimit" : 1000
-    }
-}
-
 {
     # Sensors"
     "SENSORNAME_OR_PART": {
@@ -145,7 +61,7 @@ flagdict =
             "z"
         ],
         "threshold": 6,
-        "window: : 300,
+        "window" : 300,
         "markall" : "True",
         "lowerlimit" : "None",
         "upperlimit" : "None"
@@ -156,16 +72,10 @@ flagdict =
 from magpy.stream import *
 from magpy.database import *
 from magpy.transfer import *
-import magpy.mpplot as mp
-import magpy.opt.emd as emd
-import magpy.opt.cred as mpcred
 import magpy.core.flagging as fl   # consecutive method
 
 from shutil import copyfile
-import itertools
 import getopt
-import pwd
-import socket
 import sys  # for sys.version_info()
 
 
@@ -175,6 +85,192 @@ sys.path.insert(0, anacoredir)
 from analysismethods import DefineLogger, ConnectDatabases, getstringdate, combinelists, ReadMemory
 from martas import martaslog as ml
 from acquisitionsupport import GetConf2 as GetConf
+
+def get_flagging_options(elem, begin, endtime, debug=False):
+    timerange = elem.get("timerange", 7200)
+    keys = elem.get("keys", ["all"])
+    if keys in [['all'], ['All']]:
+        keys = None
+    threshold = elem.get("threshold", None)
+    if threshold in ['Default', 'default', 'None', 'none', '', None]:
+        threshold = None
+    window = None
+    windowlen = elem.get("window", None)
+    if windowlen in ['Default', 'default', 'None', 'none', '', None]:
+        windowlen = None
+    if windowlen:
+        window = timedelta(seconds=windowlen)
+    markall = elem.get("markall", False)
+    if markall in ["True", "true", "TRUE"]:
+        markall = True
+    else:
+        markall = False
+    lowlimit = elem.get("lowerlimit", None)
+    if lowlimit in ['Default', 'default', 'None', 'none', '', None]:
+        lowlimit = None
+    highlimit = elem.get("upperlimit", None)
+    if highlimit in ['Default', 'default', 'None', 'none', '', None]:
+        highlimit = None
+    if not begin:
+        starttime = endtime - timedelta(seconds=timerange)
+    else:
+        timerange = (endtime - begin).total_seconds()
+        starttime = begin
+    if debug:
+        print(
+            "   Using the following parameters: keys={},threshold={},window={},limits={}".format(keys, threshold, window,
+                                                                                                [lowlimit, highlimit]))
+        print("   Timerange: Begin = {}, End = {}, coverage in sec = {}".format(starttime, endtime, timerange))
+    return starttime, endtime, timerange, keys, threshold, window, lowlimit, highlimit
+
+def get_validsensor_db(db,sensorid, starttime, endtime=datetime.utcnow(), debug=False):
+    validsensors = []
+    validsr = []
+
+    # Checking available sensors
+    sensorlist = dbselect(db, 'DataID', 'DATAINFO', 'SensorID LIKE "{}%"'.format(sensorid))
+    if debug:
+        print("   -> Found {} in DATAINFO".format(sensorlist))
+        print(
+            "   -> selecting only 1 second or highest resolution data with periods above 1sec")  # should be tested later again
+    validsensors1 = []
+    determinesr = []
+    srlist = []
+    if debug:
+        print("   checking sampling rates for sensor group: {}".format(sensorlist))
+    for sensor in sensorlist:
+        res = dbselect(db, 'DataSamplingrate', 'DATAINFO', 'DataID="{}"'.format(sensor))
+        try:
+            sr = float(res[0])
+            if debug:
+                print("    - Sensor: {} -> sampling rate: {}".format(sensor, sr))
+            if sr >= 1:
+                validsensors1.append(sensor)
+                srlist.append(sr)
+        except:
+            if debug:
+                print("    - Sensor: {} sampling rate {} could not be interpreted".format(sensor, res))
+                print("      determining sampling rate directly from data later")
+            determinesr.append(sensor)
+    if debug and len(determinesr) > 0:
+        print("    Trying to get correct sampling rates for still missing sensors ...")
+    for sensor in determinesr:
+        lastdata = dbgetlines(db, sensor, timerange)
+        if lastdata.length()[0] > 0:
+            sr = lastdata.samplingrate()
+            if debug:
+                print("    - Sensor: {} -> sampling rate: {}".format(sensor, sr))
+            if sr >= 1:
+                if debug:
+                    print("     -> adding to list")
+                validsensors1.append(sensor)
+                srlist.append(sr)
+    print("   checking for recent data")
+    for idx, sensor in enumerate(validsensors1):
+        last = dbselect(db, 'time', sensor, expert="ORDER BY time DESC LIMIT 1")
+        if last and len(last)>0:
+            try:
+                dbdate = getstringdate(last[0])
+            except:
+                if debug:
+                    print ("    problem interpreting last date in data table of {}".format(sensor))
+                dbdate = starttime
+            if dbdate > starttime and dbdate <= endtime+timedelta(seconds=60):
+                print("  -> DataID {} will be flagged".format(sensor))
+                validsensors.append(sensor)
+                validsr.append(srlist[idx])
+            else:
+                if debug:
+                    print("  NO data within selected flagging timerange")
+        else:
+            if debug:
+                print ("  did NOT find valid data dates in database")
+    return validsensors, validsr
+
+def flagging_data(validsensors, validsr, starttime, endtime, threshold, window, markall, lowlimit, highlimit):
+    for idx, sensor in enumerate(validsensors):
+        if debug:
+            print ("   Running flagging for {}".format(sensor))
+        try:
+            lines = int(timerange / validsr[idx])
+            lastdata = dbgetlines(db, sensor, lines)
+        except:
+            lastdata = DataStream()
+        if debug:
+            print("    - got {} datapoints".format(lastdata.length()[0]))
+        if lastdata.length()[0] > 0:
+            sensorid = "_".join(sensor.split('_')[:-1])
+            if debug:
+                print("   - getting existing flags for {}".format(sensorid))
+            vflag = db2flaglist(db, sensorid, begin=datetime.strftime(starttime, "%Y-%m-%d %H:%M:%S"), end=datetime.strftime(endtime, "%Y-%m-%d %H:%M:%S"))
+            if debug:
+                print("   - found {} existing flags within the given timerange".format(len(vflag)))
+            if len(vflag) > 0:
+                try:
+                    if debug:
+                        print("    - removing existing flags")
+                    lastdata = lastdata.flag(vflag)
+                    lastdata = lastdata.remove_flagged()
+                    if debug:
+                        print("       ...success")
+                except:
+                    print("  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    print("    Failed to apply flags TODO need to check that")
+            flaglist = []
+
+            if threshold:
+                if debug:
+                    print("  - determining new outliers")
+                flagls = lastdata.flag_outlier(keys=keys, threshold=threshold, timerange=window, returnflaglist=True,
+                                               markall=markall)
+                # now check flaglist---- if more than 20 consecutive flags... then drop them
+                flaglist = fl.union(flagls, remove=True)
+                if len(flaglist) > 0:
+                    print("  - new outlier flags: {}; after combination: {}".format(len(flagls), len(flaglist)))
+            if lowlimit:
+                print("  - flagging data below lower limit")
+                flaglow = lastdata.flag_range(keys=keys, below=lowlimit, text='below lower limit {}'.format(lowlimit),
+                                              flagnum=3)
+                if len(flaglow) > 0:
+                    print("  - new lower limit flags: {}".format(len(flaglow)))
+                if len(flaglist) == 0:
+                    flaglist = flaglow
+                else:
+                    flaglist.extend(flaglow)
+            if highlimit:
+                print("  - flagging data above higher limit")
+                flaghigh = lastdata.flag_range(keys=keys, above=highlimit,
+                                               text='exceeding higher limit {}'.format(highlimit), flagnum=3)
+                if len(flaghigh) > 0:
+                    print("  - new upper limit flags: {}".format(len(flaghigh)))
+                if len(flaglist) == 0:
+                    flaglist = flaghigh
+                else:
+                    flaglist.extend(flaghigh)
+
+            print(" -> SENSOR {}: found {} new flags".format(sensorid, len(flaglist)))
+
+            if not debug and len(flaglist) > 0:
+                for dbel in connectdict:
+                    dbt = connectdict[dbel]
+                    print("  -- Writing flags for sensors {} to DB {}".format(sensor, dbel))
+                    print("  -- New flags: {}".format(len(flaglist)))
+                    prevflaglist = db2flaglist(dbt, sensorid)
+                    if len(prevflaglist) > 0:
+                        lastdata.flagliststats(prevflaglist, intensive=True)
+                    else:
+                        print("  - no flags so far for this sensor")
+                    name3 = "{}-toDB-{}".format(config.get('logname'), dbel)
+                    statusmsg[name3] = 'flags successfully written to DB'
+                    try:
+                        flaglist2db(dbt, flaglist)
+                    except:
+                        statusmsg[name3] = 'flags could not be written to DB - disk full?'
+                    aftflaglist = db2flaglist(dbt, sensorid)
+                    lastdata.flagliststats(aftflaglist, intensive=True)
+            elif debug:
+                print (" DEBUG selected - not writing anything")
+
 
 def main(argv):
     version = '1.1.0'
@@ -197,7 +293,9 @@ def main(argv):
 
     # each input looks like:
     # { SensorNamePart : [timerange, keys, threshold, window, markall, lowlimit, highlimit]
-    flagdict_fallback = {'LEMI036':[7200,'x,y,z',6,'Default',True,'None','None'],
+    flagdict_fallback = {'LEMI036':{"timerange":7200,"keys":["x","y","z"],"threshold":6,"markall":True}}
+    """
+    flagdict_fallback = {'LEMI036':{"timerange":7200,"keys":["x","y","z"],"threshold":6,"markall":True},
             'LEMI025':[7200,'x,y,z',6,'Default',True,'None','None'],
             'FGE':[7200,'x,y,z',5,'Default',True,'None','None'],
             'GSM90_14245':[7200,'f',5,'default',False,'None','None'],
@@ -206,12 +304,12 @@ def main(argv):
             'GP20S3NSS2':[7200,'f',5,'Default',False,'None','None'],
             'POS1':[7200,'f',4,100,False,'None','None'],
             'BM35':[7200,'var3','None','None',False,750,1000]}
-
+    """
 
     try:
-        opts, args = getopt.getopt(argv,"hc:b:e:j:p:s:o:D",["config=","flaggingoptions=","begin=","endtime=","joblist=","path=","sensor=","comment=","debug="])
+        opts, args = getopt.getopt(argv,"hc:f:b:e:j:p:s:o:D",["config=","flaggingoptions=","begin=","endtime=","joblist=","path=","sensor=","comment=","debug="])
     except getopt.GetoptError:
-        print ('flagging.py -c <config>')
+        print ('flagdata.py -c <config>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -224,7 +322,7 @@ def main(argv):
             print ('...')
             print ('-------------------------------------')
             print ('Usage:')
-            print ('python flagging.py -c <config>')
+            print ('python flagdata.py -c <config>')
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
@@ -236,13 +334,15 @@ def main(argv):
             print ('-o            : delete - comment')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python flagging.py -c /etc/marcos/analysis.cfg')
+            print ('python flagdata.py -c /etc/marcos/analysis.cfg')
             print ('Once per year:')
-            print (' python flagging.py -c /etc/marcos/analysis.cfg -j archive')
+            print (' python flagdata.py -c /etc/marcos/analysis.cfg -j archive')
             print ('Eventually always:')
-            print (' python flagging.py -c /etc/marcos/analysis.cfg -j upload -p /srv/archive/flags/uploads/')
+            print (' python flagdata.py -c /etc/marcos/analysis.cfg -j upload -p /srv/archive/flags/uploads/')
             print ('Once a day/week:')
-            print (' python flagging.py -c /etc/marcos/analysis.cfg -j clean')
+            print (' python flagdata.py -c /etc/marcos/analysis.cfg -j clean')
+            print ('Testing the method:')
+            print (' python3 flagdata.py -c ../conf/wic.cfg -f ../conf/flaggingoptions.json -D')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -252,10 +352,10 @@ def main(argv):
             flagoptions = os.path.abspath(arg)
         elif opt in ("-b", "--begin"):
             # get an endtime
-            endtime = arg.split(',')
+            begin = DataStream()._testtime(arg)
         elif opt in ("-e", "--endtime"):
             # get an endtime
-            endtime = arg.split(',')
+            endtime = DataStream()._testtime(arg)
         elif opt in ("-j", "--joblist"):
             # get an endtime
             joblist = arg.split(',')
@@ -339,160 +439,35 @@ def main(argv):
     if debug:
         print ("2. Running joblist ...")
 
-    sys.exit()
-
     if 'flag' in joblist:
-      print ("2 - flag: Dealing with flagging dictionary")
-      try:
-        #ok = True
-        #if ok:
-        for elem in flagdict:
+        print (" 2 - flag: Dealing with flagging dictionary")
+        for sensor in flagdict:
             print (" -------------------------------------------")
-            print (" Dealing with sensorgroup which starts with {}".format(elem))
+            print (" Dealing with sensor group containing name fragment {}".format(sensor))
             print (" -------------------------------------------")
-            # Get parameter
-            timerange = flagdict[elem][0]
-            keyspar = flagdict[elem][1]
-            if keyspar in ['Default','default','All','all','',None]:
-               keys = None
-            else:
-               keys = keyspar.split(',')
-            threshold = flagdict[elem][2]
-            if threshold in ['Default','default','None','none','',None]:
-                threshold = None
-            windowpar = flagdict[elem][3]
-            if windowpar in ['Default','default','None','none','',None]:
-               window = None
-            else:
-               window = timedelta(seconds=windowpar)
-            markall = flagdict[elem][4]
-            lowlimit = flagdict[elem][5]
-            if lowlimit in ['Default','default','None','none','',None]:
-               lowlimit = None
-            highlimit = flagdict[elem][6]
-            if highlimit in ['Default','default','None','none','',None]:
-               highlimit = None
-            starttime = datetime.utcnow()-timedelta(seconds=timerange)
-            print (" - Using the following parameter: keys={},threshold={},window={},limits={}".format(keys, threshold, window,[lowlimit,highlimit]))
-            # Checking available sensors
-            sensorlist = dbselect(db, 'DataID', 'DATAINFO','SensorID LIKE "{}%"'.format(elem))
-            print ("   -> Found {}".format(sensorlist))
-            print ("   a) select 1 second or highest resolution data") # should be tested later again
-            validsensors1 = []
-            determinesr = []
-            srlist = []
-            for sensor in sensorlist:
-                res = dbselect(db,'DataSamplingrate','DATAINFO','DataID="{}"'.format(sensor))
-                try:
-                    sr = float(res[0])
-                    print ("    - Sensor: {} -> Samplingrate: {}".format(sensor,sr))
-                    if sr >= 1:
-                        validsensors1.append(sensor)
-                        srlist.append(sr)
-                except:
-                    print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    print ("Check sampling rate {} of {}".format(res,sensor))
-                    print ("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    determinesr.append(sensor)
-            print (" b) checking sampling rate of failed sensors")
-            for sensor in determinesr:
-                lastdata = dbgetlines(db,sensor,timerange)
-                if lastdata.length()[0] > 0:
-                    sr = lastdata.samplingrate()
-                    print ("    - Sensor: {} -> Samplingrate: {}".format(sensor,sr))
-                    if sr >= 1:
-                        validsensors1.append(sensor)
-                        srlist.append(sr)
-            print (" c) Check for recent data")
-            validsensors = []
-            validsr = []
-            for idx,sensor in enumerate(validsensors1):
-                last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
+            #try:
+            ok = True
+            if ok:
                 if debug:
-                    print ("   Last time", last)
-                try:
-                    dbdate = last[0]
-                except:
-                    print ("    - No data found for {}".format(sensor))
-                try:
-                    if getstringdate(dbdate) > starttime:
-                        print ("    - Valid data for {}".format(sensor))
-                        validsensors.append(sensor)
-                        validsr.append(srlist[idx])
-                except:
-                    print ("  Dateformat problem for {}".format(sensor))
-            print (" d) Flagging data")
-            for idx,sensor in enumerate(validsensors):
-                try:
-                     lines = int(timerange/validsr[idx])
-                     lastdata = dbgetlines(db,sensor,lines)
-                except:
-                     lastdata = DataStream()
-                print ("    - got {} datapoints".format(lastdata.length()[0]))
-                if lastdata.length()[0] > 0:
-                    sensorid = "_".join(sensor.split('_')[:-1])
-                    print ("   - getting existing flags for {}".format(sensorid))
-                    vflag = db2flaglist(db,sensorid,begin=datetime.strftime(starttime,"%Y-%m-%d %H:%M:%S"))
-                    print ("   - found {} existing flags".format(len(vflag)))
-                    if len(vflag) > 0:
-                        try:
-                            print ("    - removing existing flags")
-                            lastdata = lastdata.flag(vflag)
-                            lastdata = lastdata.remove_flagged()
-                            print ("       ...success")
-                        except:
-                            print (" ------------------------------------------------")
-                            print (" -- Failed to apply flags TODO need to check that")
-                    flaglist = []
-                    if threshold:
-                       print ("  - determining new outliers")
-                       if debug:
-                           print ("MARK all: ",  markall)
-                       flagls = lastdata.flag_outlier(keys=keys,threshold=threshold,timerange=window,returnflaglist=True,markall=markall)
-                       # now check flaglist---- if more than 20 consecutive flags... then drop them
-                       flaglist = fl.union(flagls, remove=True)
-                       #if len(flagls) > len(flaglist)+1 and sensor.startswith("LEMI036_1"):   #+1 to add some room
-                       #    statusmsg[name2] = 'Step1: removed consecutive flags for {}: Found {}, Clean: {}'.format(sensor, len(flagls), len(flaglist))
-                       print ("  - new outlier flags: {}; after combination: {}".format(len(flagls),len(flaglist)))
-                    if lowlimit:
-                       print ("  - flagging data below lower limit")
-                       flaglow = lastdata.flag_range(keys=keys,below=lowlimit, text='below lower limit {}'.format(lowlimit),flagnum=3)
-                       if len(flaglist) == 0:
-                           flaglist = flaglow
-                       else:
-                           flaglist.extend(flaglow)
-                    if highlimit:
-                       print ("  - flagging data above higher limit")
-                       flaghigh = lastdata.flag_range(keys=keys,above=highlimit, text='exceeding higher limit {}'.format(highlimit),flagnum=3)
-                       if len(flaglist) == 0:
-                           flaglist = flaghigh
-                       else:
-                           flaglist.extend(flaghigh)
+                    print ("  Extracting flagging options for this sensor ...")
+                    print("  ------------------------------------------------")
+                subdict = flagdict.get(sensor)
+                starttime, endtime, timerange, keys, threshold, window, lowlimit, highlimit = get_flagging_options(subdict, begin, endtime, debug=debug)
 
-                    print (" -> RESULT: found {} new flags".format(len(flaglist)))
+                if debug:
+                    print("  Checking database whether data is available ...")
+                    print("  ------------------------------------------------")
+                validsensors, validsr = get_validsensor_db(db, sensor, starttime, endtime, debug=debug)
 
-                    if not debug and len(flaglist) > 0:
-                        for dbel in connectdict:
-                            dbt = connectdict[dbel]
-                            print ("  -- Writing flags for sensors {} to DB {}".format(sensor,dbel))
-                            print ("  -- New flags: {}".format(len(flaglist)))
-                            prevflaglist = db2flaglist(dbt,sensorid)
-                            if len(prevflaglist) > 0:
-                                lastdata.flagliststats(prevflaglist, intensive=True)
-                            else:
-                                print ("  - no flags so far for this sensor")
-                            name3 = "{}-toDB-{}".format(config.get('logname'),dbel)
-                            statusmsg[name3] = 'flags successfully written to DB'
-                            try:
-                                flaglist2db(dbt,flaglist)
-                            except:
-                                statusmsg[name3] = 'flags could not be written to DB - disk full?'
-                            aftflaglist = db2flaglist(dbt,sensorid)
-                            lastdata.flagliststats(aftflaglist, intensive=True)
-      except:
-        print (" -> flagging failed")
-        statusmsg[name1] = 'Step1: flagging failed'
-
+                if validsensors and len(validsensors) > 0:
+                    if debug:
+                        print("  flagging data ...")
+                        print("  ------------------------------------------------")
+                    flagging_data(validsensors, validsr, starttime, endtime, threshold, window, markall, lowlimit,
+                                  highlimit)
+            #except:
+            #    print(" -> flagging failed")
+            #    statusmsg[name1] = 'Step1: flagging failed'
 
     if 'upload' in joblist and flagfilepath:
         print ("5. Upload flagging lists from files")
