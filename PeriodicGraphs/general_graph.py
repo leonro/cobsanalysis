@@ -661,7 +661,7 @@ def main(argv):
                     #    speciald[el] = vals
                     #    print (speciald[el])
                     #print (specialdict)
-                    #specialdict.extend(speciald)
+                    specialdict.append(speciald)
                     print ("  ==> section 5.{} done".format(cnt+1))
                     #print (specialdict)
                     statusmsg[processname] = "success"
