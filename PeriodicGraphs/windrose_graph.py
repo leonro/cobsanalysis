@@ -4,6 +4,7 @@
 """
 DESCRIPTION
    Creates windose plots based on direction and strength.
+   https://python-windrose.github.io/windrose/usage-output.html#A-stacked-histogram-with-normed-(displayed-in-percent)-results.
 PREREQUISITES
    The following packegas are required:
       geomagpy >= 1.1.6
@@ -205,7 +206,7 @@ EXAMPLE configuration file:
 }
 
 """
-
+from matplotlib import cm
 from windrose import WindroseAxes
 from magpy.stream import *
 from magpy.database import *
@@ -222,22 +223,25 @@ from acquisitionsupport import GetConf2 as GetConf
 from version import __version__
 
 
-debugsensor = { 'METEO_T7_0001_0001' : {
-                            'directionkey' : ['x'], # if len=2 then calculate with atan
-                            'speedkey' : ['y'],     # if len > 1 then caluclate vectorsum
+debugsensor = { 'METEOSGO_adjusted_0001' : {
+                            'directionkey' : ['var2'], # if len=2 then calculate with atan
+                            'speedkey' : ['var1'],     # if len > 1 then caluclate vectorsum
                             'legend' : 'True',
-                            'source' : '/home/leon/Cloud/Daten/',
-                            'filenamebegins' : 'LEMI036_1_0002_0002',
+                            'plottype' : 'bar', # can be bar or contour
+                            'source' : '/Users/leon/GeoSphereCloud/Daten/CobsDaten/Meteo',
+                            'filenamebegins' : 'METEOSGO_adjusted_0001',
                             'savenameattribute' : 'latest',
+                            'transparent' : 'True',
                             'color' : ['k','r','k'],
                             'edgecolor' : 'white',
+                            'facecolor' : 'white',
+                            'plotname' : 'wind',
                             'flags' : 'flag',
                             'fill' : ['y'],
                             'columns' : ['H','E','Z'],
                             'units' : ['nT','nT','nT']
                           }
               }
-
 
 def CheckSensorID(sensorid, revision='0001', debug=False):
 
@@ -255,36 +259,29 @@ def CheckSensorID(sensorid, revision='0001', debug=False):
 
     return sensorid, revision
 
-def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', mergepath='', filenamebegins='', filenameends='', mergebegins='', mergeends='', flags=False, outlier=False, dropflagged=False, columns=[], units=[], debug=False):
+def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcnow()-timedelta(days=5), sensorid=None, keylist=[], revision="0001", datapath='', filenamebegins='', filenameends='', flags=False, outlier=False, dropflagged=False, columns=[], units=[], debug=False):
 
     # Read seconds data and create plots
     dataid = '{}_{}'.format(sensorid,revision)
     db = config.get('primaryDB')
     fl=[]
-    mstream = None
-
-    if mergepath and os.path.isdir(mergepath):
-        print ("READING stream to which data is merged to...")
-        path = os.path.join(mergepath,'{}*{}'.format(mergebegins,mergeends))
-        if debug:
-            print (" -> fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
-        mstream = read(path, starttime=starttime, endtime=endtime)
-    elif mergepath and os.path.isfile(mergepath):
-        print ("READING stream to which data is merged to...")
-        print (" -> fixed file selected: {}".format(mergepath))
-        mstream = read(mergepath, starttime=starttime, endtime=endtime)
 
     if debug:
         print ("READING data stream ...")
     if datapath and os.path.isdir(datapath):
+        if debug:
+            print("  - path provided")
         path = os.path.join(datapath,'{}*{}'.format(filenamebegins,filenameends))
         if debug:
-            print (" -> fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
+            print ("  - fixed path selected: {} and timerange from {} to {}".format(path,starttime,endtime))
         stream = read(path, starttime=starttime, endtime=endtime)
     elif datapath and os.path.isfile(datapath):
-        print (" -> fixed file selected: {}".format(datapath))
+        if debug:
+            print ("  -  fixed file selected: {}".format(datapath))
         stream = read(datapath, starttime=starttime, endtime=endtime)
     elif datapath in ['db','DB','database']:
+        if debug:
+            print ("  -  database selected")
         if starttime < datetime.utcnow()-timedelta(days=15):
             print (" -> reading from archive files ...")
             path = os.path.join(config.get('archivepath'),sensorid,dataid,'*')
@@ -293,8 +290,6 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
         else:
             print (" -> reading from database ...")
             stream = readDB(db,dataid,starttime=starttime, endtime=endtime)
-    if mstream:
-        stream = mergeStreams(mstream,stream)
     if columns and len(columns) == len(keylist):
         for ind,key in enumerate(keylist):
             coln = 'col-{}'.format(key)
@@ -303,7 +298,7 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
         for ind,key in enumerate(keylist):
             coln = 'unit-col-{}'.format(key)
             stream.header[coln] = units[ind]
-    if debug:
+    if debug and stream:
         print (" -> obtained {} datapoints".format(stream.length()[0]))
 
     if flags:
@@ -320,29 +315,44 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
     return stream, fl
 
 def GetWdWsFromDatastream(datastream, dirkey, speedkey):
+    ws = np.array([])
+    wd = np.array([])
     if not datastream:
         N = 500
         ws = np.random.random(N) * 6
         wd = np.random.random(N) * 360
     else:
+        if len(speedkey)==1:
+            speedkey = speedkey[0]
+        if len(dirkey)==1:
+            dirkey = dirkey[0]
+        if datastream.length()[0]>0:
+            ws = datastream._get_column(speedkey)
+            wd = datastream._get_column(dirkey)
         pass
     return wd, ws
 
-def CreateWindrose(wd, ws, legend=True, normed=True, opening=0.8, edgecolor='white', fullplotpath='', show=False,debug=False):
+def create_windrose(wd, ws, legend=True, normed=True, opening=0.8, edgecolor='white', facecolor='white', plottype='bar',fullplotpath='', transparent=False, show=False,debug=False):
 
     if debug:
         show=True
 
     ax = WindroseAxes.from_ax()
-    ax.bar(wd, ws, normed=normed, opening=opening, edgecolor=edgecolor)
+    ax.set_facecolor(facecolor)
+    if plottype == 'contour':
+        ax.contourf(wd, ws, bins=np.arange(0, 8, 1), cmap=cm.hot)
+    else:
+        ax.bar(wd, ws, normed=normed, opening=opening, edgecolor=edgecolor)
     if legend:
         ax.set_legend()
 
     print ("  ... plotting done")
+    if transparent and debug:
+        print ("   ... transparent mode selected for saving")
     if fullplotpath:
-        print (" ... saving plot to {}".format(fullplotpath))
         if not debug:
-            plt.savefig(fullplotpath)
+            print(" ... saving plot to {}".format(fullplotpath))
+            plt.savefig(fullplotpath, transparent=transparent)
         else:
             print (" ... debug selected : otherwise would save figure to {}".format(fullplotpath))
     if show:
@@ -352,6 +362,20 @@ def CreateWindrose(wd, ws, legend=True, normed=True, opening=0.8, edgecolor='whi
     print ("  -> finished")
     return True
 
+def create_savepath(outpath,plotname="dummy",savenameattribute='date', debug=False):
+    fullplotpath = ''
+    if os.path.isdir(outpath):
+        if savenameattribute in ['date','DATE','Date']:
+            # creating file name from sensorsdef input file
+            fullplotpath = os.path.join(outpath,"{}_{}.png".format(plotname,datetime.strftime(endtime,"%Y-%m-%d")))
+        else:
+            fullplotpath = os.path.join(outpath,
+                                            "{}_{}.png".format(plotname, savenameattribute))
+    elif os.path.isfile(outpath):
+        fullplotpath = outpath
+    if debug:
+        print(" - defining save path: {}".format(fullplotpath))
+    return fullplotpath
 
 
 def main(argv):
@@ -361,29 +385,25 @@ def main(argv):
     outpath='/tmp'
     sensordefpath=''
     sensordefs = {}
-    dayrange = 3
-    plotstyle = 'magpy' # one in magpy, xxx
+    range = 3600
     starttime = None
     endtime = None
-    newloggername = 'mm-pp-tilt.log'
+    newloggername = 'mm-pp-rose.log'
     flaglist = []
     plotname = 'debug'
+    succ = False
     debug=False
 
     opacity = 0.7
     fullday = False
     show = False
-    confinex = False
-    gridcolor = '#316931'
     bgcolor = 'white'
 
-    dropflagged = False
     sensorid='LM_TILT01_0001'
-    keylist=None
 
 
     try:
-        opts, args = getopt.getopt(argv,"hc:i:y:s:e:r:l:D",["config=","input=","output=","starttime=","endtime=","range=","loggername=","debug=",])
+        opts, args = getopt.getopt(argv,"hc:i:o:s:e:r:l:D",["config=","input=","output=","starttime=","endtime=","range=","loggername=","debug=",])
     except getopt.GetoptError:
         print ('try windrose_graph.py -h for instructions')
         sys.exit(2)
@@ -410,9 +430,9 @@ def main(argv):
             print ('-r            : range in seconds')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python3 general_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17')
+            print ('python3 windrose_graph.py -c ../conf/wic.cfg -i ../conf/sensordef_plot.json -e 2020-12-17')
             print ('# debug run on my machine')
-            print ('python3 general_graph.py -c ../conf/wic.cfg -e 2020-12-17 -D')
+            print ('python3 windrose_graph.py -c ../conf/wic.cfg -e 2023-11-17 -D')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -423,9 +443,6 @@ def main(argv):
         elif opt in ("-o", "--output"):
             # delete any / at the end of the string
             outpath = os.path.abspath(arg)
-        elif opt in ("-y", "--style"):
-            # define a plotstyle
-            plotstyle = arg
         elif opt in ("-s", "--starttime"):
             # starttime of the plot
             starttime = arg
@@ -434,7 +451,7 @@ def main(argv):
             endtime = arg
         elif opt in ("-r", "--range"):
             # range in days
-            dayrange = int(arg)
+            range = int(arg)
         elif opt in ("-l", "--loggername"):
             # loggername
             newloggername = arg
@@ -452,12 +469,9 @@ def main(argv):
 
     if not os.path.exists(sensordefpath):
         print ('Sensordefinitions not found...')
-        if debug:
-            print (' ... but debug selected - using dummy values')
-            sensordefs = debugsensor
-        else:
-            print ('-- check general_graph.py -h for more options and requirements')
-            sys.exit()
+        #if debug:
+        print (' ... using default hard coded values')
+        sensordefs = debugsensor
 
     if endtime:
         try:
@@ -483,146 +497,92 @@ def main(argv):
         print (" basic code test successful")
         sys.exit(0)
 
-    print ("1. Read and check validity of configuration data")
+    if debug:
+        print ("1. Read and check validity of configuration data")
     config = GetConf(configpath)
 
-    print ("2. Activate logging scheme as selected in config")
+    if debug:
+        print ("2. Activate logging scheme as selected in config")
     config = DefineLogger(config=config, category = "TestPlotter", job=os.path.basename(__file__), newname=newloggername, debug=debug)
 
-    print ("3. Connect to databases")
+    if debug:
+        print ("3. Connect to databases")
     config = ConnectDatabases(config=config, debug=debug)
 
-    print ("4. Read sensordefinitions")
+    if debug:
+        print ("4. Read sensordefinitions")
     if not sensordefs:
-        print (sensordefpath)
+        if debug:
+            print ("Reading sensor and graph definitions from {}".format(sensordefpath))
         sensordefs = ReadMemory(sensordefpath)
         plotname = os.path.basename(sensordefpath).replace('.json','').replace('_rose','')
-        print ("Plotname : ", plotname)
+        if debug:
+            print ("Plotname : ", plotname)
         statname = "rose-{}".format(plotname)
-        pass
     else:
+        if debug:
+            print ("Using default sensor and graph definitions")
         statname = "rose-{}".format('debug')
-    print ("4.1 Extracting some basic definitions from sensor configuartion")
-    senspar = sensordefs.get('parameter',{})
 
-    print ("5. Cycle through sensordefinitions")
-    for cnt,dataid in enumerate(sensordefs):
-      if not dataid=='parameter':
-        processname = "{}-{}".format(statname,dataid.replace("_","-"))
-        statusmsg[processname] = "failure"
+    if debug:
+        print ("5. Cycle through sensor definitions")
+    defslen = [sen for sen in sensordefs]
+    if len(defslen) > 0:
         useflags = False
         outlier = False
         dropflagged = False
+        legend = False
+        normed = False
+        dataid = list(sensordefs.keys())[0]
         sensdict = sensordefs[dataid]
+        if debug:
+            print ("Got the following parameters for sensor {}: {}".format(dataid, sensdict))
+        processname = "{}-{}".format(statname,dataid.replace("_","-"))
+        statusmsg[processname] = "failure"
         revision = sensdict.get('revision','0001')
-        print ("5.{}.1 Check SensorID - or whether DataID provided for {}".format(cnt+1,dataid))
+        if debug:
+            print ("5.1.1 Check SensorID - or whether DataID provided for {}".format(dataid))
         sensorid, revision = CheckSensorID(dataid, revision, debug=debug)
-        keys = sensdict.get('keys',[])
+        directionkey = sensdict.get('directionkey',[])
+        speedkey = sensdict.get('speedkey',[])
         columns = sensdict.get('columns',[])
         units = sensdict.get('units',[])
         path = sensdict.get('source','')
-        plotstyle = sensdict.get('plotstyle','line')
+        legend = sensdict.get('legend',False)
+        if legend in ["True","true","TRUE", True]:
+            legend = True
+        normed = sensdict.get('normed',False)
+        if normed in ["True","true","TRUE", True]:
+            normed = True
+        transparent = sensdict.get('transparent', False)
+        if transparent in ["True","true","TRUE", True]:
+            transparent = True
         flagtreatment = sensdict.get('flags','')
         if 'outlier' in flagtreatment:
             outlier = True
             dropflagged = True
-        if 'flag' in flagtreatment or 'drop' in flagtreatment:
-            useflags = True
-            if 'drop' in flagtreatment:
-                dropflagged = True
         filenamebegins = sensdict.get('filenamebegins','')
         filenameends = sensdict.get('filenameends','')
-        mergepath = sensdict.get('basesource','')
-        mergebegins = sensdict.get('basebegins','')
-        mergeends = sensdict.get('baseends','')
-        savenameattribute = sensdict.get('savenameattribute','date')
-        if keys:
-            print ("5.{}.2 Read datastream for {}".format(cnt+1,dataid))
-            #try:
-            ok = True
-            if ok:
-                stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, keylist=keys, revision=revision, flags=useflags, outlier=outlier, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends,mergepath=mergepath, mergebegins=mergebegins, mergeends=mergeends, columns=columns, units=units, debug=debug)
-                if stream and stream.length()[0]>1:
-                    print ("5.{}.3 Check out flagging and annotation".format(cnt+1))
-                    if 'flag' in flagtreatment:
-                        print ("       -> eventuallyadding existing standard flags from DB")
-                        flaglist = fl
-                    if 'quake' in flagtreatment and not 'quakenew' in flagtreatment:
-                        quakekey = sensdict.get('quakekey',keys[0])
-                        print ("       -> eventually adding QUAKES to column {}".format(quakekey))
-                        fl = Quakes2Flags(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, debug=debug)
-                        flaglist = combinelists(flaglist,fl)
-                    if 'quakenew' in flagtreatment:
-                        quakekey = sensdict.get('quakekey',keys[0])
-                        print ("       -> eventually adding NEWQUAKES to column {}".format(quakekey))
-                        fl = quakes2flags_new(config=config, endtime=endtime, timerange=dayrange+1, sensorid=sensorid, keylist=quakekey, a=2.0, c=-0.43, debug=debug)
-                        flaglist = combinelists(flaglist,fl)
-                    if 'coil' in flagtreatment:
-                        print ("       -> eventually adding COIL data to column xxx")
-                        pass
-                    if len(flaglist) > 0:
-                        print ("       => total amount of {} flags added".format(len(flaglist)))
-                        stream = stream.flag(flaglist)
-                    print ("5.{}.4 Creating plot configuration lists".format(cnt+1))
-                    streamlist.append(stream)
-                    keylist.append(keys)
-                    padding = sensdict.get('padding',[])
-                    if not padding:
-                        padding = [0.0 for el in keys]
-                    paddinglist.append(padding)
-                    annotate = sensdict.get('annotate',[])
-                    if not annotate:
-                        annotate = [False for el in keys]
-                    annotatelist.append(annotate)
-                    color = sensdict.get('color',[])
-                    if not color:
-                        color = ['k' for el in keys]
-                    colorlist.extend(color)
-                    if plotstyle == 'line':
-                        symbol = ['-' for el in keys]
-                    elif plotstyle == 'bar':
-                        symbol = ['z' for el in keys]
-                    else:
-                        symbol = ['-' for el in keys]
-                    symbollist.extend(symbol)
-                    fill = sensdict.get('fill',[])
-                    filllist.extend(fill)
-                    speciald = sensdict.get('specialdict',{})
-                    print (speciald)
-                    #for el in speciald:
-                    #    vals = speciald[el]
-                    #    if isinstance(vals,list):
-                    #        vals = [int(ele) for ele in vals]
-                    #    speciald[el] = vals
-                    #    print (speciald[el])
-                    #print (specialdict)
-                    specialdict.append(speciald)
-                    print ("  ==> section 5.{} done".format(cnt+1))
-                    #print (specialdict)
-                    statusmsg[processname] = "success"
-            #except:
-            #    print (" -- severe error in data treatment")
-            #    pass
-        else:
-            print ("  -- no keys defined - skipping this sensor")
-            pass
+        plotname = sensdict.get('plotname','noname')
+        if debug:
+            print ("5.1.2 Read datastream for {}".format(dataid))
+            print (path,sensorid, revision)
+        stream, fl = ReadDatastream(config=config, starttime=starttime, endtime=endtime, sensorid=sensorid, revision=revision, flags=useflags, outlier=outlier, dropflagged=dropflagged, datapath=path, filenamebegins=filenamebegins, filenameends=filenameends,columns=columns, units=units, debug=debug)
+        if stream and stream.length()[0]>1:
+            if debug:
+                print ("5.1.3 Extracting speed and direction data")
+            wd, ws = GetWdWsFromDatastream(stream, dirkey=directionkey, speedkey=speedkey)
 
-    if len(streamlist) > 0:
-        #mp.plotStreams(streamlist,keylist, fill=filllist, colorlist=colorlist, padding=paddinglist, annotate=annotatelist, gridcolor='#316931', confinex=True, opacity=0.7)
-        print ("6. Creating plot")
-        if os.path.isdir(outpath):
-            if savenameattribute in ['date','DATE','Date']:
-                # creating file name from sensorsdef input file
-                fullplotpath = os.path.join(outpath,"{}_{}.png".format(plotname,datetime.strftime(endtime,"%Y-%m-%d")))
-            else:
-                fullplotpath = os.path.join(outpath,
-                                            "{}_{}.png".format(plotname, savenameattribute))
-            print (" -> Saving graph to {}".format(fullplotpath))
-        elif os.path.isfile(outpath):
-             fullplotpath = outpath
-        else:
-             fullplotpath = ''
-        CreateDiagram(streamlist,keylist, filllist=filllist, colorlist=colorlist, paddinglist=paddinglist, annotatelist=annotatelist, symbollist=symbollist, specialdict=specialdict, gridcolor=gridcolor, bgcolor=bgcolor, confinex=confinex, opacity=opacity, fullday=fullday, bartrange=bartrange, show=show, fullplotpath=fullplotpath, debug=debug)
+            if debug:
+                print ("5.1.4 Defining path")
+            fulloutpath = create_savepath(outpath,plotname=plotname,savenameattribute=sensdict.get('savenameattribute','date'), debug=debug)
+
+            if debug:
+                print ("5.1.5 Creating plot")
+            succ = create_windrose(wd, ws, legend=legend, normed=normed, opening=0.8, edgecolor=sensdict.get('edgecolor','white'), facecolor=sensdict.get('facecolor','white'), plottype=sensdict.get('plottype','bar'), transparent=transparent, fullplotpath=fulloutpath,
+                           show=False, debug=debug)
+            if succ:
+                statusmsg[processname] = "success"
 
     if not debug:
         martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
@@ -635,74 +595,3 @@ def main(argv):
 if __name__ == "__main__":
    main(sys.argv[1:])
 
-
-"""
-Example for a sensordefinitions json-file
-Please use filenames like tilt_plot.json, or spaceweather_plot.json 
-{
-    "LEMI036_1_0002_0002": {
-        "keys": [
-            "x",
-            "y",
-            "z"
-        ],
-        "plotstyle": "line",
-        "source": "/home/leon/Cloud/Daten/",
-        "filenamebegins": "LEMI036_1_0002_0002",
-        "color": [
-            "k",
-            "r",
-            "k"
-        ],
-        "flags": "flag,quake",
-        "fill": [
-            "y"
-        ],
-        "quakekey": "z",
-        "padding": [
-            0.2,
-            100.0,
-            0.0
-        ],
-        "annotate": [
-            true,
-            false,
-            true
-        ],
-        "columns": [
-            "H",
-            "E",
-            "Z"
-        ],
-        "units": [
-            "nT",
-            "nT",
-            "nT"
-        ]
-    },
-    "GP20S3NSS2_012201_0001_0001": {
-        "keys": [
-            "f"
-        ],
-        "plotstyle": "line",
-        "source": "/home/leon/Cloud/Daten/",
-        "filenamebegins": "GP20S3NSS2_012201_0001_0001",
-        "color": [
-            "b"
-        ],
-        "flags": "flag",
-        "padding": [
-            100.0
-        ],
-        "annotate": [
-            true
-        ],
-        "columns": [
-            "S"
-        ],
-        "units": [
-            "nT"
-        ]
-    }
-}
-"""
