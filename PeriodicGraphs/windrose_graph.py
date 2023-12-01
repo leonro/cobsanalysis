@@ -314,7 +314,7 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), starttime=datetime.utcn
 
     return stream, fl
 
-def GetWdWsFromDatastream(datastream, dirkey, speedkey):
+def GetWdWsFromDatastream(datastream, dirkey, speedkey, debug=False):
     ws = np.array([])
     wd = np.array([])
     if not datastream:
@@ -326,10 +326,17 @@ def GetWdWsFromDatastream(datastream, dirkey, speedkey):
             speedkey = speedkey[0]
         if len(dirkey)==1:
             dirkey = dirkey[0]
+        # drop nans
+        print ("Length with NaN", datastream.length()[0])
+        datastream = datastream._drop_nans(speedkey)
+        datastream = datastream._drop_nans(dirkey)
+        print ("Length without NaN", datastream.length()[0])
         if datastream.length()[0]>0:
             ws = datastream._get_column(speedkey)
             wd = datastream._get_column(dirkey)
-        pass
+    if debug:
+        print ("Speed", ws)
+        print ("Dir", wd)
     return wd, ws
 
 def create_windrose(wd, ws, legend=True, normed=True, opening=0.8, edgecolor='white', facecolor='white', plottype='bar',fullplotpath='', transparent=False, show=False,debug=False):
@@ -571,7 +578,7 @@ def main(argv):
         if stream and stream.length()[0]>1:
             if debug:
                 print ("5.1.3 Extracting speed and direction data")
-            wd, ws = GetWdWsFromDatastream(stream, dirkey=directionkey, speedkey=speedkey)
+            wd, ws = GetWdWsFromDatastream(stream, dirkey=directionkey, speedkey=speedkey, debug=debug)
 
             if debug:
                 print ("5.1.4 Defining path")
