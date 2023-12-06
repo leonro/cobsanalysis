@@ -1,16 +1,7 @@
 #!/usr/bin/env python
 
-from magpy.database import *
+from magpy.stream import *
 import getopt
-
-
-scriptpath = os.path.dirname(os.path.realpath(__file__))
-anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
-sys.path.insert(0, anacoredir)
-from analysismethods import DefineLogger, DoVarioCorrections, DoBaselineCorrection, DoScalarCorrections,ConnectDatabases, GetPrimaryInstruments, getcurrentdata, writecurrentdata
-from martas import martaslog as ml
-from acquisitionsupport import GetConf2 as GetConf
-from version import __version__
 
 
 """
@@ -18,7 +9,7 @@ DESCRIPTION
    Downloads DST index data from Kyoto:
 PREREQUISITES
    The following packegas are required:
-      geomagpy >= 0.9.8
+      geomagpy >= 1.1.7
       martas.martaslog
       martas.acquisitionsupport
       analysismethods
@@ -39,6 +30,7 @@ def get_dst(year=2023, month=11, baseurl='https://wdc.kugi.kyoto-u.ac.jp/dst_rea
     if debug:
         print ("URL = ", url)
     else:
+        print ("reading URL = ", url)
         dst = read(url)
     return dst
 
@@ -64,7 +56,6 @@ def get_range(year,month, debug=False):
 
 def main(argv):
     version = '1.0.0'
-    configpath = ''
     statusmsg = {}
     year, month = None, None
     baseurl = 'https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/'
@@ -72,9 +63,9 @@ def main(argv):
     debug=False
 
     try:
-        opts, args = getopt.getopt(argv,"hc:y:m:s:D",["config=","year=","month=","savepath=","debug="])
+        opts, args = getopt.getopt(argv,"hy:m:s:D",["year=","month=","savepath=","debug="])
     except getopt.GetoptError:
-        print ('dst_import.py -c <config>')
+        print ('dst_import.py')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -90,19 +81,15 @@ def main(argv):
             print ('python dst_import.py -c <config>')
             print ('-------------------------------------')
             print ('Options:')
-            print ('-c (required) : configuration data path')
             print ('-y            : year, default is obtained from utcnow')
             print ('-m            : month, default is obtained from utcnow')
             print ('-s            : saving data to a specific path')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python dst_import.py -c /etc/marcos/analysis.cfg')
-            print ('python dst_import.py -c /etc/marcos/analysis.cfg -y 2022 -m 11')
-            print ('python dst_import.py -c /etc/marcos/analysis.cfg')
+            print ('python dst_import.py')
+            print ('python dst_import.py -y 2022 -m 11')
+            print ('python dst_import.py -y all')
             sys.exit()
-        elif opt in ("-c", "--config"):
-            # delete any / at the end of the string
-            configpath = os.path.abspath(arg)
         elif opt in ("-y", "--year"):
             # get an endtime
             if arg in ['all','All','ALL']:
@@ -119,37 +106,8 @@ def main(argv):
             # delete any / at the end of the string
             debug = True
 
-    print ("Running flagging version {}".format(version))
+    print ("Running dst import version {}".format(version))
     print ("--------------------------------")
-
-    if not os.path.exists(configpath):
-        print ('Specify a valid path to configuration information')
-        print ('-- check magnetism_products.py -h for more options and requirements')
-        sys.exit()
-
-    print ("1. Read and check validity of configuration data")
-    config = GetConf(configpath)
-
-    print ("2. Activate logging scheme as selected in config")
-    config = DefineLogger(config=config, category = "DataProducts", job=os.path.basename(__file__), newname='mm-di-quakes.log', debug=debug)
-
-    namedst = "{}-dst".format(config.get('logname'))
-    currentvaluepath = config.get('currentvaluepath')
-
-    print ("3. Connect databases and select first available")
-    try:
-        config = ConnectDatabases(config=config, debug=debug)
-        db = config.get('primaryDB')
-        connectdict = config.get('conncetedDB')
-        print(" -> connected databases: {}".format(connectdict))
-    except:
-        statusmsg[namedst] = 'database failed'
-
-
-    prox = config.get('proxy','')
-    proxport = config.get('proxyport')
-    if prox:
-        proxy = "--proxy http://{}:{} ".format(prox,proxport)
 
     years, months = get_range(year,month,debug=debug)
 
@@ -163,6 +121,7 @@ def main(argv):
                 print ("Success for year {} and month {}".format(ye,mo))
                 dst.header['DataSource'] = 'Kyoto Observatory'
                 dst.header['DataReferences'] = baseurl
+                print ("Saving to", savepath)
                 dst.write(savepath, filenamebegins='Dst_', format_type='PYCDF',dateformat='%Y%m',coverage='month')
 
 
@@ -170,15 +129,6 @@ def main(argv):
     print ("  dst_import finished")
     print ("------------------------------------------")
     print ("SUCCESS")
-
-    if not debug:
-        martaslog = ml(logfile=config.get('logfile'),receiver=config.get('notification'))
-        martaslog.telegram['config'] = config.get('notificationconfig')
-        martaslog.msg(statusmsg)
-        pass
-    else:
-        print ("Debug selected - statusmsg looks like:")
-        print (statusmsg)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
