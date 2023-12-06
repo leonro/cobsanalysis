@@ -208,7 +208,7 @@ def ExportData(datastream, config={}, publevel=2):
         pubshort = 'v'
 
     sr = datastream.samplingrate()
-    datastream.header['DataSamplingrate'] = sr.strip(' sec')
+    datastream.header['DataSamplingrate'] = sr
     print ("  -> Exporting {} data ".format(pubtype))
     if 'IAGA' in explist:
         print ("     -- Saving one second data - IAGA - to {}".format(vpathsec))
@@ -236,6 +236,8 @@ def ExportData(datastream, config={}, publevel=2):
     if 'IAGA' in explist:
         print ("     -- Saving one minute data - IAGA")
         prelimmin = datastream.filter()
+        sr = prelimmin.samplingrate()
+        prelimmin.header['DataSamplingrate'] = sr
         prelimmin.write(vpathmin,filenamebegins=obscode.lower(),dateformat="%Y%m%d",filenameends="{}min.min".format(pubshort),format_type='IAGA')
         #mp.plot(prelimmin)
     if 'DBmin' in explist:
