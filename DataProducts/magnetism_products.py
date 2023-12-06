@@ -208,6 +208,7 @@ def ExportData(datastream, config={}, publevel=2):
         pubshort = 'v'
 
     sr = datastream.samplingrate()
+    datastream.header['DataSamplingrate'] = sr.strip(' sec')
     print ("  -> Exporting {} data ".format(pubtype))
     if 'IAGA' in explist:
         print ("     -- Saving one second data - IAGA - to {}".format(vpathsec))
