@@ -25,7 +25,7 @@ APPLICATION
 
 def get_dst(year=2023, month=11, baseurl='https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/',debug=False):
     dst = DataStream()
-    sm = int((year/100. - int(year/100.))*100)
+    sm = int( np.round((year/100. - int(year/100.))*100.,0) )
     url = '{c}{a}{b}/dst{d}{b}.for.request'.format(a=year, b=str(month).zfill(2), c=baseurl, d=sm)
     if debug:
         print ("URL = ", url)
