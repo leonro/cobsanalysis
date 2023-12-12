@@ -6,16 +6,16 @@ DESCRIPTION
 Appliaction to extract Status Parameters from the Observatory database
 
 REQUIREMENTS
+     pip/conda install requests
+     pip/conda install chardet
 
 TESTING
 
    1. delete one of the json inputs from the memory file in /srv/archive/external/esa-nasa/cme
    2. run app without file option
-       
 
    python3 status_extractor.py -c /home/cobs/CONF/wic.cfg -s testcfg -D
-   
-   
+
    # config directory looks like
    sourcedict = {"CO2 GMO tunnel": {"source":"MQ135_20220214_0001_0001", "key":"var1", "type":"gas", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"max","value_unit":"ppm","warning_high":2000,"critical_high":5000}, "Temperature GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"t1", "type":"environment", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"mean","value_unit":"C","warning_high":10,"critical_high":20}, "Humidity GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"var1", "type":"environment", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"mean","value_unit":"%"}, "Pressure GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"var2", "type":"bme280", "group":"tunnel condition", "field":"", "pierid":"", "range":30,"mode":"mean","value_unit":"hP"}, "Vehicle alarm": {"source":"RCS2F2_20160114_0001_0001", "key":"x", "type":"environment", "group":"traffic", "field":"gmo", "pierid":"", "range":120,"mode":"max","warning_high":1}, "Meteo temperature": {"source":"METEOSGO_adjusted_0001_0001", "key":"f", "type":"meteorology", "group":"meteorology", "field":"sgo", "pierid":"", "range":30,"mode":"median","warning_high":30,"warning_high":40}, "Meteo humidity": {"source":"METEOSGO_adjusted_0001_0001", "key":"t1", "type":"meteorology", "group":"meteorology", "field":"sgo", "pierid":"", "range":30,"mode":"median","warning_high":30,"warning_high":40}}
    
@@ -109,6 +109,8 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
                 value = value_max
             elif mode=="std":
                 value = np.std(cleandata)
+            elif mode == "last": # if mode.startswith(last) allow last1, last2 etc
+                value = cleandata[:1]
             else: # mode == mean
                 value = np.mean(cleandata)
             active = 1
