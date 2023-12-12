@@ -182,14 +182,18 @@ def transformUltra(db, datastream, debug=False):
         start, end = datastream._find_t_limits()
         flaglist = db2flaglist(db, datastream.header.get("SensorID"),begin=start,end=end)
         print ("      -> found existing flags: {}".format(len(flaglist)))
-        datastream = datastream.flag(flaglist)
-        datastream = datastream.remove_flagged()
-
+        if len(flaglist) > 0:
+            datastream = datastream.flag(flaglist)
+            datastream = datastream.remove_flagged()
+        print ("    -- original keys", datastream._get_key_headers())
         print ("    -- resampling and reordering ...")
-        datastream = datastream.resample(datastream._get_key_headers(),period=60,startperiod=60)
-
+        datastream = datastream.resample(datastream._get_key_headers(),period=60,startperiod=60, debugmode=True)
+        #datastream = datastream.resample(['var1'],period=60,startperiod=60, debugmode=True)
+        print ("    -- keys after resampling", datastream._get_key_headers())
         datastream._move_column('t2','f')
         datastream._drop_column('t2')
+        print ("    -- keys after reordering", datastream._get_key_headers())
+        print (datastream.ndarray)
 
     print ("      -> Done")
     return datastream
@@ -554,11 +558,12 @@ def CombineStreams(streamlist, debug=False):
         combine datastream to a single meteo data stream
     """
     result = DataStream()
-    print ("  Joining stream") 
+    print ("  Joining stream")
     for st in streamlist:
         print ("   -> dealing with {}".format(st.header.get("SensorID"))) 
         if debug:
             print ("    coverage before:", st._find_t_limits())
+            print ("    and keys of the new stream:", st._get_key_headers())
             #mp.plot(st)
         if not result.length()[0] > 0:
             result = st
@@ -567,10 +572,11 @@ def CombineStreams(streamlist, debug=False):
                 if debug:
                     print ("     - before join/merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
                 result = joinStreams(result,st)  # eventually extend the stream
+                print ("      and keys of the joined stream:", st._get_key_headers())
                 result = FloatArray(result)   # remove any unwanted string as occur in lnm
                 if debug:
                     print ("     - after join: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
-                result = mergeStreams(result,st,mode='replace')  # then merge contents 
+                result = mergeStreams(result,st,mode='replace')  # then merge contents
                 if debug:
                     print ("     - after merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
             except:
