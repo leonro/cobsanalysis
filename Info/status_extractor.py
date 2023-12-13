@@ -128,17 +128,21 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
     starttime = endtime-timedelta(minutes=trange)
     ok = True
     if ok:
-        """
         # check what happens if no data is present or no valid data is found
         if source.find('/') > -1:
+            if debug:
+                print ("Reading data: found path or url")
             fdata = read(source,starttime=starttime, endtime=endtime)
             data = fdata._get_column(key)
         else:
-        """
-        data = dbselect(db,key, source,'time > "{}" AND time < "{}"'.format(starttime,endtime))
-        if debug:
-            print ("DEBUG: got dataset: ", data)
+            if debug:
+                print ("Reading data: accessing database table")
+            data = dbselect(db,key, source,'time > "{}" AND time < "{}"'.format(starttime,endtime))
+        if debug and data:
+            print(" -> reading done: got {} datapoints for {}".format(len(data), key))
         cleandata = [x for x in data if x and not np.isnan(x)]
+        if debug:
+            print(" -> {} datapoints remaining after cleaning NaN".format(len(data)))
         if len(cleandata) > 0:
             value_min = np.min(cleandata)
             value_max = np.max(cleandata)
