@@ -20,6 +20,41 @@ TESTING
    sourcedict = {"CO2 GMO tunnel": {"source":"MQ135_20220214_0001_0001", "key":"var1", "type":"gas", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"max","value_unit":"ppm","warning_high":2000,"critical_high":5000}, "Temperature GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"t1", "type":"environment", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"mean","value_unit":"C","warning_high":10,"critical_high":20}, "Humidity GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"var1", "type":"environment", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"mean","value_unit":"%"}, "Pressure GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"var2", "type":"bme280", "group":"tunnel condition", "field":"", "pierid":"", "range":30,"mode":"mean","value_unit":"hP"}, "Vehicle alarm": {"source":"RCS2F2_20160114_0001_0001", "key":"x", "type":"environment", "group":"traffic", "field":"gmo", "pierid":"", "range":120,"mode":"max","warning_high":1}, "Meteo temperature": {"source":"METEOSGO_adjusted_0001_0001", "key":"f", "type":"meteorology", "group":"meteorology", "field":"sgo", "pierid":"", "range":30,"mode":"median","warning_high":30,"warning_high":40}, "Meteo humidity": {"source":"METEOSGO_adjusted_0001_0001", "key":"t1", "type":"meteorology", "group":"meteorology", "field":"sgo", "pierid":"", "range":30,"mode":"median","warning_high":30,"warning_high":40}}
    
    write_config(sourcepath, sourcedict)
+
+
+{
+    "CO2 GMO tunnel": {
+        "source": "MQ135_20220214_0001_0001",
+        "key": "var1",
+        "type": "gas",
+        "group": "tunnel condition",
+        "field": "environment",
+        "location": "gmo",
+        "pierid": "",
+        "range": 30,
+        "mode": "max",
+        "value_unit": "ppm",
+        "warning_high": 2000,
+        "critical_high": 5000
+    },
+    "Temperature GMO tunnel": {
+        "source": "BE280_0X76I2C00003_0001_0001",
+        "key": "t1",
+        "type": "temperature",
+        "group": "tunnel condition",
+        "field": "environment",
+        "location": "gmo",
+        "pierid": "",
+        "range": 30,
+        "mode": "mean",
+        "value_unit": "°C",
+        "warning_high": 10,
+        "critical_high": 20
+    },
+    "Humidity GMO tunnel": {
+        "source": "BE280_0X76I2C00003_0001_0001",
+        "key": "var1",
+    ...
 """
 
 
@@ -93,6 +128,13 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
     starttime = endtime-timedelta(minutes=trange)
     ok = True
     if ok:
+        """
+        # check what happens if no data is present or no valid data is found
+        if source.find('/') > -1:
+            fdata = read(source,starttime=starttime, endtime=endtime)
+            data = fdata._get_column(key)
+        else:
+        """
         data = dbselect(db,key, source,'time > "{}" AND time < "{}"'.format(starttime,endtime))
         if debug:
             print ("DEBUG: got dataset: ", data)
