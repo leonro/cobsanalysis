@@ -18,7 +18,7 @@ TESTING
 
    # config directory looks like
    sourcedict = {"CO2 GMO tunnel": {"source":"MQ135_20220214_0001_0001", "key":"var1", "type":"gas", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"max","value_unit":"ppm","warning_high":2000,"critical_high":5000}, "Temperature GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"t1", "type":"environment", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"mean","value_unit":"C","warning_high":10,"critical_high":20}, "Humidity GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"var1", "type":"environment", "group":"tunnel condition", "field":"gmo", "pierid":"", "range":30,"mode":"mean","value_unit":"%"}, "Pressure GMO tunnel": {"source":"BE280_0X76I2C00003_0001_0001", "key":"var2", "type":"bme280", "group":"tunnel condition", "field":"", "pierid":"", "range":30,"mode":"mean","value_unit":"hP"}, "Vehicle alarm": {"source":"RCS2F2_20160114_0001_0001", "key":"x", "type":"environment", "group":"traffic", "field":"gmo", "pierid":"", "range":120,"mode":"max","warning_high":1}, "Meteo temperature": {"source":"METEOSGO_adjusted_0001_0001", "key":"f", "type":"meteorology", "group":"meteorology", "field":"sgo", "pierid":"", "range":30,"mode":"median","warning_high":30,"warning_high":40}, "Meteo humidity": {"source":"METEOSGO_adjusted_0001_0001", "key":"t1", "type":"meteorology", "group":"meteorology", "field":"sgo", "pierid":"", "range":30,"mode":"median","warning_high":30,"warning_high":40}}
-   
+
    write_config(sourcepath, sourcedict)
 
 
@@ -60,6 +60,7 @@ TESTING
 
 import requests
 import dateutil.parser as dparser
+from magpy.stream import *
 from magpy.database import *
 from magpy.opt import cred as mpcred
 import getopt
@@ -126,23 +127,27 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
     value_max=0
     uncert=0
     starttime = endtime-timedelta(minutes=trange)
+    newendtime = endtime # will be changes for mode "last" 
     ok = True
     if ok:
         # check what happens if no data is present or no valid data is found
         if source.find('/') > -1:
             if debug:
-                print ("Reading data: found path or url")
+                print ("Reading data: found path or url:", source, starttime, endtime)
             fdata = read(source,starttime=starttime, endtime=endtime)
-            data = fdata._get_column(key)
+            fdata = fdata._drop_nans(key)
+            cleandata = fdata._get_column(key)
+            newendtime = num2date(fdata.ndarray[0][-1]).replace(tzinfo=None)
         else:
             if debug:
                 print ("Reading data: accessing database table")
             data = dbselect(db,key, source,'time > "{}" AND time < "{}"'.format(starttime,endtime))
-        if debug and data:
-            print(" -> reading done: got {} datapoints for {}".format(len(data), key))
-        cleandata = [x for x in data if x and not np.isnan(x)]
+            if debug and len(data) > 0:
+                print(" -> reading done: got {} datapoints for {}".format(len(data), key))
+            cleandata = [x for x in data if x and not np.isnan(x)]
         if debug:
-            print(" -> {} datapoints remaining after cleaning NaN".format(len(data)))
+            print(" -> {} datapoints remaining after cleaning NaN".format(len(cleandata)))
+        print (cleandata)
         if len(cleandata) > 0:
             value_min = np.min(cleandata)
             value_max = np.max(cleandata)
@@ -156,7 +161,8 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
             elif mode=="std":
                 value = np.std(cleandata)
             elif mode == "last": # if mode.startswith(last) allow last1, last2 etc
-                value = cleandata[:1]
+                value = cleandata[-1]
+                endtime = newendtime
             else: # mode == mean
                 value = np.mean(cleandata)
             active = 1
