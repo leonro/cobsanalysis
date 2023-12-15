@@ -432,6 +432,8 @@ def main(argv):
     # 3. Read Kp data:
     # ###########################
     try:
+        if debug:
+            print(" -  Getting Kp:")
         sqllist = read_kpnow_data(os.path.join(kpsource,kpname),debug=debug)
         statusmsg['Kp access'] = 'success'
     except:
@@ -440,6 +442,8 @@ def main(argv):
     # 4. Read ACE swepam data:
     # ###########################
     try:
+        if debug:
+            print(" -  Getting ACE sw:")
         newsql = read_swepam_data(os.path.join(swsource,swename),debug=debug)
         sqllist.extend(newsql)
         statusmsg['ACE swepam access'] = 'success'
@@ -449,6 +453,8 @@ def main(argv):
     # 5. Read ACE mag data:
     # ###########################
     try:
+        if debug:
+            print(" -  Getting ACE mag:")
         newsql = read_mag_data(os.path.join(swsource,magname),debug=debug)
         sqllist.extend(newsql)
         statusmsg['ACE mag access'] = 'success'
@@ -458,6 +464,8 @@ def main(argv):
     # 6. Read GIC data:
     # ###########################
     try:
+        if debug:
+            print(" -  Getting GIC:")
         newsql = read_gicnow_data(db,source='GICAUT',maxsensor=9, minutes=5, debug=debug)
         sqllist.extend(newsql)
         statusmsg['GIC data access'] = 'success'
@@ -468,7 +476,7 @@ def main(argv):
     # ###########################
     try:
         if debug:
-            print ("Running GOES")
+            print (" - Running GOES")
         goespath = '/srv/archive/external/esa-nasa/goes'
         newsql = read_xrs_data(os.path.join(goespath,'XRS_GOES16*'), debug=debug)
         sqllist.extend(newsql)
@@ -480,7 +488,7 @@ def main(argv):
     # ###########################
     try:
         if debug:
-            print ("Running PREDSTORM")
+            print (" - Running PREDSTORM")
         predpath = '/srv/archive/external/helio4cast/predstorm'
         psql = read_predstorm_data(os.path.join(predpath,'PREDSTORM*'), debug=debug)
         sqllist.extend(psql)
