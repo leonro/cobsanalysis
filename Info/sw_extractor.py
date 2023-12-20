@@ -32,13 +32,15 @@ from martas import sendmail as sm
 from acquisitionsupport import GetConf2 as GetConf
 from datetime import time as dttime
 
-def read_predstorm_data(source,starttime=datetime.utcnow(),debug=False):
+def read_predstorm_data(source,starttime=datetime.utcnow(),endtime=datetime.utcnow()+timedelta(days=3),debug=False):
 
     sqllist = []
     ok = True
     if ok:
-        data = read(source,starttime=starttime)
+        print ("Reading PREDSTORM data ({}) between {} and {}".format(source, starttime,endtime))
+        data = read(source,starttime=starttime,endtime=endtime)
         stime, etime = data._find_t_limits()
+        print ("Reading done: N={}".format(data.length()[0]))
         tlist = [0,3,6,9,12,15,18,21]
         newt = stime
         for t in tlist:
@@ -50,46 +52,57 @@ def read_predstorm_data(source,starttime=datetime.utcnow(),debug=False):
                  break
         step = start
         daylist = []
-        l1,l2 = [],[]
+        l1,l2,l3 = [],[],[]
         d = {}
         N = 0
+        print ("Obtaining three hour means of predicted Kp and solarwindspeed - using typical Kp time ranges")
         while step <= etime:
             dataframe = data._select_timerange(step, step+timedelta(hours=3))
             meant = step+timedelta(minutes=90)
             step = step+timedelta(hours=3)
             kplist = np.asarray(dataframe[KEYLIST.index('var2')]).astype(float)  # Kp
             sollist = np.asarray(dataframe[KEYLIST.index('t2')]).astype(float)   # SolarWindSpeed
+            dstlist = np.asarray(dataframe[KEYLIST.index('var1')]).astype(float)   # Dst
             if debug:
                 print (meant, np.nanmean(kplist))
             if meant.date() in daylist:
                 l1.append(np.nanmean(kplist))
                 l2.append(np.nanmean(sollist))
+                l3.append(np.nanmean(dstlist))
                 name = "Kp_{}".format(N)
-                d[name] = {'date':meant.date(),'kp':l1,'sw':l2}
+                d[name] = {'date':meant.date(),'kp':l1,'sw':l2,'dst':l3}
             else:
-                l1,l2 = [],[]
+                l1,l2,l3 = [],[],[]
                 N += 1
                 l1.append(np.nanmean(kplist))
                 l2.append(np.nanmean(sollist))
+                l3.append(np.nanmean(dstlist))
             daylist.append(meant.date())
 
         for day in d:
             dic = d[day]
             l1 = dic.get('kp')
             l2 = dic.get('sw')
+            l3 = dic.get('dst')
             start = dic.get('date')
             maxkpval = np.max(np.asarray(l1))
             maxwindval = np.max(np.asarray(l2))
+            mindstval = np.min(np.asarray(l3))
             if debug:
-                print (day, start, maxkpval, maxwindval)
+                print ("Maximum values:", day, start, maxkpval, maxwindval, mindstval)
             # create sql inputs
             kpsql = _create_kpforecast_sql(day, maxkpval, start )
             swsql = _create_swforecast_sql(day.replace('Kp','SolarWind'), maxwindval, start )
+            print ("here")
+            dstsql = _create_dstforecast_sql(day.replace('Kp','Dst'), mindstval, start )
+            print ("Done")
             if debug:
                 print (kpsql)
                 print (swsql)
+                print (dstsql)
             sqllist.append(kpsql)
             sqllist.append(swsql)
+            sqllist.append(dstsql)
     return sqllist
 
 
@@ -103,6 +116,11 @@ def _create_swforecast_sql(swname, swval,start ):
     active=1
     swnewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format(swname,'forecast','solarwind','solar',swval,start,start,'PREDSTORM','',datetime.utcnow(),active,'forecast','solarwind','solar',swval,start,start,'PREDSTORM','',datetime.utcnow(),active)
     return swnewsql
+
+def _create_dstforecast_sql(dstname, dstval,start ):
+    active=1
+    dstnewsql = "INSERT INTO SPACEWEATHER (sw_notation,sw_type,sw_group,sw_field,sw_value,validity_start,validity_end,source,comment,date_added,active) VALUES ('{}', '{}', '{}','{}',{},'{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE sw_type = '{}',sw_group = '{}',sw_field = '{}',sw_value = {},validity_start = '{}',validity_end = '{}',source = '{}',comment='{}',date_added = '{}',active = {} ".format(dstname,'forecast','geomagactivity','geomag',dstval,start,start,'PREDSTORM','',datetime.utcnow(),active,'forecast','geomagactivity','geomag',dstval,start,start,'PREDSTORM','',datetime.utcnow(),active)
+    return dstnewsql
 
 
 def read_xrs_data(source, debug=False):
