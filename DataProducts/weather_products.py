@@ -118,7 +118,7 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
         sens=[]
         sens2=[]
         for sensor in senslist:
-            print ("Found", sensor)
+            print ("Found sensor {} in DATAINFO".format(sensor))
             if source == 'database':
                 if debug:
                     print ("   -- checking sensor {}".format(sensor))
@@ -141,11 +141,20 @@ def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', startti
             sens = [el[0] for el in sorted(sens2, key=lambda x: x[1])]
 
         #print (sens)
+        highres_data = ['BM35_']
+        # remove high resolution data sets and use only filtered data
+        highres = []
+        for hr in highres_data:
+            for sen in sens:
+                if sen.find(hr) > -1 and sen.endswith('_0001'):
+                   highres.append(sen)
+        sens = [el for el in sens if not el in highres]
+        print ("Remaining sensors after removing highres data", sens)
 
         datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
         if len(sens) > 0:
             for sensor in sens:
-                print ("    -- getting data from {}".format(sensor))
+                print ("    -- getting data from {} between {} and {}".format(sensor,starttime,endtime))
                 try:
                     if source == 'database':
                         datastream = readDB(db,sensor,starttime=starttime,endtime=endtime)
@@ -504,8 +513,8 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, config={},
     """
     DESCRIPTION:
         compare rain measurements between LNM and Meteo bucket
-        # --------------------------------------------------------    
-        # RCS - Get data from RCS (no version/revision control in rcs) 
+        # --------------------------------------------------------
+        # RCS - Get data from RCS (no version/revision control in rcs)
         # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
     """
 
@@ -528,7 +537,9 @@ def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, config={},
     res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)])  # limit to the usually shorter rcst7 timeseries
     print ("      -> cumulative rain t7={} and lnm={}".format(np.sum(res), np.sum(res2)))
     if not len(res) > 0:
-        config['rainsource'] = 'laser' 
+        config['rainsource'] = 'laser'
+    if not len(res2) > 0:
+        config['rainsource'] = 'bucket'
     if len(res) > 1440*int(dayrange*0.5) and not np.mean(res) == 0:
         istwert = np.abs((np.mean(res) - np.mean(res2))/np.mean(res))
         sollwert = 0.3
@@ -560,7 +571,7 @@ def CombineStreams(streamlist, debug=False):
     result = DataStream()
     print ("  Joining stream")
     for st in streamlist:
-        print ("   -> dealing with {}".format(st.header.get("SensorID"))) 
+        print ("   -> dealing with {}".format(st.header.get("SensorID")))
         if debug:
             print ("    coverage before:", st._find_t_limits())
             print ("    and keys of the new stream:", st._get_key_headers())
@@ -626,7 +637,7 @@ def FloatArray(datastream):
         for el in ar:
             try:
                 n.append(float(el))
-            except: 
+            except:
                 n.append(np.nan)
         newar = np.asarray(n).astype(float)
         newnd.append(newar)
