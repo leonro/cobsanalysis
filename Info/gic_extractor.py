@@ -24,12 +24,15 @@ def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, ma
     gicdata = []
     status = {}
     amount = 0
+    active = 0
+    sql = ''
     addcommlist = []
     t1 = datetime.utcnow()
 
     start = datetime.utcnow()-timedelta(minutes=minutes)
     trange = datetime.strftime(start, "%Y-%m-%d %H:%M:%S")
     valueresults = []
+    streamlist = []
     for i in sensornums:
         name = "{}_GIC{:02d}_0001_0001".format(source,i)
         sn = "GIC{:02d}".format(i)
@@ -51,53 +54,51 @@ def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, ma
                 lastdate = gicfilt.ndarray[0][-1]
                 giclast = np.abs(gicfilt.ndarray[1][-1])
                 #print (gicdata.header.get('DataSource')) # this should contain the APG Station code
-                valueres = [giclast,gicmax,gicmin,num2date(lastdate),gicdata.header.get('DataSource',sn)]
+                valueres = [giclast,gicmax,gicmin,num2date(lastdate,tzinfo=None),gicdata.header.get('DataSource',sn)]
                 if debug:
                     print (num2date(lastdate), giclast, gicmax, gicmin)
                 amount += 1
                 valueresults.append(valueres)
+                streamlist.append(gicdata)
             # combine GIC data to a csv file
         except:
             pass
+    for stream in streamlist:
+        # join them all
+        pass
+
+    # get the largest last value which is less then 15min old
+    # if no existing, add the last existing value and set zero to 0
+    # if no values are available set active to zero
     print (valueresults)
+    fastmax = -1
+    fasti = -1
+    slowmax = -1
+    slowi = -1
+    for idx,vals in enumerate(valueresults):
+        if vals[3] > datetime.utcnow()-timedelta(minutes=15):
+            if vals[0] > fastmax:
+                fasti = idx
+        else:
+            if vals[0] > slowmax:
+                slowi = idx
 
+    if fasti > 0:
+        result = valueresults[fasti]
 
-    def is_number(var):
-        try:
-            var = float(var)
-            if np.isnan(var):
-                return False
-            return True
-        except:
-            return False
+    elif slowi > 0:
+        result = valueresults[slowi]
+        active = 0
+    else:
+        result = [0,0,0,None,'None']
+        active = 0
+
+    sql = _create_sql('GIC', 'current', 'activity', 'spaceweather', result[0]/1000., result[2]/1000., result[1]/1000., uncert, 'A', 2,
+                        8, None, None, start, result[3], active, 'TU Graz', result[4], 'Geomagnetically induced currents'):
 
     t2 = datetime.utcnow()
     print ("Duration", (t2-t1).total_seconds())
-    """
-    # remove nans and using absolutes
-    cleangicdata = [np.abs(x) for x in gicdata if is_number(x)]
-    if debug:
-        print ("GIC data", cleangicdata)
-    if len(cleangicdata) > 5:
-        # get the 5 largest values and calculate median
-        sortedgic = sorted(cleangicdata)
-        gicvals = sortedgic[-maxvals:]
-    else:
-        gicvals = cleangicdata
-    if len(cleangicdata) > 2:
-        active = 1
-        gicval = np.median(gicvals)
-    else:
-        active = 0
-        gicval = 0.0
-    if debug:
-        print (gicval, active, amount)
-    comment = "median of {} largest absolut values from {} stations ({})".format(maxvals, amount, ",".join(addcommlist))
-
-    gicnewsql = _create_gicnow_sql(gicval,start,active, comment)
-
-    return [gicnewsql]
-    """
+    return sql
 
 def _create_sql(notation,stype,group,field,value,value_min,value_max,uncert,value_unit,warning_high,critical_high,warning_low,critical_low,start,end,active,source,location,comment):
     now = datetime.utcnow()
@@ -215,19 +216,15 @@ def main(argv):
 
     sqllist = [el for el in sqllist if el]
 
-    """
     if debug:
         print ("Debug selected - sql call looks like:")
         print (sqllist)
     else:
-      for dbel in connectdict:
-        db = connectdict[dbel]
-        print ("     -- Writing data to DB {}".format(dbel))
-        if init:
-            swtableinit(db)
-        if len(sqllist) > 0:
-            _execute_sql(db,sqllist, debug=debug)
-    """
+        for dbel in connectdict:
+            db = connectdict[dbel]
+            print ("     -- Writing data to DB {}".format(dbel))
+            if len(sqllist) > 0:
+                _execute_sql(db, sqllist, debug=debug)
 
     # Logging section
     # ###########################
