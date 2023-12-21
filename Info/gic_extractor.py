@@ -1,35 +1,66 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+from magpy.database import *
+from magpy.opt import cred as mpcred
+import getopt
+
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+anacoredir = os.path.abspath(os.path.join(scriptpath, '..', 'core'))
+sys.path.insert(0, anacoredir)
+from analysismethods import DefineLogger, ConnectDatabases, load_current_data_sub
+from martas import martaslog as ml
+from martas import sendmail as sm
+from acquisitionsupport import GetConf2 as GetConf
+from datetime import time as dttime
+
 """
 Programm to extract GIC values for all stations covering a certain time range.
 Analyzes availability, variability, extrema and current values.
 Creates
 """
-def read_gic_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debug=False):
+def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, maxvals=5, debug=False):
     knewsql = ''
     gicdata = []
     status = {}
     amount = 0
     addcommlist = []
+    t1 = datetime.utcnow()
+
     start = datetime.utcnow()-timedelta(minutes=minutes)
     trange = datetime.strftime(start, "%Y-%m-%d %H:%M:%S")
-    for i in range(1,maxsensor):
+    valueresults = []
+    for i in sensornums:
         name = "{}_GIC{:02d}_0001_0001".format(source,i)
         sn = "GIC{:02d}".format(i)
         try:
             if debug:
                 print ("Checking table ", name)
-            gicdat = dbselect(db,'x', name,'time > "{}"'.format(trange))
+            #gicdat = dbselect(db,'x', name,'time > "{}"'.format(trange))
+            gicdata = readDB(db, name, starttime=start)
+            #gicdat = gicdata._get_column('x')
             if debug:
-                print (" - obtained {} datapoints ".format(len(gicdat)))
-            status[name] = len(gicdat)
-            if len(gicdat) > 0:
+                print (" - obtained {} datapoints ".format(gicdata.length()[0]))
+            status[name] = gicdata.length()[0]
+            if gicdata.length()[0] > 0:
+                # filter the data and extract maximam and minima and last value
+                gicfilt = gicdata.filter()
+                gicrange = [np.abs(gicfilt._get_max('x')),np.abs(gicfilt._get_min('x'))]
+                gicmax = np.max(gicrange)
+                gicmin = np.min(gicrange)
+                lastdate = gicfilt.ndarray[0][-1]
+                giclast = np.abs(gicfilt.ndarray[1][-1])
+                #print (gicdata.header.get('DataSource')) # this should contain the APG Station code
+                valueres = [giclast,gicmax,gicmin,num2date(lastdate),gicdata.header.get('DataSource',sn)]
+                if debug:
+                    print (num2date(lastdate), giclast, gicmax, gicmin)
                 amount += 1
-                addcommlist.append(sn)
-            gicdata.extend(gicdat)
+                valueresults.append(valueres)
+            # combine GIC data to a csv file
         except:
             pass
+    print (valueresults)
+
 
     def is_number(var):
         try:
@@ -40,6 +71,8 @@ def read_gic_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debug=F
         except:
             return False
 
+    t2 = datetime.utcnow()
+    print ("Duration", (t2-t1).total_seconds())
     """
     # remove nans and using absolutes
     cleangicdata = [np.abs(x) for x in gicdata if is_number(x)]
@@ -65,6 +98,32 @@ def read_gic_data(db,source='GICAUT',maxsensor=10, minutes=5, maxvals=5, debug=F
 
     return [gicnewsql]
     """
+
+def _create_sql(notation,stype,group,field,value,value_min,value_max,uncert,value_unit,warning_high,critical_high,warning_low,critical_low,start,end,active,source,location,comment):
+    now = datetime.utcnow()
+    sql = "INSERT INTO COBSSTATUS (status_notation,status_type,status_group,status_field,status_value,value_min,value_max,value_std,value_unit,warning_high,critical_high,warning_low,critical_low,validity_start,validity_end,source,location,comment,date_added,active) VALUES ('{}','{}','{}','{}',{},{},{},{},'{}',{},{},{},{},'{}','{}','{}','{}','{}','{}',{}) ON DUPLICATE KEY UPDATE status_type = '{}',status_group = '{}',status_field = '{}',status_value = {},value_min = {},value_max = {},value_std = {},value_unit = '{}',warning_high = {},critical_high = {},warning_low = {},critical_low = {},validity_start = '{}',validity_end = '{}',source = '{}',location = '{}',comment='{}',date_added = '{}',active = {} ".format(notation,stype,group,field,value,value_min,value_max,uncert,value_unit,warning_high,critical_high,warning_low,critical_low,start,end,source,location,comment,now,active,stype,group,field,value,value_min,value_max,uncert,value_unit,warning_high,critical_high,warning_low,critical_low,start,end,source,location,comment,now,active)
+    return [sql]
+
+def _execute_sql(db,sqllist, debug=False):
+    """
+    DESCRIPTION
+        sub method to execute sql requests
+    """
+    if len(sqllist) > 0:
+        cursor = db.cursor()
+        for sql in sqllist:
+            if debug:
+                print ("executing: {}".format(sql))
+            try:
+                cursor.execute(sql)
+            except mysql.Error as e:
+                emsg = str(e)
+                print ("mysql error - {}".format(emsg))
+            except:
+                print ("unknown mysql error when executing {}".format(sql))
+        db.commit()
+        cursor.close()
+
 
 def main(argv):
     """
@@ -148,7 +207,7 @@ def main(argv):
     try:
         if debug:
             print(" -  Getting GIC:")
-        newsql = read_gic_data(db,source='GICAUT',maxsensor=9, minutes=gicrange, debug=debug)
+        newsql = read_gic_data(db,source='GICAUT',sensornums=GICNUMS, minutes=gicrange, debug=debug)
         sqllist.extend(newsql)
         statusmsg['GIC data access'] = 'success'
     except:
