@@ -54,7 +54,7 @@ def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, ma
                 lastdate = gicfilt.ndarray[0][-1]
                 giclast = np.abs(gicfilt.ndarray[1][-1])
                 #print (gicdata.header.get('DataSource')) # this should contain the APG Station code
-                valueres = [giclast,gicmax,gicmin,num2date(lastdate,tzinfo=None),gicdata.header.get('DataSource',sn)]
+                valueres = [giclast,gicmax,gicmin,num2date(lastdate).replace(tzinfo=None),gicdata.header.get('DataSource',sn)]
                 if debug:
                     print (num2date(lastdate), giclast, gicmax, gicmin)
                 amount += 1
@@ -76,6 +76,7 @@ def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, ma
     slowmax = -1
     slowi = -1
     for idx,vals in enumerate(valueresults):
+        print (idx, vals[3])
         if vals[3] > datetime.utcnow()-timedelta(minutes=15):
             if vals[0] > fastmax:
                 fasti = idx
@@ -85,7 +86,7 @@ def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, ma
 
     if fasti > 0:
         result = valueresults[fasti]
-
+        active = 1
     elif slowi > 0:
         result = valueresults[slowi]
         active = 0
@@ -93,8 +94,8 @@ def read_gic_data(db,source='GICAUT',sensornums=[1,2,3,4,5,6,7,8], minutes=5, ma
         result = [0,0,0,None,'None']
         active = 0
 
-    sql = _create_sql('GIC', 'current', 'activity', 'spaceweather', result[0]/1000., result[2]/1000., result[1]/1000., uncert, 'A', 2,
-                        8, None, None, start, result[3], active, 'TU Graz', result[4], 'Geomagnetically induced currents'):
+    sql = _create_sql('GICmeas', 'activity', 'gic', 'spaceweather', result[0]/1000., result[2]/1000., result[1]/1000., 0, 'A', 2,
+                        8, 0, 0, start, result[3], active, 'TU Graz', result[4], 'geomagnetically induced currents as measured at the neutral point of the transformer')
 
     t2 = datetime.utcnow()
     print ("Duration", (t2-t1).total_seconds())
@@ -135,7 +136,7 @@ def main(argv):
     GICNUMS = [1,2,3,4,5,6,7,8,9]
     configpath = '' # is only necessary for monitoring
     sqllist = []
-    gicrange = 360
+    gicrange = 1440
     savepath = "/tmp/gicdata.csv"
     endtime = datetime.utcnow()
     debug = False
@@ -205,14 +206,16 @@ def main(argv):
 
     # 6. Read GIC data:
     # ###########################
-    try:
+    #try:
+    ok = True
+    if ok:
         if debug:
             print(" -  Getting GIC:")
         newsql = read_gic_data(db,source='GICAUT',sensornums=GICNUMS, minutes=gicrange, debug=debug)
         sqllist.extend(newsql)
         statusmsg['GIC data access'] = 'success'
-    except:
-        statusmsg['GIC data access'] = 'failed'
+    #except:
+    #    statusmsg['GIC data access'] = 'failed'
 
     sqllist = [el for el in sqllist if el]
 
