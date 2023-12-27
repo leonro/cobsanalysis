@@ -127,7 +127,7 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
     value_max=0
     uncert=0
     starttime = endtime-timedelta(minutes=trange)
-    newendtime = endtime # will be changes for mode "last" 
+    newendtime = endtime # will be changes for mode "last"
     ok = True
     if ok:
         # check what happens if no data is present or no valid data is found
@@ -135,9 +135,17 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
             if debug:
                 print ("Reading data: found path or url:", source, starttime, endtime)
             fdata = read(source,starttime=starttime, endtime=endtime)
+            if debug:
+                print (" - found {} datapoints".format(fdata.length()[0]))
             fdata = fdata._drop_nans(key)
+            if debug:
+                print (" - dropped nans")
             cleandata = fdata._get_column(key)
+            if debug:
+                print (" - got key", key)
             newendtime = num2date(fdata.ndarray[0][-1]).replace(tzinfo=None)
+            if debug:
+                print (" - Done")
         else:
             if debug:
                 print ("Reading data: accessing database table")
@@ -338,20 +346,21 @@ def main(argv):
     # ###########################
     try:
         for element in sourcedict:
+            print ("Running job", element)
             try:
                 #element is the unique status_notation
                 warnmsg = 'Fine'
                 if debug:
                      print ("Checking ", element)
                 job = sourcedict.get(element)
-                value, value_min, value_max, uncert, starttime, endtime, active = read_db_data(db, job.get("source"),job.get("key"),trange=job.get("range"),endtime=endtime,mode=job.get("mode"), debug=debug)
+                value, value_min, value_max, uncert, stime, etime, active = read_db_data(db, job.get("source"),job.get("key"),trange=job.get("range"),endtime=endtime,mode=job.get("mode"), debug=debug)
                 warnmsg = check_highs(value,job.get("value_unit"),job.get("warning_high",0),job.get("critical_high",0),job.get("warning_low",0),job.get("critical_low",0))
-                newsql = _create_sql(element,job.get("type"),job.get("group",""),job.get("field",""),value, value_min, value_max, uncert,job.get("value_unit",""),job.get("warning_high",0),job.get("critical_high",0),job.get("warning_low",0),job.get("critical_low",0),starttime,endtime,active,job.get("source",""),job.get("location",""),job.get("comment",""))
+                newsql = _create_sql(element,job.get("type"),job.get("group",""),job.get("field",""),value, value_min, value_max, uncert,job.get("value_unit",""),job.get("warning_high",0),job.get("critical_high",0),job.get("warning_low",0),job.get("critical_low",0),stime,etime,active,job.get("source",""),job.get("location",""),job.get("comment",""))
                 sqllist.extend(newsql)
                 warningmsg[element] = warnmsg
                 statusmsg[element] = 'success'
             except:
-                statusmsg[job] = 'success'
+                statusmsg[element] = 'failed'
         statusmsg['Joblist treatment'] = 'success'
     except:
         statusmsg['Joblist treatment'] = 'failed'
