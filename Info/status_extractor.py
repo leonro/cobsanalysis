@@ -134,15 +134,23 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
         if source.find('/') > -1:
             if debug:
                 print ("Reading data: found path or url:", source, starttime, endtime)
-            fdata = read(source,starttime=starttime, endtime=endtime)
+            try:
+                fdata = read(source,starttime=starttime, endtime=endtime)
+            except:
+                if debug:
+                    print ("Just try to load at least the current day")
+                fbdate = datetime.strftime(endtime,"%Y-%m-%d")
+                source = source.replace("*", "*" + fbdate)
+                fdata = read(source)
             if debug:
                 print (" - found {} datapoints".format(fdata.length()[0]))
-            fdata = fdata._drop_nans(key)
+            ndata = fdata._drop_nans(key)
             if debug:
-                print (" - dropped nans")
-            cleandata = fdata._get_column(key)
+                print (" - dropped nans -> remaining datapoints: {}".format(ndata.length()[0]))
+            cleandata = ndata._get_column(key)
             if debug:
                 print (" - got key", key)
+                #print (fdata.ndarray[0])
             newendtime = num2date(fdata.ndarray[0][-1]).replace(tzinfo=None)
             if debug:
                 print (" - Done")
@@ -155,8 +163,8 @@ def read_db_data(db,source,key,trange=30,endtime=datetime.utcnow(),mode="mean",d
             cleandata = [x for x in data if x and not np.isnan(x)]
         if debug:
             print(" -> {} datapoints remaining after cleaning NaN".format(len(cleandata)))
-        print (cleandata)
-        if len(cleandata) > 0:
+        print ("Cleandata", cleandata)
+        if len(cleandata) > 0 and not isnan(cleandata[0]):
             value_min = np.min(cleandata)
             value_max = np.max(cleandata)
             uncert = np.std(cleandata)
