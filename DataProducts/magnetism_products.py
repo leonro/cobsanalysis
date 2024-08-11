@@ -210,6 +210,7 @@ def ExportData(datastream, config={}, publevel=2):
     sr = datastream.samplingrate()
     datastream.header['DataSamplingrate'] = sr
     print ("  -> Exporting {} data ".format(pubtype))
+    print (" Coverage sec:", datastream._find_t_limits())
     if 'IAGA' in explist:
         print ("     -- Saving one second data - IAGA - to {}".format(vpathsec))
         datastream.write(vpathsec,filenamebegins=obscode.lower(),dateformat="%Y%m%d",filenameends="{}sec.sec".format(pubshort),format_type='IAGA')
@@ -238,6 +239,9 @@ def ExportData(datastream, config={}, publevel=2):
         prelimmin = datastream.filter()
         sr = prelimmin.samplingrate()
         prelimmin.header['DataSamplingrate'] = sr
+        if len(prelimmin.ndarray[0]) > 2:
+            prelimmin = prelimmin.trim(starttime=np.round(prelimmin.ndarray[0][2],0))
+        print ("     -- coverage min", prelimmin._find_t_limits())
         prelimmin.write(vpathmin,filenamebegins=obscode.lower(),dateformat="%Y%m%d",filenameends="{}min.min".format(pubshort),format_type='IAGA')
         #mp.plot(prelimmin)
     if 'DBmin' in explist:

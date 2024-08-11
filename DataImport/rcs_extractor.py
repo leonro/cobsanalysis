@@ -86,26 +86,29 @@ import sys
 import getopt
 import os
 import json
+from magpy.stream import *
 
 
-def _execute_remote_call(host, command, debug=False):
+def _execute_remote_call(host, command, tool="ssh", debug=False):
     """
     call: ["ssh", "cobs@138.22.188.45", "bin/rcsListIni"]
     """
-    ssh = subprocess.Popen(["ssh", "%s" % host, command],
+    ssh = subprocess.Popen([tool, "%s" % host, command],
                            shell=False,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
     result = ssh.stdout.readlines()
-    if result == []:
+    if result == [] and tool == 'ssh':
         error = ssh.stderr.readlines()
-        print( >> sys.stderr, "ERROR: %s" % error)
-        else:
-        print(result)
+        if debug:
+             print ("rcs_extracctor: ERROR in remote call: {}".format(error))
+    else:
+        if debug:
+             print ("Obtained {} lines".format(len(result)))
     return result
 
 
-def _create_fp_data_call(fp, channellist, sensid, begin, end, headerdict={}, debug=False):
+def _create_fp_data_call(host, fp, channellist, sensid, begin, end, headerdict={}, debug=False):
     """
     rcs2csv YYYY-MM-DD [hh:mm:ss] YYYY-MM-DD [hh:mm:ss] FP signals [outfile]
     will save to temporary directory and
@@ -113,10 +116,19 @@ def _create_fp_data_call(fp, channellist, sensid, begin, end, headerdict={}, deb
 
     """
     stream = DataStream()
+    s = datetime.strftime(begin, "%Y-%m-%d %H:%M:%S")
+    e = datetime.strftime(end, "%Y-%m-%d %H:%M:%S")
+    outname = "/tmp/{}.csv".format(sensid)
     if len(channellist) > 15:
         channellist = channellist[:15]
         print("Too many channels ({}) selected for a MagPy datastream output - reducing to 15".format(len(channellist)))
-    call = "bin/rcs2csv {} {} {} {} /tmp/{}.csv".format(begin, end, fp, ",".join(channellist), sensid)
+    call = "bin/rcs2csv {} {} {} {} {}".format(s, e, fp, ",".join(channellist), outname)
+    if debug:
+        print (call)
+    res = _execute_remote_call(host, call, debug=debug)
+    cp = _execute_remote_call("{}:{}".format(host,outname), outname, tool="scp", debug=debug)
+    stream = read(outname)
+    stream.header["SensorID"] = sensid
     return stream
 
 
@@ -135,18 +147,19 @@ def _full_list_call(host, debug=False):
        subdictionary.
     """
     fpdict = {}
-    listcommad = "bin/rcsListIni"
+    listcommand = "bin/rcsListIni"
     res = _execute_remote_call(host, listcommand, debug=debug)
     for el in res:
-        ll = el.decode().strip().split("\t"))
+        ll = el.decode().strip().split("\t")
         fpcont = fpdict.get(ll[0], {})
         contl = [e for idx, e in enumerate(ll) if idx > 0]
         if ll and len(contl) > 2:
-            if
-        len(contl) > 3:
-        fpcont[contl[0]] = {'datatype': contl[1], 'fuse': contl[2], 'description': contl[3]}
-        elif len(contl) > 2:
-        fpcont[contl[0]] = {'datatype': contl[1], 'fuse': contl[2]}
+            if len(contl) > 3:
+                fpcont[contl[0]] = {'datatype': contl[1], 'fuse': contl[2], 'description': contl[3]}
+            elif len(contl) > 2:
+                fpcont[contl[0]] = {'datatype': contl[1], 'fuse': contl[2]}
+            else:
+                fpcont[contl[0]] = {'datatype': contl[1]}
         fpdict[ll[0]] = fpcont
     return fpdict
 
@@ -162,6 +175,8 @@ def _fpdict_extract(fpdict, fieldpoints=[], channels=[], searchlist=[], notlist=
     if not fieldpoints:
         fieldpoints = [key for key in fpdict]
     for fp in fieldpoints:
+        if debug:
+            print ("rcs_extractor: dealing with ", fp)
         newcont = {}
         subd = fpdict.get(fp)
         if not channels:
@@ -169,21 +184,21 @@ def _fpdict_extract(fpdict, fieldpoints=[], channels=[], searchlist=[], notlist=
         for ch in channels:
             take = True
             contd = subd.get(ch)
-            dt = contd.get('datatype')
-            fu = contd.get('fuse')
-            de = contd.get('description')
-            if searchlist:
-                take = False
-                for se in searchlist:
-                    if dt.find(se) > -1 or fu.find(se) > -1 or de.find(se) > -1:
-                        take = True
-            if notlist:
-                take = True
-                for no in notlist:
-                    if dt.find(no) > -1 or fu.find(no) > -1 or de.find(no) > -1:
-                        take = False
-            if take:
-                newcont[ch] = contd
+            if contd:
+                dt = contd.get('datatype',' ')
+                fu = contd.get('fuse',' ')
+                de = contd.get('description',' ')
+                if searchlist:
+                    take = False
+                    for se in searchlist:
+                        if dt.find(se) > -1 or fu.find(se) > -1 or de.find(se) > -1:
+                            take = True
+                if notlist:
+                    for no in notlist:
+                        if dt.find(no) > -1 or fu.find(no) > -1 or de.find(no) > -1:
+                            take = False
+                if take:
+                    newcont[ch] = contd
         newdict[fp] = newcont
 
     return newdict
@@ -191,7 +206,7 @@ def _fpdict_extract(fpdict, fieldpoints=[], channels=[], searchlist=[], notlist=
 
 def _isnum(string):
     try:
-        num = int(string)
+        num = float(string)
         return True
     except:
         return False
@@ -199,7 +214,7 @@ def _isnum(string):
 
 
 def _make_list(stringvar):
-    var = stringar.split(',')
+    var = stringvar.split(',')
     if not isinstance(var, list):
         var = [var]
     var = [el.strip() for el in var]
@@ -211,9 +226,11 @@ def _make_list(stringvar):
                 inds = el.split('-')
                 if len(inds) == 2 and _isnum(inds[0]) and _isnum(inds[1]):
                     li = list(range(int(inds[0]), int(inds[1]) + 1, 1))
+                    li = [str(e) for e in li]
                     newvar.extend(li)
             else:
                 newvar.append(el)
+        var = newvar
     return var
 
 
@@ -228,6 +245,7 @@ def main(argv):
     end = datetime.utcnow()
     outpath = ''
     format_type = 'PYCDF'
+    SUPPORTED_FORMATS = ['PYCDF','CSV']
     jsonpath = ''
     statusdict = {}
     update = False
@@ -289,37 +307,58 @@ def main(argv):
         elif opt in ("-u", "--update"):
             update = True
         elif opt in ("-D", "--debug"):
+            print ("DEBUG mode selected")
             debug = True
 
-        if not conf:
-            print("rcs_extractor: configuration file is required")
-            # sys.exit()
-        if not begin or not end or begin >= end:
-            print("rcs_extractor: check your input dates")
-            sys.exit()
+    if not conf:
+        print("rcs_extractor: configuration file is required")
+        # sys.exit()
+    if not begin or not end or begin >= end:
+        print("rcs_extractor: check your input dates")
+        sys.exit()
 
-        if not fomat_type in SUPPORTED_FORMATS:
-            print("rcs_extractor: selected outputformat is not supported")
-            print("               choose one of {}".format(SUPPORTED_FORMATS))
-            sys.exit()
+    if not format_type in SUPPORTED_FORMATS:
+        print("rcs_extractor: selected outputformat is not supported")
+        print("               choose one of {}".format(SUPPORTED_FORMATS))
+        sys.exit()
 
-        # 1) read config
-        config = {}
-        config['rcshost'] = "cobs@138.22.188.45"
-        if not config.get('rcshost'):
-            print("rcs_extractor: RCS host not defined in config file - aborting")
-            sys.exit()
+    # 1) read config
+    config = {}
+    config['rcshost'] = "cobs@138.22.188.45"
+    if not config.get('rcshost'):
+        print("rcs_extractor: RCS host not defined in config file - aborting")
+        sys.exit()
 
-        # 2) create "rcsListIni" call
-        fpdict = _full_list_call(config.get('rcshost'), debug=debug)
-        selected = _fpdict_extract(fpdict, fieldpoints=[], channels=[], searchlist=[], notlist=[], debug=debug)
-        if l:
-            print(selected)
-        if update:
-            print("Updating database information table contents")
-        if outpath:
-            print("data output selected")
-            # create rcs2csv call - save to temporary and then create selected format
+    # 2) create "rcsListIni" call        
+    fpdict = _full_list_call(config.get('rcshost'), debug=debug)
+    selected = _fpdict_extract(fpdict, fieldpoints=fieldpoints, channels=channels, searchlist=searchlist, notlist=notlist, debug=debug)
+    if debug:
+        count = 0
+        for el in selected:
+            for e in selected.get(el):
+                count = count +1
+        print ("rcs_extractor: Amount of signals in dictionary:", count)
+
+    if l:
+        for el in selected:
+            print ("Fieldpoint:", el) 
+            print ("-------------------------") 
+            for e in selected.get(el):
+                print ("Channel {}: {}".format(e, selected.get(el).get(e)))
+        
+    if update:
+        print("Updating database information table contents")
+    if outpath:
+        print("data output selected")
+        # Only supported for single fieldpoint and less then 15 channels
+        # create rcs2csv call - save to temporary and then create selected format
+        for fp in selected:
+            channellist = [e for e in selected.get(fp)]
+            print ("Fieldpoint:", fp, channellist)
+            sensid = "RCS{}_{}_0001".format(fp,len(channellist))
+            datastream = _create_fp_data_call(config.get('rcshost'), fp, channellist, sensid, begin, end, headerdict={}, debug=debug)
+        import magpy.mpplot as mp
+        mp.plot(datastream)
 
 
 if __name__ == "__main__":
