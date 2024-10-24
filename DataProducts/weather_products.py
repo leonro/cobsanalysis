@@ -319,6 +319,7 @@ def transformBM35(db, datastream, debug=False):
         datastream = datastream.remove_flagged()
         print ("    -- filtering to minute")
         datastream = datastream.filter() # minute data
+        print (" BM35: sampling rate after filtering", datastream.samplingrate())
 
         datastream._move_column('var3','var5')
         datastream._drop_column('var3')
@@ -890,6 +891,7 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), sourc
         statusmsg[name1g] = 'combination of streams successful'
     except:
         statusmsg[name1g] = 'combination of streams failed'
+    print ("Checking results:", result.samplingrate())
 
     print (" H. Add Synop codes and I. Selecting Bucket or Laser")
     try:
@@ -918,6 +920,8 @@ def WeatherAnalysis(db, config={},statusmsg={}, endtime=datetime.utcnow(), sourc
         succ = ExportData(result, onlyarchive=onlyarchive, config=config)
     else:
         print (" Debug selected - not exporting")
+
+    print ("Checking results again:", result.samplingrate())
 
     return result, succ, statusmsg
 
