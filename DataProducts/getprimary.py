@@ -103,7 +103,6 @@ def PrimaryScalar(db, scalarlist, endtime=datetime.utcnow(), logname='', statusm
         #    lval = dbselect(db,'y',inst,expert="ORDER BY time DESC LIMIT 1")
         #else:
         lval = dbselect(db,'f',inst,expert="ORDER BY time DESC LIMIT 1")
-        print (len(last), getstringdate(last[0]))
         if len(last) > 0 and lval and not lval[0] in [0,np.nan]:
             # convert last to datetime
             if debug:
