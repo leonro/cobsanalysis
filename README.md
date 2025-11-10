@@ -557,3 +557,45 @@ LOGPATH=/var/log/magpy
 #30  2  1  2  *    $PYTHON /home/cobs/ANALYSIS/DataProducts/flagging.py -c /home/cobs/CONF/wic.cfg -j archive > $LOGPATH/cron-db-flagarchive 2>&1
 '''
 
+
+## 8. The database structure - groups, types and location details
+
+SENSORS contains the fields SensorGroup and SensorType. 
+
+### 8.1 SensorGroup
+
+SensorGroup describes the main purpose of a specific sensor. A geomagnetic variometer is designed to measure magnetic 
+field variations, but usually also contains temperature probes and voltage acquisition.
+The SensorGroup would be magnetism. SensorGroup is used by flagging tools. Thus, a magnetic 
+anomaly like a geomagnetic storm will affect all magnetism sensors at one location and thus a group
+flag is useful.
+
+At the Conrad Observatory we would record the following sensor groups (examples):
+
+| SensorGroup   | instruments belonging to this group |
+|---------------|-------------------------------------| 
+| magnetism     | FGE, LEMI, GSM, GP20S3, CS,         |
+| meteorology   | LNM, BM35, METEO,                   |
+| environment   | ENV05, DS, MQ135,                   |
+| gravity       | iGRAV, tilt, LM                     |
+| radiometry    | RADON, GAMMA,                       |
+| remotecontrol | RCS,                                |
+| space         | DSCOVR, GOES,                       |
+
+
+### 8.2 SensorType
+
+SensorType contains the primary sensor mechanism or measurement principle
+
+| SensorType       | instruments belonging to this group                       |
+|------------------|-----------------------------------------------------------| 
+| fluxgate         | FGE, LEMI,                                                |
+| overhauser       | GSM,                                                      |
+| optically pumped | GP20S3, CS,                                               |
+| gravity          | iGRAV                                                     |
+| spectrometer     | RADON, GAMMA,                                             |
+| disdrometer      | LNM,                                                      |
+| gas              | MQ135,                                                    |
+| temperature      | Env, DS,                                                  |
+| pressure         | BM35,                                                     |
+| multiple         | DSCOVR, GOES, METEO, (only if a primary is not specified) |
