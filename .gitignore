@@ -4,7 +4,6 @@
 *.py.old
 *.md~
 *.txt~
-*.png
 Logs
 *.log
 Logs/*.pkl
