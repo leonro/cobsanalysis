@@ -2,12 +2,7 @@
 #!/usr/bin/env python
 """
 DESCRIPTION
-   Analyses environmental data from various different sensors providing weather information.
-   Sources are RCS raw data, RCS analyzed meteo data, ultrasonic, LNM and BM35 pressure.
-   Creates a general METEO table called METEOSGO_adjusted, by applying various flagging
-   methods and synop codes (LNM). Additionally, a short term current condition table is created (30min mean),
-   two day and one year plots are generated. Beside, different measurements are compared for similarity (e.g.
-   rain from bucket and lnm)
+   Analyses weather data
 
 PREREQUISITES
    The following packegas are required:
@@ -38,25 +33,17 @@ sys.path.insert(1,'/home/leon/Software/MARTAS/') # should be magpy2
 import unittest
 
 from magpy.stream import *
-from magpy.core import methods
-from magpy.core import database
-from magpy.core import activity
-from magpy.core import flagging
 from magpy.core import plot as mp
-import magpy.opt.cred as mpcred
+from magpy.core import flagging
+from magpy.core.methods import dictdiff, testtime
 
-from martas.version import __version__
-from martas.core.methods import martaslog as ml
-from martas.core import methods as mm
-from martas.core import definitive
-
-
-import json, os
-
+import numpy as np
+import math
+import copy
+import json
+import os
 import getopt
-import pwd
-import socket
-import sys  # for sys.version_info()
+import glob
 
 
 """
@@ -81,13 +68,6 @@ Sensors which are used to create the weather data products
      
 
 """
-# IMPORT analysismethods
-
-
-#sgopath                :       /srv/archive/SGO
-#meteoproducts          :       /srv/products/data/meteo
-#meteoimages            :       /srv/products/graphs/meteo
-#meteorange             :       3
 
 """
 # ################################################
@@ -95,7 +75,7 @@ Sensors which are used to create the weather data products
 # ################################################
 """
 
-synopdict = {"-1":"Sensorfehler",
+synopdict = {'de' : {"-1":"Sensorfehler",
                  "41":"Leichter bis maessiger Niederschlag (nicht identifiziert)",
                  "42":"Starker Niederschlag (nicht identifiziert, unbekannt)",
                  "00":"Kein Niederschlag",
@@ -116,643 +96,507 @@ synopdict = {"-1":"Sensorfehler",
                  "74":"Leichte Graupel",
                  "75":"Maessige Graupel",
                  "76":"Starke Graupel",
-                 "89":"Hagel"}
+                 "89":"Hagel",
+                 "99":""},
+             'en' : {"-1":"Sensor error",
+                 "41":"Light to moderate precipitation (unidentified)",
+                 "42":"Heavy precipitation (unidentified, unknown)",
+                 "00":"No precipitation",
+                 "51":"Light drizzle",
+                 "52":"Moderate drizzle",
+                 "53":"Heavy drizzle",
+                 "57":"Light drizzle with rain",
+                 "58":"Moderate to heavy drizzle with rain",
+                 "61":"Light rain",
+                 "62":"Moderate rain",
+                 "63":"Heavy rain",
+                 "67":"Light rain",
+                 "68":"Moderate to heavy rain",
+                 "77":"Snow sprinkles",
+                 "71":"Light snowfall",
+                 "72":"Moderate snowfall",
+                 "73":"Heavy snowfall",
+                 "74":"Light sleet",
+                 "75":"Moderate sleet",
+                 "76":"Heavy sleet",
+                 "89":"Hail",
+                 "99":""}
+            }
 
-
-
-
-def combinelists(l1,l2):
-    if len(l1) > 0 and len(l2) > 0:
-        l1.extend(l2)
-    elif not len(l1) > 0 and len(l2) > 0:
-        l1 = l2
-    return l1
-
-
-
-def readTable(db, sourcetable="ULTRASONIC%", source='database', path='', starttime='', endtime='', debug=False):
+# add the following methods to basic analysis techniques
+def _data_from_db(name, starttime=None, endtime=None, samplingperiod=1, debug=False):
     """
-    DESCRIPTION:
-        read data from database for all sensors matching sourcetabe names and timerange
-        If archive is selected as source, then the database is searched for all sensors and
-        the archive directory is scanned for all related raw files in related subdirectores
+    DESCRIPTION
+        Extract data sets from database based on name fraction.
+        - will get the lowest sampling period data equal or above the provided limit (default 1sec)
+        - will also check coverage
+    TODO:
+        this method has the same name and almost identical applictaion are analysis._get_data_from_db
+    RETURN
+        datastream
     """
-    print ("  -----------------------")
-    print ("  Reading source tables like {}".format(sourcetable))
-    datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
-    if db and not starttime == '':
-        search = 'SensorID LIKE "{}"'.format(sourcetable)
-        senslist = dbselect(db, 'DataID', 'DATAINFO',search)
-        sens=[]
-        sens2=[]
-        for sensor in senslist:
-            print ("Found sensor {} in DATAINFO".format(sensor))
-            if source == 'database':
-                if debug:
-                    print ("   -- checking sensor {}".format(sensor))
-                last = dbselect(db,'time',sensor,expert="ORDER BY time DESC LIMIT 1")
-                ### last2 should be the better alternative
-                last2 = dbselect(db,'DataMaxTime','DATAINFO','DataID="{}"'.format(sensor))
-                #print (last, starttime, last2)
-                if not last2:
-                    last2 = last
-                if last and (getstringdate(last[0]) > starttime or getstringdate(last2[0]) > starttime):
-                    #sens.append(sensor)
-                    sens2.append([sensor,getstringdate(last[0])])
-                    if debug:
-                        print ("     -> valid data for sensor {}".format(sensor))
-            else:
-                sens.append(sensor)
+    datadict = {}
+    determinesr = []
+    datastream = DataStream()
+    success = False
+    if not starttime and not endtime:
+        success = True
 
-        # sort sens2 so that the one with the latest record is last
-        if not sens:
-            sens = [el[0] for el in sorted(sens2, key=lambda x: x[1])]
-
-        #print (sens)
-        highres_data = ['BM35_']
-        # remove high resolution data sets and use only filtered data
-        highres = []
-        for hr in highres_data:
-            for sen in sens:
-                if sen.find(hr) > -1 and sen.endswith('_0001'):
-                   highres.append(sen)
-        sens = [el for el in sens if not el in highres]
-        print ("Remaining sensors after removing highres data", sens)
-
-        datastream = DataStream([],{},np.asarray([[] for key in KEYLIST]))
-        if len(sens) > 0:
-            for sensor in sens:
-                print ("    -- getting data from {} between {} and {}".format(sensor,starttime,endtime))
-                try:
-                    if source == 'database':
-                        datastream = readDB(db,sensor,starttime=starttime,endtime=endtime)
-                    else:
-                        raw = 'raw'
-                        if sensor.startswith('BM35'):
-                            raw = sensor[:-5]+'_0002'
-                        print ("    -- reading from {}".format(os.path.join(path,sensor[:-5],raw)))
-                        if debug:
-                            print ("       starttime: {}, endtime: {}".format(starttime,endtime))
-                        datastream = read(os.path.join(path,sensor[:-5],raw,'*'),starttime=starttime,endtime=endtime)
-                except:
-                    datastream = DataStream()
-                if debug:
-                    print ("      -> got data with range: {}".format(datastream._find_t_limits()))
-                print ("      -> Done")
-
+    # First get all existing sensors comaptible with name fraction
+    sensorlist = self.db.select('DataID', 'DATAINFO', 'SensorID LIKE "%{}%"'.format(name))
     if debug:
-        print ("      -> obtained {}".format(datastream.length()[0]))
-    print ("      -> readTable finished")
-    print ("  -----------------------")
-
-    return datastream
-
-
-def transformUltra(db, datastream, debug=False):
-    """
-    DESCRIPTION:
-        transform utrasonic data to produce a general structure for combination
-    """
-    if datastream.length()[0] > 0:
-        print ("  Transforming ultrasonic data")
-        print ("    -- getting existing flags ...")
-        start, end = datastream._find_t_limits()
-        flaglist = db2flaglist(db, datastream.header.get("SensorID"),begin=start,end=end)
-        print ("      -> found existing flags: {}".format(len(flaglist)))
-        if len(flaglist) > 0:
-            datastream = datastream.flag(flaglist)
-            datastream = datastream.remove_flagged()
-        print ("    -- original keys", datastream._get_key_headers())
-        print ("    -- resampling and reordering ...")
-        datastream = datastream.resample(datastream._get_key_headers(),period=60,startperiod=60, debugmode=True)
-        #datastream = datastream.resample(['var1'],period=60,startperiod=60, debugmode=True)
-        print ("    -- keys after resampling", datastream._get_key_headers())
-        datastream._move_column('t2','f')
-        datastream._drop_column('t2')
-        print ("    -- keys after reordering", datastream._get_key_headers())
-        print (datastream.ndarray)
-
-    print ("      -> Done")
-    return datastream
-
-
-def getLastSynop(datastream, synopdict={}):
-    """
-    DESCRIPTION:
-        transform lnm data to produce a general structure for combination
-    """
-    print ("  Extracting last synop code")
-    trans = ''
-    # Get latest synop data
-    for index,elem in enumerate(datastream.ndarray):
-        if len(elem) > 0:
-            #print ("KEY: {} = {} ({})".format(KEYLIST[index],elem[-1],data.header.get('col-{}'.format(KEYLIST[index]))))
-            if KEYLIST[index] == 'str1':
-                synop = elem[-1]
-
-    transtmp = synopdict.get(str(synop))
-    try:
-        if (datetime.utcnow()-num2date(datastream.ndarray[0][-1]).replace(tzinfo=None)).total_seconds() < 3600:
-             print ("     -- Current Weather: {}".format(transtmp))
-             trans = transtmp
-        else:
-             print ("     -- !!! No recent SYNOP data available - check LNM data") 
-    except:
-        pass
-
-    print ("      -> Done")
-    return trans
-
-def transformLNM(datastream, debug=False):
-    """
-    DESCRIPTION:
-        transform lnm data to produce a general structure for combination
-        # Columns after: 
-        temperature: 'f'
-        synop: 'str1'
-        visibility: 't2'
-        rain: 'y'
-        rain: 'df'
-    """
-
-    print ("  Transforming LNM data")
-    if datastream.length()[0] > 0:
-        print ("    -- extracting synop code into resampled stream")
-        data = datastream.copy()
-        syn = data._get_column('str1')
-        syn = np.asarray([float(el) for el in syn])
-        data._drop_column('var4')
-        data._put_column(syn,'var4')
-        print ("    -- determine average rain from LNM")
-        res2 = datastream.steadyrise('x', timedelta(minutes=60),sensitivitylevel=0.002)
-        datastream= datastream._put_column(res2, 'df', columnname='Percipitation',columnunit='mm/1h')
-        print ("    -- resampling LNM")
-        datastream= datastream.resample(datastream._get_key_headers(),period=60,startperiod=60)
-        # Test merge to get synop data again
-        print ("    -> Syn column looks like:", syn)
-        datastream = datastream._drop_column('var4')
-        if len(syn) > 0:
+        print("   -> Found {}".format(sensorlist))
+        print("   a) select of highest resolution data equal/above samplingperiods of {} sec".format(
+            samplingperiod))  # should be tested later again
+    # Now get corresponding sampling rate
+    projected_sr = samplingperiod
+    for sensor in sensorlist:
+        sr = 0
+        res = self.db.select('DataSamplingrate', 'DATAINFO', 'DataID="{}"'.format(sensor))
+        try:
+            sr = float(res[0])
             if debug:
-                print ("      -> found synop codes {}".format(len(syn)))
-            datastream = mergeStreams(datastream,data, keys=['var4'])
-        else:
-            emp = [0]*datastream.length()[0]
-            datastream = datastream._put_column(emp,'var4')
-            print ("    -> no percipitation codes found within the covered time range")
-
-        datastream._drop_column('x')
-        datastream._move_column('y','t2')
-        datastream._drop_column('z')
-        datastream._move_column('t1','f')
-        datastream._drop_column('t1')
-        datastream._drop_column('var1')
-        datastream._drop_column('var2')
-        datastream._drop_column('var3')
-        datastream._drop_column('var5')
-        datastream._drop_column('dx')
-        datastream._drop_column('dy')
-        datastream._drop_column('dz')
-        datastream._move_column('df','y')
-        datastream._drop_column('str1')
-        #datastream._drop_column('df')  # remove after CheckRain
-
-    print ("      -> Done")
-    return datastream
-
-
-def transformBM35(db, datastream, debug=False):
-    """
-    DESCRIPTION:
-        filter and transform bm35 data to produce a general structure for combination
-        # Columns after: 
-        pressure: 'var5'
-    PARAMTER:
-        dbupdate : if True then new flags will be written to DB
-    """
-
-    print ("  Transforming BM35 data")
-    if datastream.length()[0] > 0:
-        datastream = datastream.filter(filter_width=timedelta(seconds=3.33333333),resample_period=1)
-        start, end = datastream._find_t_limits()
-        print ("    -- getting existing flags ...")
-        flaglist = db2flaglist(db, datastream.header.get("SensorID"),begin=start,end=end)
-        print ("    -- found existing flags: {}".format(len(flaglist)))
-        datastream = datastream.flag(flaglist)
-        datastream = datastream.remove_flagged()
-        flaglist2 = datastream.flag_range(keys=['var3'],above=1000, text='pressure exceeding value range',flagnum=3)
-        flaglist3 = datastream.flag_range(keys=['var3'],below=750, text='pressure below value range',flagnum=3)
-        flaglist2 = combinelists(flaglist2,flaglist3)
-        print ("    -- removing flagged data")
-        datastream = datastream.flag(flaglist2)
-        datastream = datastream.remove_flagged()
-        print ("    -- filtering to minute")
-        datastream = datastream.filter() # minute data
-        print (" BM35: sampling rate after filtering", datastream.samplingrate())
-
-        datastream._move_column('var3','var5')
-        datastream._drop_column('var3')
-
-    print ("      -> Done")
-    return datastream, flaglist2
-
-
-def transformRCST7(db, datastream, debug=False):
-    """
-    DESCRIPTION:
-        filter and transform rcs t7 data to produce a general structure for combination
-        # --------------------------------------------------------    
-        # RCS - Get data from RCS (no version/revision control in rcs) 
-        # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
-        # 
-        # Columns after: 
-        pressure (if existing): 'var5'
-        temperature: 'f'
-        snowheight: 'z'
-        rain: 'y'
-        humidity: 't1'
-
-    PARAMTER:
-        dbupdate : if True then new flags will be written to DB
-    """
-
-    print ("  Transforming RCST7 data")
-
-    filtdatastream = DataStream()
-    flaglist = []
-    if datastream.length()[0]>0:
-        start, end = datastream._find_t_limits()
-        print ("    -- getting existing flags for {} ...".format(datastream.header.get("SensorID")))
-        flaglist = db2flaglist(db,datastream.header.get("SensorID"),begin=start, end=end)
-        print ("    -- found {} flags for given time range".format(len(flaglist)))
-        if len(flaglist) > 0:
-            datastream = datastream.flag(flaglist)
-        datastream = datastream.remove_flagged()
-        datastream.header['col-y'] = 'T'
-        datastream.header['unit-col-y'] = 'degC'
-        datastream.header['col-t2'] = 'rh'
-        datastream.header['unit-col-t2'] = 'percent'
-        datastream.header['col-f'] = 'P'
-        datastream.header['unit-col-f'] = 'hPa'
-        datastream.header['col-x'] = 'snowheight'
-        datastream.header['unit-col-x'] = 'cm'
-
-        flaglist = []
-        print ("    -- cleanup snow height measurement - outlier")  # WHY NOT SAVED?? -- TOO MANY Flags -> needs another method
-        removeimmidiatly = True
-        if removeimmidiatly:
-            datastream = datastream.flag_outlier(keys=['x'],timerange=timedelta(days=5),threshold=3)
-            datastream = datastream.remove_flagged()
-        else:
-            flaglist = datastream.flag_outlier(keys=['x'],timerange=timedelta(days=5),threshold=3,returnflaglist=True)
-        print ("      -> size of flaglist now {}".format(len(flaglist)))
-        print ("    -- cleanup rain measurement")
-        try:
-            z = datastream._get_column('z')
-            if np.mean('z') >= 0 and np.mean('z') <= 1:
-                flaglist0 = datastream.bindetector('z',1,['t1','z'],datastream.header.get("SensorID"),'Maintanence switch for rain bucket',markallon=True)
-            else:
-                print ("      -> flagging of service switch rain bucket failed")
+                print("    - Sensor: {} -> Samplingrate: {}".format(sensor, sr))
         except:
-            flaglist0 = []
-            print ("      -> flagging of service switch rain bucket failed")
-        flaglist = combinelists(flaglist,flaglist0)
-        print ("      -> size of flaglist now {}".format(len(flaglist)))
-        print ("    -- cleanup temperature measurement")
-        flaglist1 = datastream.flag_outlier(keys=['y'],timerange=timedelta(hours=12),returnflaglist=True)
-        flaglist = combinelists(flaglist,flaglist1)
-        print ("      -> size of flaglist now {}".format(len(flaglist)))
-        print ("    -- cleanup pressure measurement") # not part of rcs any more -> flag only if mean is between 800 and 1000...
-        if not np.isnan(datastream.mean('f')) and 800 < datastream.mean('f') and datastream.mean('f') < 1000:
-            flaglist2 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], below=800,text='pressure below value range')
-            flaglist = combinelists(flaglist,flaglist2)
-            flaglist3 = datastream.flag_range(keys=['f'], flagnum=3, keystoflag=['f'], above=1000,text='pressure exceeding value range')
-            flaglist = combinelists(flaglist,flaglist3)
-            print ("      -> size of flaglist now {}".format(len(flaglist)))
-        else:
-            datastream._drop_column('f')
-            print ("      -> no pressure data found")
-        print ("    -- cleanup humidity measurement")
-        flaglist4 = datastream.flag_range(keys=['t2'], flagnum=3, keystoflag=['t2'], above=100, below=0,text='humidity not valid')
-        flaglist = combinelists(flaglist,flaglist4)
-        print ("      -> size of flaglist now {}".format(len(flaglist)))
-        datastream = datastream.flag(flaglist)
-        print ("    -- found new flags: {}".format(len(flaglist)))
-        datastream = datastream.remove_flagged()
-        print ("    -- found and removed new flags: {}".format(len(flaglist)))
-
-        # Now Drop flag and comment line - necessary because of later filling of gaps
-        flagpos = KEYLIST.index('flag')
-        commpos = KEYLIST.index('comment')
-        datastream.ndarray[flagpos] = np.asarray([])
-        datastream.ndarray[commpos] = np.asarray([])
-        ## Now use missingvalue treatment
-        print ("    -- interpolating missing values if less then 5 percent are missing within 2 minutes")
-        datastream.ndarray[1] = datastream.missingvalue(datastream.ndarray[1],120,threshold=0.05,fill='interpolate')
-        print ("    -- determine average rain")
-        res = datastream.steadyrise('t1', timedelta(minutes=60),sensitivitylevel=0.002)
-        print ("       -> RCST7 rain checked")
-        datastream= datastream._put_column(res, 'var1', columnname='Percipitation',columnunit='mm/1h')
-        print ("    -- filter all RCS data columns to 1 min")
-        filtdatastream = datastream.filter(missingdata='interpolate')
-
-        filtdatastream._move_column('f','var5')
-        filtdatastream._move_column('y','f')
-        filtdatastream._move_column('x','z')
-        filtdatastream._drop_column('x')
-        filtdatastream._move_column('var1','y')
-        filtdatastream._move_column('t2','t1')
-        filtdatastream._drop_column('t2')
-        filtdatastream._drop_column('var1')
-        filtdatastream._drop_column('var2')
-        filtdatastream._drop_column('var3')
-        filtdatastream._drop_column('var4')
-
-    else:
-        filtdatastream = DataStream()
-
-    print ("      -> Done")
-
-    return filtdatastream, flaglist
-
-
-def transformMETEO(db, datastream, debug=False):
-    """
-    DESCRIPTION:
-        filter and transform rcs t7 data to produce a general structure for combination
-        # --------------------------------------------------------
-        # METEO - Get data from RCS (no version/revision control in rcs)
-        # Schnee: z, Temperature: f, Humidity: t1, Pressure: var5
-    """
-
-    print ("  Transforming METEO data")
-
-    if datastream.length()[0] > 0:
-        start, end = datastream._find_t_limits()
-        flaglist = db2flaglist(db,datastream.header.get("SensorID"),begin=start, end=end)
-        print ("    -- Found existing flags: {}".format(len(flaglist)))
-        datastream = datastream.flag(flaglist)
-        datastream = datastream.remove_flagged()
-        datastream = datastream.flag_outlier(keys=['f','z'],timerange=timedelta(days=5),threshold=3)
-        # meteo data is not flagged
-        datastream = datastream.remove_flagged()
-        print ("    -- Cleanup pressure measurement")
-        if not np.isnan(datastream.mean('var5')) and 800 < datastream.mean('var5') and datastream.mean('var5') < 1000:
-            flaglist1 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], below=800,text='pressure below value range')
-            flaglist = combinelists(flaglist,flaglist1)
-            flaglist15 = datastream.flag_range(keys=['var5'], flagnum=3, keystoflag=['var5'], above=1000,text='pressure exceeding value range')
-            flaglist = combinelists(flaglist,flaglist15)
-        else:
-            print ("      -> no pressure data found")
-            datastream._drop_column('var5')
-        print ("    -- Cleanup humidity measurement")
-        flaglist2 = datastream.flag_range(keys=['t1'], flagnum=3, keystoflag=['t1'], above=100, below=0)
-        flaglist = combinelists(flaglist,flaglist2)
-        meteost = datastream.flag(flaglist)
-        meteost = datastream.remove_flagged()
-        print ("    -- Determine average rain")
-        res = datastream.steadyrise('dx', timedelta(minutes=60),sensitivitylevel=0.002)
-        print ("       -> METEO rain checked")
-        if np.isnan(np.sum(res)):
-            print (" STEADYRISE: found a NAN value")
-        datastream = datastream._put_column(res, 'y', columnname='Percipitation',columnunit='mm/1h')
-        flagpos = KEYLIST.index('flag')
-        commpos = KEYLIST.index('comment')
-        datastream.ndarray[flagpos] = np.asarray([])
-        datastream.ndarray[commpos] = np.asarray([])
-
-        print ("    -- cleaning data stream")
-        # Meteo
-        datastream._drop_column('x')
-        datastream._drop_column('t2')
-        #datastream._drop_column('var1')   # remove after CheckRain
-        datastream._drop_column('var2')
-        datastream._drop_column('var3')
-        datastream._drop_column('var4')
-        datastream._drop_column('dx')
-        datastream._drop_column('dy')
-        datastream._drop_column('dz')
-        datastream._drop_column('df')
-
-    print ("      -> Done")
-
-    return datastream
-
-
-def CheckRainMeasurements(lnmdatastream, meteodatastream, dayrange=3, config={}, debug=False):
-    """
-    DESCRIPTION:
-        compare rain measurements between LNM and Meteo bucket
-        # --------------------------------------------------------
-        # RCS - Get data from RCS (no version/revision control in rcs)
-        # Schnee: x, Temperature: y,  Maintainance: z, Pressure: f, Rain: t1,var1, Humidity: t2
-    """
-
-    print (" -----------------------")
-    print (" Compare rain data from bucket and LNM")
-    istwert = -999
-    # now get: filter data to 1 minute
-    # extract similar time rangee from both datasets
-    print ("    -- get similar time ranges")
-    minlnm, maxlnm = lnmdatastream._find_t_limits()
-    minmet, maxmet = meteodatastream._find_t_limits()
-    mint = max([minlnm,minmet])
-    maxt = min([maxlnm,maxmet])
-    lnmdata = lnmdatastream.trim(starttime=mint,endtime=maxt)
-    meteodata = meteodatastream.trim(starttime=mint,endtime=maxt)
+            if debug:
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print("Check sampling rate {} of {}".format(res, sensor))
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            determinesr.append(sensor)
+        if sr >= projected_sr - 0.02:
+            # if sr is larger to projected sr within 0.02 sec
+            cont = {}
+            cont['samplingrate'] = sr
+            datadict[sensor] = cont
+    if len(determinesr) > 0:
+        if debug:
+            print("   b) checking sampling rate of {} sensors without sampling rate".format(len(determinesr)))
+        for sensor in determinesr:
+            lastdata = self.db.get_lines(sensor, namedict.get('coverage', 7200))
+            if len(lastdata) > 0:
+                sr = lastdata.samplingrate()
+                if debug:
+                    print("    - Sensor: {} -> Samplingrate: {}".format(sensor, sr))
+                # update samplingrate in db
+                print("    - updating header with determined sampling rate:", lastdata.header)
+                self.db.write(lastdata)
+                if sr >= projected_sr - 0.02:
+                    # if sr is larger to projected sr within 0.02 sec
+                    cont = {}
+                    cont['samplingrate'] = sr
+                    datadict[sensor] = cont
     if debug:
-        print ("      -> dealing with time range from {} to {}".format(mint,maxt))
-    print ("    -- extract rain measurements")
-    res = np.asarray([el for el in meteodata._get_column('y') if not np.isnan(el)])
-    res2 = np.asarray([el for el in lnmdata._get_column('df') if not np.isnan(el)])  # limit to the usually shorter rcst7 timeseries
-    print ("      -> cumulative rain t7={} and lnm={}".format(np.sum(res), np.sum(res2)))
-    if not len(res) > 0:
-        config['rainsource'] = 'laser'
-    if not len(res2) > 0:
-        config['rainsource'] = 'bucket'
-    if len(res) > 1440*int(dayrange*0.5) and not np.mean(res) == 0:
-        istwert = np.abs((np.mean(res) - np.mean(res2))/np.mean(res))
-        sollwert = 0.3
-        if debug:
-            print ("Obsevered difference of cumulative percipitioan: {} percent; (accepted difference: {} percent)".format(istwert,sollwert))
-        if istwert > 0.3:
-            print ("     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print ("     Current Weather: large differences between rain measurements !!") # add this to consistency log
-            print ("     Difference is {}".format(istwert))
-            print ("     Means: T7 = {}; LNM = {}".format(np.mean(res), np.mean(res2)))
-            print ("     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            # you can switch to lnm data by activating the following two lines
-            #data2 = data2._put_column(res2, 't2', columnname='Niederschlag',columnunit='mm/1h')
-            #data = mergeStreams(data,data2,keys=['t2'],mode='replace')
-    else:
-        print ("    -> no rain in time range or sequence too short")
+        print("   -> {} data sets fulfilling search criteria after a and b".format(len(datadict)))
 
-    print ("      -> Done")
-    print (" -----------------------")
+    data = DataStream()
+    selectedsensor = ''
+    sel_sr = 9999
+    for dataid in datadict:
+        cont = datadict.get(dataid)
+        sr = cont.get('samplingrate')
+        if sr < sel_sr:
+            selectedsensor = dataid
+            sel_sr = sr
+            if debug:
+                print("   -> {}: this sensor with sampling rate {} sec is selected".format(selectedsensor, sel_sr))
+            ddata = self.db.read(selectedsensor, starttime=starttime, endtime=endtime)
+            if len(ddata) > 0:
+                data = join_streams(ddata, data)
+            if debug:
+                print("   c) now check whether the timerange is fitting")
+            st, et = data.timerange()
+            if starttime:
+                # assume everything within oe hour to be OK
+                if np.abs((starttime - st).total_seconds()) < 3600:
+                    success = True
+            if endtime:
+                if np.abs((endtime - et).total_seconds()) < 3600:
+                    success = True
 
-    return istwert, config
+    return data, success
 
 
-def CombineStreams(streamlist, debug=False):
+def get_data(sname, starttime=None, endtime=None, stationid='SGO', apply_flags=True, config={}, debug=True):
     """
-    DESCRIPTION:
-        combine datastream to a single meteo data stream
+    same = like "ULTRA*"
     """
-    result = DataStream()
-    print ("  Joining stream")
-    for st in streamlist:
-        print ("   -> dealing with {}".format(st.header.get("SensorID")))
-        if debug:
-            print ("    coverage before:", st._find_t_limits())
-            print ("    and keys of the new stream:", st._get_key_headers())
-            #mp.plot(st)
-        if not result.length()[0] > 0:
-            result = st
-        else:
-            try:
-                if debug:
-                    print ("     - before join/merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
-                result = joinStreams(result,st)  # eventually extend the stream
-                print ("      and keys of the joined stream:", st._get_key_headers())
-                result = FloatArray(result)   # remove any unwanted string as occur in lnm
-                if debug:
-                    print ("     - after join: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
-                result = mergeStreams(result,st,mode='replace')  # then merge contents
-                if debug:
-                    print ("     - after merge: len {} and keys {}".format(result.length()[0], result._get_key_headers()))
-            except:
-                print ("   -> problem when joining datastream")
-        if debug:
-            print ("    coverage after:", result._find_t_limits())
+    dbname = config.get('', 'cobsdb')
+    archivepath = config.get('', '/srv/archive')
 
-    result.header = {}
-    result.header['col-y'] = 'rain'
-    result.header['unit-col-y'] = 'mm/h'
-    result.header['col-z'] = 'snow'
-    result.header['unit-col-z'] = 'cm'
-    result.header['col-f'] = 'T'
-    result.header['unit-col-f'] = 'degC'
-    result.header['col-t1'] = 'rh'
-    result.header['unit-col-t1'] = 'percent'
-    result.header['col-t2'] = 'visibility'
-    result.header['unit-col-t2'] = 'm'
-    result.header['col-var1'] = 'windspeed'
-    result.header['unit-col-var1'] = 'm/s'
-    result.header['col-var2'] = 'winddirection'
-    result.header['unit-col-var2'] = 'deg'
-    result.header['col-var4'] = 'synop'
-    result.header['unit-col-var4'] = '4680'
-    result.header['col-var5'] = 'P'
-    result.header['unit-col-var5'] = 'hPa'
-    result.header['StationID'] = 'SGO'
-    result.header['SensorID'] = 'METEOSGO_adjusted_0001'
-    result.header['DataID'] = 'METEOSGO_adjusted_0001_0001'
-
-    if debug:
-        #mp.plot(result)
-        print (result.ndarray)
-        print (result.length()[0])
-    return result
-
-
-def ObjectArray(datastream):
-    l = np.asarray([np.asarray(el).astype(object) for el in datastream.ndarray])
-    return DataStream([],datastream.header,l)
-
-
-def FloatArray(datastream):
-    newnd = []
-    for ar in datastream.ndarray:
-        n = []
-        for el in ar:
-            try:
-                n.append(float(el))
-            except:
-                n.append(np.nan)
-        newar = np.asarray(n).astype(float)
-        newnd.append(newar)
-
-    return DataStream([],datastream.header,np.asarray(newnd))
-
-
-def AddSYNOP(datastream, synopdict={}, debug=False):
-    # Add plain text synop descriptions
-    print (" -----------------------")
-    print (" Adding synop codes")
-    syno = datastream._get_column('var4')
-    txt= []
-    for el in syno:
-        try:
-            itxt = str(int(el))
-            txt.append(synopdict.get(itxt,''))
-        except:
-            txt.append('')
-    txt = np.asarray(txt)
-    datastream._put_column(txt,'str2')
-
-    print ("      -> Done")
-    print (" -----------------------")
-
-    return datastream
-
-
-def RainSource(datastream, diff=0.1, source='bucket', debug=False):
-    """
-    DESCRIPTION
-        Select primary source of percipitation data
-        Three possibilities:
-          1) source "bucket" -> always use rain bucket data
-          2) source "laser" -> always use laser disdrometer
-          3) source "whatever" -> primarly use 'bucket', switch to 'laser' if difference exceeds threshold (e.g 0.3 = 30%)
-        Background of "whatever": In very strong rain events, the bucket cannot measure rain amounts precisly any more  
-    """
-
-    print (" -----------------------")
-    print (" Fixing source of rain measurements")
-    threshold = 0.3
-    if diff > threshold and not source == 'bucket':
-        source = 'laser'
-    if source=='bucket':
-        datastream._drop_column('df')
-    else:  # source=='laser':
-        datastream._move_column('df','y')
-        datastream._drop_column('df')
-
-    print ("      -> Done: using {}".format(source))
-    print (" -----------------------")
-
-    return datastream
-
-
-def dbtableexists(db,tablename):
-    """
-    DESCRIPTION
-        check whether a table existis or not
-    VARIABLES:
-        db   :    a link to a mysql database
-        tablename  :  the table to be searched (%tablename%)
-                      e.g.  MyTable  wil find MyTable, NOTMyTable, OhItsMyTableIndeed
-    RETURNS
-        True : if one or more table with %tablename% are existing
-        False : if tablename is NOT found in database db
-    APPLICATION
-        db = mysql.connect(...)
-        return dbtableexists(db,'MyTable') 
-    """
-    n = 0
-    sql = "SHOW TABLES LIKE '%{}%'".format(tablename)
-
-    cursor = db.cursor()
-    try:
-        n = cursor.execute(sql)
-    except:
+    et = ''
+    data = DataStream()
+    if not endtime:
         pass
-    if n > 0:
-        return True
+    elif endtime == 'now':
+        et = 'now'
+        endtime = datetime.now(timezone.utc).replace(tzdata=None)
     else:
-        return False
+        endtime = testtime(endtime)
+    if not starttime:
+        if et == 'now':
+            starttime = endtime - timedelta(days=1)
+    else:
+        starttime = testtime(starttime)
+
+    # connect_db
+    db = False
+    # if sname is a path with widcards then skip db test and read directly
+    l = glob.glob(sname)
+    if len(l) > 0:
+        # file path with wildcards was provided
+        data = read(sname, starttime=starttime, endtime=endtime)
+    else:
+        # check database first
+        if db:
+            dname = sname.replace("*", "%")
+            ddata, success = _data_from_db(dname, starttime=starttime, endtime=endtime, samplingperiod=1, debug=debug)
+        else:
+            ddata = DataStream()
+            success = False
+        # if no fdata or incomplete check archive
+        if not success:
+            l1 = glob.glob(os.path.join(archive, stationid, sname))
+            print(l1)
+            if len(l1) > 1:
+                print("name fragment is unspecific")
+            if len(l1) > 0:
+                for path in l1:
+                    cdata = read(os.path.join(path, sname), starttime=starttime, endtime=endtime)
+                    data = join_streams(cdata, data)
+                if len(ddata) > 0:
+                    data = join_streams(data, ddata)
+        else:
+            data = ddata.copy()
+    # flags
+    if db:
+        fl = db.flags_from_db(sensorid=data.header.get("SensorID"), starttime=starttime, endtime=endtime)
+        data = fl.apply_flags(data)
+
+    return data
+
+
+def pressure_to_sea_level(pressure, height, temp=[], rh=[], g0=9.80665):
+    """
+    DESCRIPTION
+        caluclates pressure to sea level using the DWD formula
+    PARAMETERS
+        pressure  :  array with pressure values at station altitiude
+        height    :  height of the station in m
+        temp  :  temperature array with same length as pressure in degree C
+        relhum :  relative humidity with len of pressure values
+    RETURNS
+        pr_sea_level : an array of length pressure with values at sea level in hPa
+    """
+    Rd = 287.05 # m2/(s2/K)
+    a = 0.0065 # K/m
+
+    if not len(pressure) > 0:
+        print ("You need to provide pressure data at station level")
+        return None
+    if not height:
+        print ("You need to provide a height of the measurement")
+        return None
+    if len(temp)>0 and len(rh)>0 and len(temp) == len(pressure) and len(rh) == len(pressure):
+        # Solution 1 - source Wikipedia, after Beobachterhandbuch (BHB) für Wettermeldestellen des synoptisch-klimatologischen
+        # Mess- und Beobachtungsnetzes (= Vorschriften und Betriebsunterlagen. Nr. 3). Dezember 2015, Kap. 6.6 Reduktion des Luftdrucks
+        Th = temp + 273.25  # K
+        es = 6.112 * np.exp((17.67*temp)/(temp+243.5))  # t in degree C, saturation vapor pressure
+        E = rh/100. * es # hPa
+        Ch = 0.12 # K/hPa
+        print ("Using full DWD equation - citation")
+        x = (g0*height)/(Rd*(Th+Ch*E+a*height/2))
+        pr_sea = pressure * np.exp(x)
+    else:
+        # Solution 2 - internationale barometrische Hoehenformel (kein spezifisches Zitat auffindbar, zahllose Nennungen im WWW)
+        # no additional parameter - used in java script WebMARTAS)
+        # difference about 1 hPa
+        print ("Using simplification - citation")
+        pr_sea = (pressure / (1-(a*height)/288.15)**5.255)
+    return pr_sea
+
+def snow_or_nosnow(meteo,config=None, debug=False):
+    """
+    DESCRIPTION:
+        Estimate whether a snow cover is probable or not. Background: very small snow heights
+        might not be found because of uncertainties of snow height sensor. They are, however,
+        critical for road conditions.
+        Ideally we would use a camera... but
+        This method uses several parameters related to snow and
+        adds them up to a probability sum, indicating whether snow
+        is accumulating or not. Currently five parameters are tested:
+           1. Temperature (high probablity at low temperatures)
+           2. Snow height (high probability at high values)
+              problematic are low values (<5cm)
+           3. SYNOP code: high probability if it is snowing or hailing (SYNOP>70)
+           4. Snow cover already detected earlier
+           5. some location related manual probability (0 in our case)
+           Useful extensions:
+           6. Soil or ground temperature (or eventually temperature history)
+           7. Reflectivity
+           and a CAM !!!
+        Each parameter adds to a probability sum. If this sum
+        exceeds the given threshold value we assume a snow cover
+    """
+    if not config:
+        config = {}
+
+    threshold = config.get('threshold',1.90)
+    p0 = config.get('p0',0)
+    ta = config.get('ta',-7.14286)
+    tb = config.get('tb',107.69231)
+    sa = 0.04
+
+    tcol = meteo._get_column('f')
+    if debug:
+        print (tcol)
+    tcol = np.where(tcol<=1, 1.0, tcol)
+    tcol = np.where(tcol>=15, 0, tcol)
+    probability_T = np.where(tcol>1, (ta*tcol+tb)/100., tcol)
+    if debug:
+        print ("probability T", probability_T)
+    scol = meteo._get_column('z')
+    if debug:
+        print ("scol", scol)
+    scol = np.where(scol<=0, 0, scol)
+    scol = np.where(scol>=5, -1.0, scol)
+    scol = np.where(scol>0, sa*scol*scol, scol)
+    probability_SnowHeight = np.where(scol==-1, 1.0, scol)
+    if debug:
+        print ("probability SnowHeight", probability_SnowHeight)
+    syncol = meteo._get_column('var4')
+    syncol = np.where(syncol>70, 1.0, syncol)
+    probability_Synop = np.where(syncol<=70, 0, syncol)
+    if debug:
+        print ("probability Synop", probability_Synop)
+    ecol = meteo._get_column('dz')  # 1 (snow) or 0 (no-snow)
+    if not len(ecol) == len(tcol):
+        ecol = np.asarray([0]*len(tcol))
+    probability_SnowExists = np.asarray([np.mean(ecol[idx-30:idx]) if idx > 30 and not np.isnan(el) else 0 for idx,el in enumerate(ecol)])
+    if debug:
+        print ("probability Existed recently", probability_SnowExists)
+
+    sumprobcol = probability_T + probability_SnowHeight + probability_Synop + probability_SnowExists + p0
+    if debug:
+        print ("probability Sum", sumprobcol)
+    resultcol = np.where(sumprobcol>threshold, 1, 0)
+    meteo = meteo._put_column(resultcol, 'dz')
+    meteo.header['col-dz'] = 'snow cover'
+
+    return meteo
 
 
 
+
+def transfrom_ultra(source, starttime=None, endtime=None, offsets={'t2':-0.87}, debug=False):
+    """
+    DESCRIPTION
+        creates a 1-min data set, moves columns and apply offsets
+    """
+    t1 = datetime.now()
+    ultra = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    #ultra = get_data(os.path.join(basepath, "ULTRA*"))
+    if debug:
+        print ("Headers: ", ultra._get_key_names())
+        print ("Samplingrate {} sec and {} data points".format(ultra.samplingrate(), len(ultra)))
+        print ("Range:", ultra.timerange())
+    ultra = ultra.get_gaps()
+    ultram = ultra.resample(keys=ultra._get_key_headers(),period=60)
+    ultram = ultram.offset(offsets)
+    ultram = ultram._move_column('t2','f')
+    ultram = ultram._drop_column('var5') # resample might create a var5 column with gaps
+    t2 = datetime.now()
+    if debug:
+        print (" transform needed {} sec".format((t2-t1).total_seconds()))
+    return ultram
+
+
+def transfrom_pressure(source, starttime=None, endtime=None, debug=False):
+    """
+    DESCRIPTION
+        creates a 1-min data set, moves columns
+    """
+    t1 = datetime.now()
+    bm35 = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    #bm35 = read(os.path.join(basepath, "Antares", "BM35*"))
+    if debug:
+        print ("Headers: ", bm35._get_key_names())
+        print ("Samplingrate {} sec and {} data points".format(bm35.samplingrate(), len(bm35)))
+        print ("Range:", bm35.timerange())
+    #bm35s = bm35.filter()
+    bm35 = bm35._move_column('var3','var5')
+    bm35m = bm35.filter(filter_width=timedelta(minutes=2), resample_period=60.0)
+    t2 = datetime.now()
+    if debug:
+        print ("filtered sampling rate", bm35m.samplingrate())
+        print (" transform needed {} sec".format((t2-t1).total_seconds()))
+    return bm35m
+
+def transfrom_lnm(source, starttime=None, endtime=None, debug=False):
+    """
+    DESCRIPTION
+        creates a 1-min data set, moves columns.
+        Tested no-data issues: nan-values are returned
+    """
+    t1 = datetime.now()
+    lnm = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    #lnm = read(os.path.join(basepath, "LNM_0351_0001_0001_*"))
+    lnm = lnm.get_gaps()
+    if debug:
+        print ("Headers: ", lnm._get_key_names())
+        print ("Samplingrate {} sec and {} data points".format(lnm.samplingrate(), len(lnm)))
+        print ("Range:", lnm.timerange())
+
+    # TEST - no-data (NAN-values returned
+    #col = lnm._get_column('x')
+    #print (len(col))
+    #col = np.asarray([np.nan if 3000 < i < 4000 else el for i,el in enumerate(col)])
+    #lnm = lnm._put_column(col,'x')
+
+    lnmm = lnm.copy()
+    lnmm = lnmm._drop_column('dz')
+    lnmm = lnmm._drop_column('dy')
+    lnmm = lnmm._drop_column('dx')
+    lnmm = lnmm._drop_column('var5')
+    lnmm = lnmm._drop_column('var4')
+    lnmm = lnmm._drop_column('var3')
+    lnmm = lnmm._drop_column('var2')
+    lnmm = lnmm._drop_column('var1')
+    lnmm = lnmm._drop_column('t1')
+    lnmm = lnmm._drop_column('t2')
+    lnmm = lnmm._drop_column('f')
+    lnmm = lnmm._drop_column('z')
+    synop = lnmm._get_column('str1')
+    # Move Synop code to var4
+    syn = []
+    for el in synop:
+        if el in ['','-']:
+            syn.append(np.nan)
+        else:
+            try:
+                syn.append(int(el))
+            except:
+                syn.append(np.nan)
+    lnmm = lnmm._drop_column('str1')
+    lnmm = lnmm._move_column('y','t2')
+    col = lnmm.steadyrise('x', timedelta(minutes=60),sensitivitylevel=0.002)
+    orgcol = np.asarray([1.0 if not np.isnan(el) else np.nan for el in lnmm._get_column('x')])
+    col = col*orgcol
+    lnmm = lnmm._put_column(col,'y')
+    lnmm = lnmm.resample(keys=lnmm._get_key_headers(),period=60)
+    lnmm = lnmm._put_column(np.asarray(syn)[:len(lnmm)],'var4')
+    lnmm = lnmm._drop_column('var5') # resample might create a var5 column with gaps
+    t2 = datetime.now()
+    if debug:
+        print (lnmm.timerange())
+        print (len(lnm),len(syn[:len(lnmm)]), len(lnmm))
+        print (" transform needed {} sec".format((t2-t1).total_seconds()))
+    return lnmm
+
+def transfrom_rcs(source, starttime=None, endtime=None, debug=False):
+    """
+    DESCRIPTION
+        creates a 1-min data set, move columns.
+        Tested maintainance flagging
+    """
+    # Problem with RCS data: data is not equidistant, contains numerous gaps
+    # if get gaps is done, then cumulative rain is wrongly determined because of gaps
+    t1 = datetime.now()
+    #rcst7 = read(os.path.join(basepath, "RCST7*"))
+    rcst7 = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    if debug:
+        print ("Headers: ", rcst7._get_key_names())
+        print ("Samplingrate {} sec and {} data points".format(rcst7.samplingrate(), len(rcst7)))
+        print ("Range:", rcst7.timerange())
+
+    pa = None
+    fl = None
+    #print ("GET THIS INTO FLAGGING")
+    # TEST binary flagging
+    #rcst7 = rcst7.offset({'z' : 1}, starttime="2025-10-12T12:00:00", endtime="2025-10-12T12:30:00")
+    #fl = flagging.flag_binary(rcst7, 'z', flagtype=3, labelid='070', keystoflag=['x','t1'], sensorid=rcst7.header.get("SensorID"),
+    #                      text="Maintainance switch activated", markallon=True)
+    #fl = fl.union(level=1)
+    #print (fl)
+    # TEST JC spike flagging (water data set)
+    if (rcst7.end()-rcst7.start()).total_seconds() < 86400*12: # limit to 12 days
+        medianjc = rcst7.mean('x', meanfunction='median')
+        fl = flagging.flag_range(rcst7, keys=['x'], above=medianjc+30.) # typical range is 2 hours, flag data eceeding the median by 30 cm
+        print ("Got {} outliers".format(len(fl)))
+        pa = fl.create_patch()
+
+    # now determine the gaps and interpolate the rain accumulation data (for testing of accumulation)
+    rcst7 = rcst7.get_gaps()
+    #rcst7 = rcst7.interpolate_nans(keys=['t1'])
+    # then apply the flags
+    if fl and len(fl) > 0:
+        rcst7 = fl.apply_flags(rcst7)
+        # save flags?
+    # calculate cumulative rain before filtering
+    col = rcst7.steadyrise('t1', timedelta(minutes=60),sensitivitylevel=0.002)
+    if debug:
+        p,a = mp.tsplot(rcst7, keys=['x','y','t1','t2'], patch=pa, height=2)
+
+    orgcol = np.asarray([1.0 if not np.isnan(el) else np.nan for el in rcst7._get_column('t1')])
+    col = col*orgcol
+    rcst7 = rcst7._put_column(col,'var5')
+    # filter the data
+    rcst7m = rcst7.filter(filter_width=timedelta(minutes=1),resample_period=60.0)
+    rcst7m = rcst7m._drop_column('f')
+    rcst7m = rcst7m._move_column('y','f')
+    rcst7m = rcst7m._drop_column('z')
+    rcst7m = rcst7m._move_column('x','z')
+    rcst7m = rcst7m._move_column('t1','x')
+    rcst7m = rcst7m._move_column('t2','t1')
+    rcst7m = rcst7m._drop_column('x') # remove the rain accumulation
+    rcst7m = rcst7m._drop_column('var1')
+    rcst7m = rcst7m._drop_column('var2')
+    rcst7m = rcst7m._drop_column('var3')
+    rcst7m = rcst7m._drop_column('var4')
+    rcst7m = rcst7m._move_column('var5','y')
+    t2 = datetime.now()
+    if debug:
+        print (" transform needed {} sec".format((t2-t1).total_seconds()))
+    return rcst7m
+
+
+def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
+    t1 = datetime.now()
+    #meteo = read(os.path.join(basepath, "METEO*"))
+    meteo = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    meteom = meteo.copy()
+    meteom = meteom.get_gaps()
+    meteom = meteom._drop_column('var1')
+    meteom = meteom._drop_column('var2')
+    meteom = meteom._drop_column('var3')
+    meteom = meteom._drop_column('var4')
+    meteom = meteom._drop_column('var5')
+    meteom = meteom._drop_column('x')
+    meteom = meteom._drop_column('y')
+    meteom = meteom._drop_column('t2')
+    col = meteom.steadyrise('dx', timedelta(minutes=60),sensitivitylevel=0.002)
+    orgcol = np.asarray([1.0 if not np.isnan(el) else np.nan for el in meteom._get_column('dx')])
+    col = col*orgcol
+    meteom = meteom._put_column(col,'y')
+    meteom = meteom._drop_column('dx')
+    if (meteom.end()-meteom.start()).total_seconds() < 86400*12: # limit to 12 days
+        medianjc = meteom.mean('z', meanfunction='median')
+        fl = flagging.flag_range(meteom, keys=['z'], above=medianjc+30.) # typical range is 2 hours, flag data eceeding the median by 30 cm
+        print ("Got {} outliers".format(len(fl)))
+        pa = fl.create_patch()
+        if len(fl) > 0:
+            meteom = fl.apply_flags(meteom)
+
+
+    t2 = datetime.now()
+    if debug:
+        p,a = mp.tsplot(meteom, keys=['z'], patch=pa, height=2)
+        print ("Headers: ", meteo._get_key_names())
+        print ("Samplingrate {} sec and {} data points".format(meteo.samplingrate(), len(meteo)))
+        print ("Range:", meteo.timerange())
+        print (" transform needed {} sec".format((t2-t1).total_seconds()))
+    return meteom
+
+# old
 def ExportData(datastream, onlyarchive=False, config={}):
 
     meteofilename = 'meteo-1min_'

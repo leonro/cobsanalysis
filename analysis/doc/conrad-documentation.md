@@ -119,5 +119,8 @@ The METEO RCS data file is an internal program which analyses and averages RCS T
 #### 2.2.1 Outside temperature
 
 The following systems record the outside temperature at a very sinmilar position outside the SGO. METEO and RCST7 should be identical.  The Thiess Ultrasonic anometer records temperature approcimately x m apart (and above). The Thies LNM system also records temperature within 1m distance of the RCS 430_T sensor. As shown in Fig. Y the temperature recordings are different for all these systems. LNM temperature shows a different response when temperature changes. Ultra shows similar variations as 430_T but largest offset with ~0.9°C.
-We choose 430_T as the primary temperature channel. The Ultrasonic Windmeter is used as a secondary temperature source.
+We choose 430_T as the primary temperature channel. The Ultrasonic Windmeter, which has an relatively constant offset of -0.9 deg C, is used as a secondary temperature source.
+This offset is determined by the average difference in the following time windows: (12.09.2024-18.09.2024, xxx). The Ultrasonic sensor is replaced
+
+Figure ![2.2.1](figures/fig_weather_T_variation.png "Temperature response of different sensors"). 
 
