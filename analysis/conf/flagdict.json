@@ -1,0 +1,137 @@
+{
+    "LEMI": {
+        "coverage": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "mode": [
+            "outlier"
+        ],
+        "samplingrate": 1,
+        "min": -59000,
+        "max": 50000,
+        "addflag": true,
+        "threshold": 4,
+        "window": 60,
+        "markall": true
+    },
+    "GP20S3NS_": {
+        "coverage": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z",
+            "dx",
+            "dy",
+            "dz"
+        ],
+        "mode": [
+            "outlier"
+        ],
+        "samplingrate": 1,
+        "min": 47000000,
+        "max": 50000000,
+        "groups": {
+            "GP20S3NSS1_012201_0001": [
+                "f"
+            ],
+            "GP20S3NSS2_012201_0001": [
+                "f"
+            ],
+            "GP20S3NSS3_012201_0001": [
+                "f"
+            ]
+        },
+        "addflag": true,
+        "threshold": 5,
+        "window": 60,
+        "markall": false
+    },
+    "GSM90_14": {
+        "coverage": 7200,
+        "keys": [
+            "f"
+        ],
+        "mode": [
+            "outlier"
+        ],
+        "samplingrate": 1,
+        "min": 47000,
+        "max": 50000,
+        "addflag": true,
+        "threshold": 4,
+        "window": 60,
+        "markall": false
+    },
+    "FGE": {
+        "coverage": 7200,
+        "keys": [
+            "x",
+            "y",
+            "z"
+        ],
+        "mode": [
+            "outlier"
+        ],
+        "samplingrate": 1,
+        "min": 47000,
+        "max": 50000,
+        "addflag": true,
+        "threshold": 4,
+        "window": 60,
+        "markall": true
+    },
+    "BM35": {
+        "coverage": 7200,
+        "keys": [
+            "var3"
+        ],
+        "mode": [
+            "outlier",
+            "range"
+        ],
+        "samplingrate": 1,
+        "min": 750,
+        "max": 1000,
+        "addflag": true,
+        "threshold": 4,
+        "window": 60,
+        "markall": false
+    },
+    "GSM90_3": {
+        "coverage": 7200,
+        "keys": [
+            "f"
+        ],
+        "mode": [
+            "outlier",
+            "range"
+        ],
+        "samplingrate": 3,
+        "min": 47000,
+        "max": 50000,
+        "addflag": true,
+        "threshold": 4,
+        "window": 60,
+        "markall": false
+    },
+    "GSM90_6": {
+        "coverage": 7200,
+        "keys": [
+            "f"
+        ],
+        "mode": [
+            "outlier",
+            "range"
+        ],
+        "samplingrate": 3,
+        "min": 47000,
+        "max": 50000,
+        "addflag": true,
+        "threshold": 4,
+        "window": 60,
+        "markall": false
+    }
+}

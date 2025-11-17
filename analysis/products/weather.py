@@ -35,7 +35,8 @@ import unittest
 from magpy.stream import *
 from magpy.core import plot as mp
 from magpy.core import flagging
-from magpy.core.methods import dictdiff, testtime
+from magpy.core import methods as mama
+from martas.core import methods as mm
 from martas.core import analysis as marana
 
 import numpy as np
@@ -395,7 +396,7 @@ def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=Fa
         print ("Range:", ultra.timerange())
     ultra = ultra.get_gaps()
     ultram = ultra.resample(keys=ultra._get_key_headers(),period=60)
-    if offsets:
+    if offsets and len(ultram) > 0:
         offset = {}
         for offsetid in offsets:
             if offsetid in ultra.header.get("SensorID"):
@@ -410,7 +411,6 @@ def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=Fa
     if debug:
         print (" transform needed {} sec".format((t2-t1).total_seconds()))
     return ultram
-
 
 
 def transfrom_pressure(source, starttime=None, endtime=None, debug=False):
@@ -526,7 +526,7 @@ def transfrom_rcs(source, starttime=None, endtime=None, debug=False):
     #fl = fl.union(level=1)
     #print (fl)
     # TEST JC spike flagging (water data set)
-    if (rcst7.end()-rcst7.start()).total_seconds() < 86400*12: # limit to 12 days
+    if len(rcst7) > 0 and (rcst7.end()-rcst7.start()).total_seconds() < 86400*12: # limit to 12 days
         medianjc, stdvar = rcst7.mean('x', meanfunction='median', std=True)
         fl = flagging.flag_range(rcst7, keys=['x'], above=medianjc+2*stdvar+30.) # typical range is 2 hours, flag data eceeding the median by 30 cm
         print ("Got {} outliers".format(len(fl)))
@@ -587,7 +587,7 @@ def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
     col = col*orgcol
     meteom = meteom._put_column(col,'y')
     meteom = meteom._drop_column('dx')
-    if (meteom.end()-meteom.start()).total_seconds() < 86400*12: # limit to 12 days
+    if len(meteom) > 0 and (meteom.end()-meteom.start()).total_seconds() < 86400*12: # limit to 12 days
         medianjc = meteom.mean('z', meanfunction='median')
         fl = flagging.flag_range(meteom, keys=['z'], above=medianjc+30.) # typical range is 2 hours, flag data eceeding the median by 30 cm
         print ("Got {} outliers".format(len(fl)))
@@ -595,10 +595,8 @@ def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
         if len(fl) > 0:
             meteom = fl.apply_flags(meteom)
 
-
     t2 = datetime.now()
     if debug:
-        p,a = mp.tsplot(meteom, keys=['z'], patch=pa, height=2)
         print ("Headers: ", meteo._get_key_names())
         print ("Samplingrate {} sec and {} data points".format(meteo.samplingrate(), len(meteo)))
         print ("Range:", meteo.timerange())
@@ -608,36 +606,32 @@ def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
 
 def main(argv):
     configpath = ''
-    statusmsg = {}
+    anaconf = ''
     debug=False
     endtime = None
-    weatherstream = DataStream()
-    testplot = False
-    dayrange = 0
-    source = 'database'
-    onlyarchive=False
+    starttime = None
 
     try:
-        opts, args = getopt.getopt(argv,"hc:e:r:aDP",["config=","endtime=","dayrange=","createarchive=","debug=","plot=",])
+        opts, args = getopt.getopt(argv,"hc:e:s:D",["config=","endtime=","starttime=","debug=",])
     except getopt.GetoptError:
-        print ('weather.py -c <config>')
+        print ('weather.py -c <config> -s <starttime> -e <endtime>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print ('-------------------------------------')
             print ('Description:')
-            print ('-- weather_products.py will determine the primary instruments --')
+            print ('-- weather.py will determine the primary instruments --')
             print ('-----------------------------------------------------------------')
             print ('detailed description ..')
             print ('...')
             print ('...')
             print ('-------------------------------------')
             print ('Usage:')
-            print ('python weather_products.py -c <config>')
+            print ('python weather.py -c <config> -s <starttime> -e <endtime>')
             print ('-------------------------------------')
             print ('Options:')
             print ('-c (required) : configuration data path')
-            print ('-s            : starttimetime - default is endtime - 2 days')
+            print ('-s            : starttime - default is endtime - 2 days')
             print ('-e            : endtime - default is now')
             print ('-------------------------------------')
             print ('Application:')
@@ -655,16 +649,27 @@ def main(argv):
         elif opt in ("-D", "--debug"):
             # delete any / at the end of the string
             debug = True
-        elif opt in ("-T", "--unittest"):
-            # delete any / at the end of the string
-            debug = True
 
     # get conf
     # get configuration data
     destinations = {}
+    if not configpath:
+        configpath = "../conf/weather.cfg"
+    if not os.path.exists(configpath):
+        print ('Specify a valid path to configuration information')
+        print ('-- check weather.py -h for more options and requirements')
+        sys.exit()
+    wconf = mm.get_conf(configpath)
+    daystodeal = int(wconf.get("daystodeal",2))
+    if wconf.get("analysisconfig",""):
+        anaconf = mm.get_conf(wconf.get("analysisconfig"))
+    if debug:
+        print ("Weather config:", wconf)
+
     # if analysis is activated then the underlying analysis config is initialized
-    maan = marana.MartasAnalysis()
-    print(maan.config)
+    maan = marana.MartasAnalysis(config=anaconf)
+    if debug:
+        print("General analysis config:", maan.config)
 
     connectdict = maan.config.get('conncetedDB')
     for dbel in connectdict:
@@ -674,35 +679,65 @@ def main(argv):
     # get special weather configuration data
     if not configpath:
         configpath = "analysis/conf/weather.cfg"
-    if not os.path.exists(configpath):
-        print ('Specify a valid path to configuration information')
-        print ('-- check magnetism_products.py -h for more options and requirements')
-        sys.exit()
     wconf = mm.get_conf(configpath)
     if wconf.get('meteoproducts'):
         destinations[wconf.get('meteoproducts')] = {"name": wconf.get('meteofilename'), "dateformat": "%Y%m",
                                                     "coverage": "month", "mode": "replace", "format_type": "PYCDF"}
-
-
     if endtime:
-         try:
-             endtime = testtime(endtime)
-         except:
-             print (" Could not interpret provided endtime. Please Check !")
-             sys.exit(1)
-    else:
-         endtime = datetime.utcnow()
-
+        try:
+            endtime = mama.testtime(endtime)
+        except:
+            print (" Could not interpret provided endtime. Please Check !")
+            sys.exit(1)
+    elif not starttime:
+         endtime = datetime.now(timezone.utc).replace(tzinfo=None)
     if starttime:
-         try:
-             starttime = testtime(starttime)
-         except:
-             print (" Could not interpret provided starttime. Please Check !")
-             sys.exit(1)
+        try:
+            starttime = mama.testtime(starttime)
+        except:
+            print (" Could not interpret provided starttime. Please Check !")
+            sys.exit(1)
+        if not endtime:
+            endtime = starttime+timedelta(days=daystodeal)
     else:
-         starttime = endtime-timedelta(days=2)
+         starttime = endtime-timedelta(days=daystodeal)
 
+    if debug:
+        print ("Start, End", starttime, endtime)
+        print ("Destinations:", destinations)
 
+    ultram = transfrom_ultra("ULTRASONICDSP*",starttime=starttime, endtime=endtime,offsets=wconf,debug=debug)
+    if not len(ultram) > 0:
+        print ("weather: no wind data available")
+    bm35m = transfrom_pressure("BM35*",starttime=starttime, endtime=endtime,debug=debug)
+    if not len(bm35m) > 0:
+        print ("weather: no pressure data available")
+    lnmm = transfrom_lnm("LNM_0351_0001_0001*",starttime=starttime, endtime=endtime,debug=debug)
+    if not len(lnmm) > 0:
+        print ("weather: no disdrometer data available")
+    rcst7m, fl1 = transfrom_rcs("RCS*",starttime=starttime, endtime=endtime,debug=debug)
+    if not len(rcst7m) > 0:
+        print ("weather: no rcs weather data available")
+    meteom, fl2 = transfrom_meteo("METEOT7*",starttime=starttime, endtime=endtime,debug=debug)
+    if not len(meteom) > 0:
+        print ("weather: no rcs meteo data available")
+
+    # return flags and store them as well !!
+    if len(fl1) > 0 and len(fl2) > 0:
+        fl = fl1.join(fl2)
+    elif len(fl1) > 0:
+        fl = fl1
+    else:
+        fl = fl2
+    #maan.update_flags_db(fl, debug=False)
+    result = combine_weather(ultram=ultram, bm35m=bm35m, lnmm=lnmm, rcst7m=rcst7m, meteom=meteom)
+    if not len(result) > 0:
+        print ("weather: no data at all")
+    elif debug:
+        print ("weather:  got {} data points in a combined meteorological data set of 1 min resolution".format(len(result)))
+
+    # export the adjusted data set
+    #success = put_data(result, destinations=destinations, debug=True)
 
 
 if __name__ == "__main__":
