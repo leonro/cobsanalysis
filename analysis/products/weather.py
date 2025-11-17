@@ -715,7 +715,7 @@ def main(argv):
     lnmm = transfrom_lnm("LNM_0351_0001_0001*",starttime=starttime, endtime=endtime,debug=debug)
     if not len(lnmm) > 0:
         print ("weather: no disdrometer data available")
-    rcst7m, fl1 = transfrom_rcs("RCS*",starttime=starttime, endtime=endtime,debug=debug)
+    rcst7m, fl1 = transfrom_rcs("RCST7*",starttime=starttime, endtime=endtime,debug=debug)
     if not len(rcst7m) > 0:
         print ("weather: no rcs weather data available")
     meteom, fl2 = transfrom_meteo("METEOT7*",starttime=starttime, endtime=endtime,debug=debug)
