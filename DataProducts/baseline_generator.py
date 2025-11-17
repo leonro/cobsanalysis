@@ -160,19 +160,22 @@ def ReadDatastream(config={}, endtime=datetime.utcnow(), timerange=5, sensorid=N
     starttime=endtime-timedelta(days=timerange)
     dataid = '{}_{}'.format(sensorid,revision)
     db = config.get('primaryDB')
+    print ("     -> ReadDatastream", starttime, timerange)
 
     if starttime < datetime.utcnow()-timedelta(days=15):
         print (" Reading from archive files ...")
         path = os.path.join(config.get('archivepath'),sensorid,dataid,'*')
-        print (path)
+        print (path, starttime, endtime)
         stream = read(path, starttime=starttime, endtime=endtime)
     else:
         print (" Reading from database ...")
         stream = readDB(db,dataid,starttime=starttime, endtime=endtime)
 
+    print ("DONE")
     fl = db2flaglist(db,stream.header.get('SensorID'),begin=starttime, end=endtime)
     stream = stream.flag(fl)
     stream = stream.remove_flagged()
+    print (".... returning")
 
     return stream
 
@@ -192,22 +195,30 @@ def GetDeltas(config={}, settime=datetime.utcnow(), fieldvector=[0,0,0], debug=F
     print ("   -> read datastream for {}".format(sensorid))
     stream = ReadDatastream(config=config, endtime=endtime, timerange=1, sensorid=sensorid, revision=revision, debug=debug)
 
+    print ("   -> obtained {} data points.".format(stream.length()[0]))
+    print ("      Range:", endtime)
+
     if stream.length()[0] > 0 and db:
+        print ("     -> performing corrections ...")
         stream = DoVarioCorrections(db, stream, variosens=sensorid, starttimedt=endtime-timedelta(days=1))
+        print ("     -> Done")
     #if debug:
     #mp.plot(stream)
     stream = stream.xyz2hdz()
     idx, line =  stream.findtime(settime)
+    print ("HERE")
     Hv = stream.ndarray[1][idx]
     Dv = stream.ndarray[2][idx]
     Zv = stream.ndarray[3][idx]
+    print ("and HERE", fieldvector)
     absvector = IDF2HDZ(fieldvector)
+    print (" and now HERE")
     dH = absvector[0]-Hv
     dD = absvector[1]-Dv
     dZ = absvector[2]-Zv
-    if debug:
-        print ("   -> obtained the following basevalues:")
-        print (dH,dD,dZ)
+    #if debug:
+    print ("   -> obtained the following basevalues:")
+    print (dH,dD,dZ)
     return [dH,dD,dZ]
 
 def CreateOutputStream(config={}, settime=None, fieldvector=[], deltavector=[], observer="Robot", DIFsource="IGRF", debug=False):
@@ -390,6 +401,7 @@ def main(argv):
     if not fieldvector:
         try:
             fieldvector, DIFsource = GetDIF(config=config, settime=settime, offset=offset, realF=realF, debug=debug)  # return [I,D,F]
+            print ("GOT", fieldvector)
             statusmsg[name5] = 'field vector obtained from IGRF model'
         except:
             statusmsg[name5] = 'field vector could not be obtained from IGRF model'
