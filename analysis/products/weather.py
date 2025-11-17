@@ -36,7 +36,7 @@ from magpy.stream import *
 from magpy.core import plot as mp
 from magpy.core import flagging
 from magpy.core.methods import dictdiff, testtime
-from martas.core.analysis.MartasAnalysis import get_data
+from martas.core import analysis as marana
 
 import numpy as np
 import math
@@ -380,12 +380,14 @@ def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=Fa
     """
     DESCRIPTION
         creates a 1-min data set, moves columns and apply offsets
+    VARIABLES
+        offsets : (dict) like {"SensorID" : {"x":2, "y":"-1"}}
     """
     if not offsets:
-        # TODO replace by {}
-        offsets = {'t2':-0.87}
+        offsets = {"ULTRASONICDSP_0001106088_0001" : {'t2':-0.87}}
     t1 = datetime.now()
-    ultra = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    maan = marana.MartasAnalysis()
+    ultra = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     #ultra = get_data(os.path.join(basepath, "ULTRA*"))
     if debug:
         print ("Headers: ", ultra._get_key_names())
@@ -394,9 +396,14 @@ def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=Fa
     ultra = ultra.get_gaps()
     ultram = ultra.resample(keys=ultra._get_key_headers(),period=60)
     if offsets:
-        for offset in offsets:
-            offsets[offset] = float(offsets.get(offset))
-        ultram = ultram.offset(offsets)
+        offset = {}
+        for offsetid in offsets:
+            if offsetid in ultra.header.get("SensorID"):
+                offset = offsets.get(offsetid)
+                for off in offset:
+                    offset[off] = float(offset.get(off))
+        if offset:
+            ultram = ultram.offset(offset)
     ultram = ultram._move_column('t2','f')
     ultram = ultram._drop_column('var5') # resample might create a var5 column with gaps
     t2 = datetime.now()
@@ -405,13 +412,15 @@ def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=Fa
     return ultram
 
 
+
 def transfrom_pressure(source, starttime=None, endtime=None, debug=False):
     """
     DESCRIPTION
         creates a 1-min data set, moves columns
     """
     t1 = datetime.now()
-    bm35 = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    maan = marana.MartasAnalysis()
+    bm35 = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     #bm35 = read(os.path.join(basepath, "Antares", "BM35*"))
     if debug:
         print ("Headers: ", bm35._get_key_names())
@@ -434,7 +443,8 @@ def transfrom_lnm(source, starttime=None, endtime=None, debug=False):
         Tested no-data issues: nan-values are returned
     """
     t1 = datetime.now()
-    lnm = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    maan = marana.MartasAnalysis()
+    lnm = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     #lnm = read(os.path.join(basepath, "LNM_0351_0001_0001_*"))
     lnm = lnm.get_gaps()
     if debug:
@@ -499,7 +509,8 @@ def transfrom_rcs(source, starttime=None, endtime=None, debug=False):
     # if get gaps is done, then cumulative rain is wrongly determined because of gaps
     t1 = datetime.now()
     #rcst7 = read(os.path.join(basepath, "RCST7*"))
-    rcst7 = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    maan = marana.MartasAnalysis()
+    rcst7 = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     if debug:
         print ("Headers: ", rcst7._get_key_names())
         print ("Samplingrate {} sec and {} data points".format(rcst7.samplingrate(), len(rcst7)))
@@ -559,7 +570,8 @@ def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
     fl = flagging.Flags()
     t1 = datetime.now()
     #meteo = read(os.path.join(basepath, "METEO*"))
-    meteo = get_data(source, starttime=starttime, endtime=endtime, debug=debug)
+    maan = marana.MartasAnalysis()
+    meteo = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     meteom = meteo.copy()
     meteom = meteom.get_gaps()
     meteom = meteom._drop_column('var1')
@@ -651,7 +663,7 @@ def main(argv):
     # get configuration data
     destinations = {}
     # if analysis is activated then the underlying analysis config is initialized
-    maan = MartasAnalysis()
+    maan = marana.MartasAnalysis()
     print(maan.config)
 
     connectdict = maan.config.get('conncetedDB')
@@ -670,7 +682,7 @@ def main(argv):
     if wconf.get('meteoproducts'):
         destinations[wconf.get('meteoproducts')] = {"name": wconf.get('meteofilename'), "dateformat": "%Y%m",
                                                     "coverage": "month", "mode": "replace", "format_type": "PYCDF"}
-    ultraoffsets = wconf.get("ULTRASONIC", {})
+
 
     if endtime:
          try:

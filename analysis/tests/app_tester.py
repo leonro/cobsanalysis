@@ -13,15 +13,14 @@ sys.path.insert(1,'/home/leon/Software/magpy/') # should be magpy2
 sys.path.insert(1,'/home/leon/Software/cobsanalysis/') # should be magpy2
 
 import os
-import shutil
-import numpy as np
-from magpy.stream import DataStream, read
-from magpy.core import database
-from magpy.opt import cred as mpcred
-
-from datetime import datetime, timedelta, timezone
 from analysis.products import weather
 
+#import shutil
+#import numpy as np
+#from magpy.stream import DataStream, read
+#from magpy.core import database
+#from magpy.opt import cred as mpcred
+#from datetime import datetime, timedelta, timezone
 
 
 class TestWeather(unittest.TestCase):
@@ -37,31 +36,46 @@ class TestWeather(unittest.TestCase):
       transform_rcs
     """
 
-    def test_transform_datelist(self):
-        ultram = weather.transfrom_ultra(os.path.join(basepath, "ULTRA*", starttime=None, endtime=None, offsets=ultraoffsets),
-                                 debug=True)
-        bm35m = weather.transfrom_pressure(os.path.join(basepath, "BM35*"), starttime=None, endtime=None, debug=True)
-        lnmm = weather.transfrom_lnm(os.path.join(basepath, "LNM_0351_0001_0001_*"), starttime=None, endtime=None, debug=True)
-        rcst7m, fl1 = weather.transfrom_rcs(os.path.join(basepath, "RCS*"), starttime=None, endtime=None, debug=True)
-        meteom, fl2 = weather.transfrom_meteo(os.path.join(basepath, "METEO*"), starttime=None, endtime=None, debug=True)
+    def test_transform_anemometer(self):
+        basepath = "examplefiles/weather"
+        ultraoffsets = {"ULTRASONICDSP_0001106088_0001" : {'t2':'-0.87'}}
+        ultram = weather.transfrom_ultra(os.path.join(basepath, "ULTRA*"), offsets=ultraoffsets, debug=True)
+        self.assertEqual(len(ultram), 1439)
 
-        # return flags and store them as well !!
+    def test_transform_pressure(self):
+        basepath = "examplefiles/weather"
+        bm35m = weather.transfrom_pressure(os.path.join(basepath, "BM35*"), debug=True)
+        self.assertEqual(len(bm35m), 1440)
+
+    def test_transform_laser(self):
+        basepath = "examplefiles/weather"
+        lnmm = weather.transfrom_lnm(os.path.join(basepath, "LNM_0351_0001_0001_*"), debug=True)
+        self.assertEqual(len(lnmm), 1439)
+
+    def test_transform_rcs(self):
+        basepath = "examplefiles/weather"
+        rcst7m, fl1 = weather.transfrom_rcs(os.path.join(basepath, "RCS*"), debug=True)
+        self.assertEqual(len(rcst7m), 1439)
+
+    def test_transform_meteo(self):
+        basepath = "examplefiles/weather"
+        meteom, fl2 = weather.transfrom_meteo(os.path.join(basepath, "METEO*"), debug=True)
+        self.assertEqual(len(meteom), 1440)
+
+    def test_transform_combine(self):
+        basepath = "examplefiles/weather"
+        ultraoffsets = {"ULTRASONICDSP_0001106088_0001" : {'t2':'-0.87'}}
+        ultram = weather.transfrom_ultra(os.path.join(basepath, "ULTRA*"), offsets=ultraoffsets, debug=False)
+        bm35m = weather.transfrom_pressure(os.path.join(basepath, "BM35*"), debug=False)
+        lnmm = weather.transfrom_lnm(os.path.join(basepath, "LNM_0351_0001_0001_*"), debug=False)
+        rcst7m, fl1 = weather.transfrom_rcs(os.path.join(basepath, "RCS*"), debug=False)
+        meteom, fl2 = weather.transfrom_meteo(os.path.join(basepath, "METEO*"), debug=False)
         fl = fl1.join(fl2)
-        result = combine_weather(ultram=ultram, bm35m=bm35m, lnmm=lnmm, rcst7m=rcst7m, meteom=meteom)
+        self.assertEqual(len(fl), 60)
+        result = weather.combine_weather(ultram=ultram, bm35m=bm35m, lnmm=lnmm, rcst7m=rcst7m, meteom=meteom)
 
-        self.assertEqual(len(dl), 10)
+        #self.assertEqual(len(dl), 10)
 
-    #def test_create_data_selectionlist(self):
-    #    dt = archive.create_data_selectionlist(blacklist=None, debug=False)
-    #    self.assertEqual(ar[1],11)
 
-    #def test_get_data_dictionary(self):
-    #    cfg = archive.get_data_dictionary(db,sql,debug=False)
-    #    self.assertEqual(cfg.get("station"),"myhome")
-
-    #def test_get_parameter(self):
-    #    sens = archive.get_parameter(plist, debug=False)
-    #    self.assertEqual(sens,[])
-
-    #def test_validtimerange(self):
-    #    archive.validtimerange(timetuple, mintime, maxtime, debug=False)
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
