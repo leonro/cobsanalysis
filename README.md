@@ -19,21 +19,21 @@ an optimal usage of various different scripts.
 | adjusted.py | products | 2min     | baseline.cfg  | 2.0.0   | martas       | martas-analysis | antares |
 | weather.py  | products |          | weather.cfg   | 2.0.0   | martas       | app_tester      |         |
 | flag.py     | products | 2min     | flagdict.json | 2.0.0   | martas       | martas-analysis | antares |
-| gamma.py    | products |          |               | -       | martas       |                 |         |
+| gamma.py    | products |          | gamma.cfg     | 2.0.0   | martas       |                 |         |
 
 
 
 | Script                       | Location             | Schedule         | Config          | Analysis2.0     | Dependencies | Comments                         |
 |------------------------------|----------------------|------------------|-----------------|-----------------|--------------|----------------------------------|
 | magnetism\_products.py       | DataProducts         | 5min             | wic.cfg         | adjusted        |              | QD missing                       |
-| weather\_products.py         | DataProducts         | hourly           | wic.cfg         | weather.py      |              |                                  |
+| weather\_products.py         | DataProducts         | hourly           | wic.cfg         | weather.py      |              | done - testing                   |
 | ggp\_products.py             | DataProducts         |                  |                 |                 |              | DEVELOP                          |
 | gravity\_products.py         | DataProducts         | hourly           |                 |                 |              |                                  |
-| obsstatus\_products.py       | DataProducts         |                  |                 |                 |              |                                  |
+| obsstatus\_products.py       | DataProducts         |                  |                 |                 |              | ? DEFUNC                         |
 | tilt\_products.py            | DataProducts         |                  |                 |                 |              |                                  |
 | flagdata.py                  | DataProducts         |                  |                 | --              |              | DEFUNC                           |
 | flagging.py                  | DataProducts         | 5min             | wic.cfg         | flag.py         |              | done, upload and archive missing |
-| gamma\_products.py           | DataProducts         | hourly           | wic.cfg         |                 |              |                                  |
+| gamma\_products.py           | DataProducts         | hourly           | wic.cfg         |                 |              | done - testing                   |
 | magnetism\_checkadj.py       | DataProducts         | daily            | wic.cfg         |                 |              |                                  |
 | baseline\_generator.py       | DataProducts         | to daily         | gam.cfg/swz.cfg |                 |              |                                  |
 | convert\_data.py             | DataProducts         | hourly           | wic.cfg         | weather.py?     |              |                                  |

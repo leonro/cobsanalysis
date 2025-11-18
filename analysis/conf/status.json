@@ -1,0 +1,16 @@
+{
+    "Average field X": {
+        "source": "TEST001_1234_0001_0001",
+        "key": "x",
+        "type": "temperature",
+        "group": "tunnel condition",
+        "field": "environment",
+        "location": "gmo",
+        "pierid": "",
+        "range": 30,
+        "mode": "mean",
+        "value_unit": "°C",
+        "warning_high": 10,
+        "critical_high": 20
+    }
+}

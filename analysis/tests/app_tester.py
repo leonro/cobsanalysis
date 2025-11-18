@@ -14,6 +14,7 @@ sys.path.insert(1,'/home/leon/Software/cobsanalysis/') # should be magpy2
 
 import os
 from analysis.products import weather
+from analysis.products import gamma
 
 #import shutil
 #import numpy as np
@@ -73,9 +74,26 @@ class TestWeather(unittest.TestCase):
         fl = fl1.join(fl2)
         self.assertEqual(len(fl), 60)
         result = weather.combine_weather(ultram=ultram, bm35m=bm35m, lnmm=lnmm, rcst7m=rcst7m, meteom=meteom)
+        self.assertEqual(len(result), 1440)
 
-        #self.assertEqual(len(dl), 10)
+class TestGamma(unittest.TestCase):
+    """
+    Test environment for weather.py methods
+      create_old_products_tables
+      create_webservice_table
+    """
 
+    def test_create_old_products_tables(self):
+        config = {}
+        # add paths
+        test = gamma.create_old_products_tables(config=None, statusmsg=None, start=None, end=None, debug=True)
+        #self.assertEqual(len(ultram), 1439)
+
+    def test_create_webservice_table(self):
+        config = {}
+        # add paths
+        test = gamma.create_webservice_table(config=None, statusmsg=None, start=None, end=None, debug=True)
+        #self.assertEqual(len(ultram), 1439)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
