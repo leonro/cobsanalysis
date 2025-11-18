@@ -1,87 +1,69 @@
-
+import json
 #!/usr/bin/env python
-"""
-DESCRIPTION
-   Analyses weather data
 
-PREREQUISITES
-   The following packegas are required:
-      geomagpy >= 0.9.8
-      martas.martaslog
-      martas.acquisitionsupport
-      analysismethods
-
-PARAMETERS
-    -c configurationfile   :   file    :  too be read from GetConf2 (martas)
-    -e endtime             :   date    :  date until analysis is performed
-                                          default "datetime.utcnow()"
-
-APPLICATION
-    PERMANENTLY with cron:
-        python weather_products.py -c /etc/marcos/analysis.cfg
-    REDO analysis for a time range:
-        (startime is defined by endtime - daystodeal as given in the config file
-        python weather_products.py -c /etc/marcos/analysis.cfg -e 2020-11-22
-    RECREATE archive files:
-        python3 weather_products.py -c ~/CONF/wic.cfg -e 2020-05-18 -r 20 -a
-
-"""
 import sys
 sys.path.insert(1,'/home/leon/Software/magpy/') # should be magpy2
 sys.path.insert(1,'/home/leon/Software/MARTAS/') # should be magpy2
 
-import unittest
-
+# MagPy - requires >= 2.0.0
 from magpy.stream import *
-from magpy.core import plot as mp
 from magpy.core import flagging
 from magpy.core import methods as mama
+# MARTAS - requires >= 2.0b9
+from martas.core.methods import martaslog as ml
 from martas.core import methods as mm
 from martas.core import analysis as marana
 
 import numpy as np
-import math
-import copy
-import json
+#import math
+#import copy
+#import json
 import os
 import getopt
 import glob
 
 
 """
-Sensors which are used to create the weather data products
-- Disdrometer (Rain, T, Synop, Rainanalysis)
-- RCS collection (T, rh, rain nbucket)
-- METEO (RCS analysis by Andreas Winkelbauer)
-- BM35 (pressure, T)
-- Ultra-Anemometer (windspeed, winddirection, T)
+DESCRIPTION
+   Combining weather data from various different sensors into a single adjusted product.
+   This method uses the following SensorIDs from the Conrad Observatory. Adiitional sensors
+   require a modification of the code and addition of transform functions.
+   - ULTRASONICDSP* : Thiess Ultrasonic-DSP-Anemometer (windspeed, winddirection, T)
+   - BM35* : Meteolab BM035 (pressure, T)
+   - LNM* : Thiess Disdrometer (Rain, T, Synop, Rainanalysis)
+   - RCST7* : remote-control-system, COBS specific, (T, rh, rain nbucket, snowheight)
+   - METEOT7* : (RCS analysis by Andreas Winkelbauer)
+   Depending on availability the job identifies existing data in a MARCOS database, and, if not found,
+   afterwards in a MARCOS archive structure. Paths and offsets need to be defined in a configuration
+   file "weather.cfg".
+   requires: Python >= 3.7
 
-# Approach - separate the jobs (ANALYSIS 1.0):
-- SEPARATE: each sensor is flagged by martas.analysis job - TODO test the best flagging options (schedule ... every 5min?)
-- Read each data source (DB table or archive file if timerange older than 1 week), filter to 1min and transform the data set to the
-  meteo product stream structure, apply offsets and calculate specific contents (i.e. average rain)
-- the order of inputs defines the significance (previous content might be replaced by new content
-- eventually perform a similarity analysis of multiply sampled parameters and decide which one to choose, report in log and message
-- save the new data structure 
-- SEPARATE: create plots
-- SEPARATE: create messages(logs pointing to strong variations, create messages for sognoficant events (strong rain, large pressure drop)
-
-  # weather.py requires a configuration defining data sources and destinations, offsets, primary definitions deviating from order
-     
-Methods:
+METHODS
 
 | class  |  method                 |  version |  tested  |              comment             | manual | *used by   |
 | ------ |  ---------------------- |  ------- |  ------- |  ------------------------------- | ------ | ---------- |
-|        |                         |          |          |                                  |        |            |
-|        |  combine_weather        |  2.0.0   |          |                                  | -      |            |
-|        |  pressure_to_sea_level  |  2.0.0   |          |                                  | -      |            |
-|        |  snow_or_nosnow         |  2.0.0   |          |                                  | -      |            |
-|        |  transform_ultra        |  2.0.0   |          |                                  | -      |            |
-|        |  transform_pressure     |  2.0.0   |          |                                  | -      |            |
-|        |  transform_lnm          |  2.0.0   |          |                                  | -      |            |
-|        |  transform_meteo        |  2.0.0   |          |                                  | -      |            |
-|        |  transform_rcs          |  2.0.0   |          |                                  | -      |            |
+|        |  combine_weather        |  2.0.0   | app_test |                                  | -      |            |
+|        |  pressure_to_sea_level  |  2.0.0   | app_test |                                  | -      |            |
+|        |  snow_or_nosnow         |  2.0.0   | app_test |                                  | -      |            |
+|        |  transform_ultra        |  2.0.0   | app_test |                                  | -      |            |
+|        |  transform_pressure     |  2.0.0   | app_test |                                  | -      |            |
+|        |  transform_lnm          |  2.0.0   | app_test |                                  | -      |            |
+|        |  transform_meteo        |  2.0.0   | app_test |                                  | -      |            |
+|        |  transform_rcs          |  2.0.0   | app_test |                                  | -      |            |
 
+PARAMETERS
+    -c configurationfile   :   path    :  
+    -s starttime           :   date    :  starttime, default is endtime - 2 days
+    -e endtime             :   date    :  date, default is now (utc)
+
+RETURNS
+    Saves a data product with SensorID "METEO_adjusted_0001" in 1-min resolution.
+
+APPLICATION
+    Realtime analysis with cron:
+        python weather.py -c ~/CONF/weather.cfg
+    Analysis of a given time range:
+        python weather.py -c ~/CONF/weather.cfg -s 2020-11-11 -e 2020-11-22
 
 """
 
@@ -261,7 +243,8 @@ def combine_weather(ultram=DataStream(), bm35m=DataStream(), lnmm=DataStream(), 
     # 3.) get flags and relate them to METEO_adjusted
 
     # 4.) Determine possible snow cover on road
-    result = snow_or_nosnow(result)
+    if len(main._get_column('f')) > 0 and len(main._get_column('z')) > 0 and len(main._get_column('var4')) > 0:
+        result = snow_or_nosnow(result)
 
     return result
 
@@ -377,17 +360,19 @@ def snow_or_nosnow(meteo,config=None, debug=False):
     return meteo
 
 
-def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=False):
+def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, config=None, debug=False):
     """
     DESCRIPTION
         creates a 1-min data set, moves columns and apply offsets
     VARIABLES
         offsets : (dict) like {"SensorID" : {"x":2, "y":"-1"}}
     """
+    if not config:
+        config = {}
     if not offsets:
         offsets = {"ULTRASONICDSP_0001106088_0001" : {'t2':-0.87}}
     t1 = datetime.now()
-    maan = marana.MartasAnalysis()
+    maan = marana.MartasAnalysis(config=config.get('anaconf',{}))
     ultra = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     #ultra = get_data(os.path.join(basepath, "ULTRA*"))
     if debug:
@@ -413,13 +398,15 @@ def transfrom_ultra(source, starttime=None, endtime=None, offsets=None, debug=Fa
     return ultram
 
 
-def transfrom_pressure(source, starttime=None, endtime=None, debug=False):
+def transfrom_pressure(source, starttime=None, endtime=None, config=None, debug=False):
     """
     DESCRIPTION
         creates a 1-min data set, moves columns
     """
+    if not config:
+        config = {}
     t1 = datetime.now()
-    maan = marana.MartasAnalysis()
+    maan = marana.MartasAnalysis(config=config.get('anaconf',{}))
     bm35 = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     #bm35 = read(os.path.join(basepath, "Antares", "BM35*"))
     if debug:
@@ -436,14 +423,16 @@ def transfrom_pressure(source, starttime=None, endtime=None, debug=False):
     return bm35m
 
 
-def transfrom_lnm(source, starttime=None, endtime=None, debug=False):
+def transfrom_lnm(source, starttime=None, endtime=None, config=None, debug=False):
     """
     DESCRIPTION
         creates a 1-min data set, moves columns.
         Tested no-data issues: nan-values are returned
     """
+    if not config:
+        config = {}
     t1 = datetime.now()
-    maan = marana.MartasAnalysis()
+    maan = marana.MartasAnalysis(config=config.get('anaconf',{}))
     lnm = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     #lnm = read(os.path.join(basepath, "LNM_0351_0001_0001_*"))
     lnm = lnm.get_gaps()
@@ -499,7 +488,7 @@ def transfrom_lnm(source, starttime=None, endtime=None, debug=False):
     return lnmm
 
 
-def transfrom_rcs(source, starttime=None, endtime=None, debug=False):
+def transfrom_rcs(source, starttime=None, endtime=None, config=None, debug=False):
     """
     DESCRIPTION
         creates a 1-min data set, move columns.
@@ -507,9 +496,11 @@ def transfrom_rcs(source, starttime=None, endtime=None, debug=False):
     """
     # Problem with RCS data: data is not equidistant, contains numerous gaps
     # if get gaps is done, then cumulative rain is wrongly determined because of gaps
+    if not config:
+        config = {}
     t1 = datetime.now()
     #rcst7 = read(os.path.join(basepath, "RCST7*"))
-    maan = marana.MartasAnalysis()
+    maan = marana.MartasAnalysis(config=config.get('anaconf',{}))
     rcst7 = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     if debug:
         print ("Headers: ", rcst7._get_key_names())
@@ -566,11 +557,13 @@ def transfrom_rcs(source, starttime=None, endtime=None, debug=False):
     return rcst7m, fl
 
 
-def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
+def transfrom_meteo(source, starttime=None, endtime=None, config=None, debug=False):
+    if not config:
+        config = {}
     fl = flagging.Flags()
     t1 = datetime.now()
     #meteo = read(os.path.join(basepath, "METEO*"))
-    maan = marana.MartasAnalysis()
+    maan = marana.MartasAnalysis(config=config.get('anaconf',{}))
     meteo = maan.get_marcos_data(source, starttime=starttime, endtime=endtime, debug=debug)
     meteom = meteo.copy()
     meteom = meteom.get_gaps()
@@ -606,10 +599,15 @@ def transfrom_meteo(source, starttime=None, endtime=None, debug=False):
 
 def main(argv):
     configpath = ''
-    anaconf = ''
+    logpath = ''
     debug=False
     endtime = None
     starttime = None
+    receiver = None
+    receiverconf = None
+    notify = True # will be set to False if starttime and endtime is selected.
+    proxies = {}
+    statusmsg = {}
 
     try:
         opts, args = getopt.getopt(argv,"hc:e:s:D",["config=","endtime=","starttime=","debug=",])
@@ -622,9 +620,19 @@ def main(argv):
             print ('Description:')
             print ('-- weather.py will determine the primary instruments --')
             print ('-----------------------------------------------------------------')
-            print ('detailed description ..')
-            print ('...')
-            print ('...')
+            print ('Combining weather data from various different sensors into a single adjusted product.')
+            print ('This method uses the following SensorIDs from the Conrad Observatory. Adiitional sensors')
+            print ('require a modification of the code and addition of transform functions.')
+            print ('- ULTRASONICDSP* : Thiess Ultrasonic-DSP-Anemometer (windspeed, winddirection, T)')
+            print ('- BM35* : Meteolab BM035 (pressure, T)')
+            print ('- LNM* : Thiess Disdrometer (Rain, T, Synop, Rainanalysis)')
+            print ('- RCST7* : remote-control-system, COBS specific, (T, rh, rain nbucket, snowheight)')
+            print ('- METEOT7* : (RCS analysis by Andreas Winkelbauer)')
+            print ('Depending on availability the job identifies existing data in a MARCOS database, and, if not found,')
+            print ('afterwards in a MARCOS archive structure. Paths and offsets need to be defined in a configuration')
+            print ('file "weather.cfg".')
+            print ('weather.cfg will hold a link to the general analysis configuration with MARCOS structure and ')
+            print ('notification.')
             print ('-------------------------------------')
             print ('Usage:')
             print ('python weather.py -c <config> -s <starttime> -e <endtime>')
@@ -635,7 +643,8 @@ def main(argv):
             print ('-e            : endtime - default is now')
             print ('-------------------------------------')
             print ('Application:')
-            print ('python weather.py -c /etc/marcos/analysis.cfg')
+            print ('python weather.py -c ~/.analysis/conf/analysis.cfg')
+            print ('python weather.py -c ~/CONF/weather.cfg -s 2020-11-11 -e 2020-11-22')
             sys.exit()
         elif opt in ("-c", "--config"):
             # delete any / at the end of the string
@@ -650,7 +659,7 @@ def main(argv):
             # delete any / at the end of the string
             debug = True
 
-    # get conf
+    t1 = datetime.now()
     # get configuration data
     destinations = {}
     if not configpath:
@@ -661,13 +670,20 @@ def main(argv):
         sys.exit()
     wconf = mm.get_conf(configpath)
     daystodeal = int(wconf.get("daystodeal",2))
-    if wconf.get("analysisconfig",""):
-        anaconf = mm.get_conf(wconf.get("analysisconfig"))
+    if wconf:
+        # get notification data frm the general analysis-configuration
+        logpath = wconf.get('logpath','') # logpath is used in most configfiles
+        receiver = wconf.get('notification')
+        receiverconf = wconf.get('notificationconf')
+        if wconf.get('https'):
+            proxies['https'] = wconf.get('https')
+        if wconf.get('http'):
+            proxies['http'] = wconf.get('http')
     if debug:
         print ("Weather config:", wconf)
 
     # if analysis is activated then the underlying analysis config is initialized
-    maan = marana.MartasAnalysis(config=anaconf)
+    maan = marana.MartasAnalysis(config=wconf)
     if debug:
         print("General analysis config:", maan.config)
 
@@ -677,13 +693,11 @@ def main(argv):
     # destinations['cobsdb'] = {"name" : "METEOSGO_adjusted_0001_0001"}
 
     # get special weather configuration data
-    if not configpath:
-        configpath = "analysis/conf/weather.cfg"
-    wconf = mm.get_conf(configpath)
     if wconf.get('meteoproducts'):
         destinations[wconf.get('meteoproducts')] = {"name": wconf.get('meteofilename'), "dateformat": "%Y%m",
                                                     "coverage": "month", "mode": "replace", "format_type": "PYCDF"}
     if endtime:
+        notify = False
         try:
             endtime = mama.testtime(endtime)
         except:
@@ -692,6 +706,7 @@ def main(argv):
     elif not starttime:
          endtime = datetime.now(timezone.utc).replace(tzinfo=None)
     if starttime:
+        notify = False
         try:
             starttime = mama.testtime(starttime)
         except:
@@ -705,22 +720,30 @@ def main(argv):
     if debug:
         print ("Start, End", starttime, endtime)
         print ("Destinations:", destinations)
+    statusdict = {"WIND" : "OK", "PRESSURE" : "OK", "SYNOP" : "OK", "RCST7" : "OK", "METEOT7" : "OK", "RESULT" : "OK"}
+    # try and except not necessary: if the job fails completely then no METEO_adjusted is created, which is observed
+    # by DB monitoring
 
-    ultram = transfrom_ultra("ULTRASONICDSP*",starttime=starttime, endtime=endtime,offsets=wconf,debug=debug)
+    ultram = transfrom_ultra("ULTRASONICDSP*",starttime=starttime, endtime=endtime,offsets=wconf,config=wconf,debug=debug)
     if not len(ultram) > 0:
         print ("weather: no wind data available")
-    bm35m = transfrom_pressure("BM35*",starttime=starttime, endtime=endtime,debug=debug)
+        statusdict["WIND"] = "FAILED"
+    bm35m = transfrom_pressure("BM35*",starttime=starttime, endtime=endtime,config=wconf,debug=debug)
     if not len(bm35m) > 0:
         print ("weather: no pressure data available")
-    lnmm = transfrom_lnm("LNM_0351_0001_0001*",starttime=starttime, endtime=endtime,debug=debug)
+        statusdict["PRESSURE"] = "FAILED"
+    lnmm = transfrom_lnm("LNM_0351_0001_0001*",starttime=starttime, endtime=endtime,config=wconf,debug=debug)
     if not len(lnmm) > 0:
         print ("weather: no disdrometer data available")
-    rcst7m, fl1 = transfrom_rcs("RCST7*",starttime=starttime, endtime=endtime,debug=debug)
+        statusdict["SYNOP"] = "FAILED"
+    rcst7m, fl1 = transfrom_rcs("RCST7*",starttime=starttime, endtime=endtime,config=wconf,debug=debug)
     if not len(rcst7m) > 0:
         print ("weather: no rcs weather data available")
-    meteom, fl2 = transfrom_meteo("METEOT7*",starttime=starttime, endtime=endtime,debug=debug)
+        statusdict["RCST7"] = "FAILED"
+    meteom, fl2 = transfrom_meteo("METEOT7*",starttime=starttime, endtime=endtime,config=wconf,debug=debug)
     if not len(meteom) > 0:
         print ("weather: no rcs meteo data available")
+        statusdict["METEOT7"] = "FAILED"
 
     # return flags and store them as well !!
     if len(fl1) > 0 and len(fl2) > 0:
@@ -733,12 +756,28 @@ def main(argv):
     result = combine_weather(ultram=ultram, bm35m=bm35m, lnmm=lnmm, rcst7m=rcst7m, meteom=meteom)
     if not len(result) > 0:
         print ("weather: no data at all")
+        statusdict["RESULT"] = "FAILED"
     elif debug:
         print ("weather:  got {} data points in a combined meteorological data set of 1 min resolution".format(len(result)))
+    else:
+        pass
+        # export the adjusted data set
+        #success = put_data(result, destinations=destinations, debug=True)
 
-    # export the adjusted data set
-    #success = put_data(result, destinations=destinations, debug=True)
-
+    statusmsg["weather"] = json.dumps(statusdict)
+    # create a statusmessage with len(result) > 0 and contents (ultra=True etc)
+    if debug:
+        print(statusmsg)
+    elif receiver and receiverconf and notify:
+        # will only run if automatic scheduled analysis without give start- or endtime is performed
+        martaslog = ml(logfile=logpath, receiver=receiver, proxies=proxies)
+        if receiver == 'email':
+            martaslog.email['config'] = receiverconf
+        elif receiver == 'telegram':
+            martaslog.telegram['config'] = receiverconf
+    t2 = datetime.now()
+    if debug:
+        print ("weather.py : the job needed {} seconds".format((t2-t1).total_seconds()))
 
 if __name__ == "__main__":
    main(sys.argv[1:])

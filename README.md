@@ -2,57 +2,78 @@
 
 ## 1. Introduction
 
-The following README contains an overview about all analysis scripts used at the Conrad Observatory. A short description of each script is accompanied by dependencies and some typical schedules of the respective application. A detailed description of how the analysis scripts interact with MARTAS and MARCOS machines at the Conrad Observatory, and how different script are used for consecutive automatic data analysis is to be found in the README.md document of the MarcosScripts repository. While this "ANALYSIS" repository contains detailed descriptions and application examples of individual scripts, the "Marcos" repository README will focus on application examples for testing and production based an optimal usage of various different scripts. 
+The following README contains an overview about all analysis scripts used at the Conrad Observatory. A short description
+of each script is accompanied by dependencies and some typical schedules of the respective application. A detailed 
+description of how the analysis scripts interact with MARTAS and MARCOS machines at the Conrad Observatory, and how 
+different script are used for consecutive automatic data analysis is to be found in the README.md document of the 
+MarcosScripts repository. While this "ANALYSIS" repository contains detailed descriptions and application examples of 
+individual scripts, the "Marcos" repository README will focus on application examples for testing and production based
+an optimal usage of various different scripts. 
 
 
 ## 2. Overview
 
 
-| Script        | Location | Schedule         | Config        | Version | Dependencies | Tested          |
-|---------------|----------|------------------|---------------|---------|--------------|-----------------|
-| adjusted.py   | products | 5min             | baseline.cfg  | 2.0.0   | martas       | martas-analysis |
-| weather.py    | products | hourly           | weather.cfg   | 2.0.0   | martas       | app_tester      |
-| flag.py       | products | 5min             | flagdict.json | 2.0.0   | martas       | martas-analysis |
+| Script      | Location | Schedule | Config        | Version | Dependencies | Tested          | Active  |
+|-------------|----------|----------|---------------|---------|--------------|-----------------|---------|
+| adjusted.py | products | 2min     | baseline.cfg  | 2.0.0   | martas       | martas-analysis | antares |
+| weather.py  | products |          | weather.cfg   | 2.0.0   | martas       | app_tester      |         |
+| flag.py     | products | 2min     | flagdict.json | 2.0.0   | martas       | martas-analysis | antares |
+| gamma.py    | products |          |               | -       | martas       |                 |         |
 
 
 
-| Script                      | Location        | Schedule         | Config          | Analysis2.0     | Dependencies | Comments          |
-|-----------------------------| --------------- |------------------|-----------------|-----------------|--------------|-------------------|
-| magnetism\_products.py      | DataProducts    | 5min             | wic.cfg         | adjusted        |              | QD missing        |
-| weather\_products.py        | DataProducts    | hourly           | wic.cfg         | weather.py      |              |                   |
-| getprimary.py               | DataProducts    | 5min             | wic.cfg         | --              | martas.core  | done              |
-| ggp\_products.py            | DataProducts    |                  |                 |                 |              | DEVELOP           |
-| gravity\_products.py        | DataProducts    | hourly           |                 |                 |              |                   |
-| obsstatus\_products.py      | DataProducts    |                  |                 |                 |              |                   |
-| tilt\_products.py           | DataProducts    |                  |                 |                 |              |                   |
-| flagdata.py                 | DataProducts    |                  |                 | --              |              | DEFUNC            |
-| flagging.py                 | DataProducts    | 5min             | wic.cfg         | flag.py         |              | done              |
-| gamma\_products.py          | DataProducts    | hourly           | wic.cfg         |                 |              |                   |
-| magnetism\_checkadj.py      | DataProducts    | daily            | wic.cfg         |                 |              |                   |
-| baseline\_generator.py      | DataProducts    | to daily         | gam.cfg/swz.cfg |                 |              |                   |
-| convert\_data.py            | DataProducts    | hourly           | wic.cfg         | weather.py?     |              |                   |
-| create\_meteo\_files.py     | DataProducts    | daily            |                 | weather.py?     |              |                   |
-| tg\_pha.py                  | Info            | analysis_20min   |                 | MARTAS telegram |              |                   |
-| tg\_kval.py                 | Info            | 5min             |                 | MARTAS telegram |              |                   |
-| tg\_quake.py                | Info            | analysis_20min   |                 | MARTAS telegram |              |                   |
-| tg\_base.py                 | Info            | weekly           | wic.cfg         | MARTAS telegram |              | py3               |
-| logfiledate.py              | Info            | weekly           | wic.cfg         | MARTAS telegram |              | py2 ... py3       |
-| quakes\_import.py           | DataImport      |                  | wic.cfg         | MARTAS telegram |              | py3               |
-| dscovr\_download\_broker.py | DataImport      |                  | -               | Logfile monitor |              | running on broker |
-| gfzkp\_download\_broker.py  | DataImport      |                  | -               | Logfile monitor |              | running on broker |
-| ace\_conversion.py          | DataImport      |                  |                 | MARTAS telegram |              |                   |
-| wbvimport.py                | DataImport      |                  |                 | MARTAS telegram | pandas, xlrd | py3               |
-| mag\_graph.py               | TitleGraphs     | analysis_20min   |                 | MARTAS telegram |              |                   |
-| weather\_graph.py           | TitleGraphs     | analysis_20min   |                 | MARTAS telegram |              |                   |
-| general\_graph.py           | PeriodicGraphs  | analysis_hourly  |                 | MARTAS telegram |              | py2 and py3       |
-| tilt\_graph.py              | PeriodicGraphs  | analysis_hourly  |                 | MARTAS telegram |              |                   |
-| supergrad\_graph.py         | PeriodicGraphs  | analysis_hourly  |                 | MARTAS telegram |              |                   |
-| gamma\_graph.py             | PeriodicGraphs  | analysis_hourly  |                 | MARTAS telegram |              |                   |
-| spaceweather\_graph.p       | PeriodicGraphs  | analysis_hourly  |                 | MARTAS telegram |              |                   |
-| current\_weatherchanges.py  | PeriodicGraphs  | analysis_hourly  |                 | MARTAS telegram |              |                   |
-| gamma.py                    | Projects/gamma/ | analysis_daily   |                 | MARTAS telegram |              |                   |
-| iono\_analysis.py           | Projects/ionit  | analysis_monthly |                 | MARTAS telegram |              |                   |
-| GeoelekTimeSeries.py        | Projects/geoelectric/wenner\_sgo/ | analysis_monthly |                 | MARTAS telegram |              |                   |
+| Script                       | Location             | Schedule         | Config          | Analysis2.0     | Dependencies | Comments                         |
+|------------------------------|----------------------|------------------|-----------------|-----------------|--------------|----------------------------------|
+| magnetism\_products.py       | DataProducts         | 5min             | wic.cfg         | adjusted        |              | QD missing                       |
+| weather\_products.py         | DataProducts         | hourly           | wic.cfg         | weather.py      |              |                                  |
+| ggp\_products.py             | DataProducts         |                  |                 |                 |              | DEVELOP                          |
+| gravity\_products.py         | DataProducts         | hourly           |                 |                 |              |                                  |
+| obsstatus\_products.py       | DataProducts         |                  |                 |                 |              |                                  |
+| tilt\_products.py            | DataProducts         |                  |                 |                 |              |                                  |
+| flagdata.py                  | DataProducts         |                  |                 | --              |              | DEFUNC                           |
+| flagging.py                  | DataProducts         | 5min             | wic.cfg         | flag.py         |              | done, upload and archive missing |
+| gamma\_products.py           | DataProducts         | hourly           | wic.cfg         |                 |              |                                  |
+| magnetism\_checkadj.py       | DataProducts         | daily            | wic.cfg         |                 |              |                                  |
+| baseline\_generator.py       | DataProducts         | to daily         | gam.cfg/swz.cfg |                 |              |                                  |
+| convert\_data.py             | DataProducts         | hourly           | wic.cfg         | weather.py?     |              |                                  |
+| create\_meteo\_files.py      | DataProducts         | daily            |                 | weather.py?     |              |                                  |
+| tg\_pha.py                   | Info                 | analysis_20min   |                 | MARTAS telegram |              |                                  |
+| tg\_kval.py                  | Info                 | 5min             |                 | MARTAS telegram |              |                                  |
+| tg\_quake.py                 | Info                 | analysis_20min   |                 | MARTAS telegram |              |                                  |
+| tg\_base.py                  | Info                 | weekly           | wic.cfg         | MARTAS telegram |              |                                  |
+| logfiledate.py               | Info                 | weekly           | wic.cfg         | MARTAS telegram |              |                                  |
+| cme_extractor.py             | Info                 |                  |                 | MARTAS telegram |              |                                  |
+| gic_extractor.py             | Info                 |                  |                 | MARTAS telegram |              |                                  |
+| iGrav_log.py                 | Info                 |                  |                 | MARTAS telegram |              |                                  |
+| status_extractor.py          | Info                 |                  |                 | MARTAS telegram |              |                                  |
+| sw_extractor.py              | Info                 |                  |                 | MARTAS telegram |              |                                  |
+| quakes\_import.py            | DataImport           |                  | wic.cfg         | MARTAS telegram |              |                                  |
+| dscovr\_download\_broker.py  | DataImport           |                  | -               | Logfile monitor |              | running on broker                |
+| gfzkp\_download\_broker.py   | DataImport           |                  | -               | Logfile monitor |              | running on broker                |
+| ace\_conversion.py           | DataImport           |                  |                 | MARTAS telegram |              |                                  |
+| wbvimport.py                 | DataImport           |                  |                 | MARTAS telegram | pandas, xlrd | py3                              |
+| dst\_download\_broker.py     | DataImport           |                  |                 | MARTAS telegram |              |                                  |
+| goes\_download\_broker.py    | DataImport           |                  |                 | MARTAS telegram |              |                                  |
+| predstorm\_download\_broker.py | DataImport           |                  |                 | MARTAS telegram |              |                                  |
+| rcs\_extractor.py            | DataImport           |                  |                 | MARTAS telegram |              |                                  |
+| mag\_graph.py                | TitleGraphs          | analysis_20min   |                 | MARTAS telegram |              |                                  |
+| weather\_graph.py            | TitleGraphs          | analysis_20min   |                 | MARTAS telegram |              |                                  |
+| general\_graph.py            | PeriodicGraphs       | analysis_hourly  |                 | MARTAS telegram |              |                                  |
+| graviry\_graph.py            | PeriodicGraphs       | analysis_hourly  |                 | MARTAS telegram |              |                                  |
+| current\_weatherchanges.py   | PeriodicGraphs       | analysis_hourly  |                 | MARTAS telegram |              |                                  |
+| windrose\_graph.py           | PeriodicGraphs       |                  |                 | MARTAS telegram |              |                                  |
+| stormdetector\_graph.py      | PeriodicGraphs       |                  |                 | MARTAS telegram |              |                                  |
+| sparklingscience\_graph.py   | PeriodicGraphs       |                  |                 | MARTAS telegram |              |                                  |
+| skeleton\_graph.py           | PeriodicGraphs       |                  |                 | MARTAS telegram |              |                                  |
+| OMEGA.DAT                    | PeriodicGraphs       |                  |                 | MARTAS telegram |              |                                  |
+| induction\_graph.py          | PeriodicGraphs       |                  |                 | MARTAS telegram |              |                                  |
+| --------------------------   | Projects             |                  |                 |                 |              |                                  |
+| gamma.py                     | Projects/gamma       | analysis_daily   |                 | MARTAS telegram |              |                                  |
+| iono\_analysis.py            | Projects/ionit       | analysis_monthly |                 | MARTAS telegram |              |                                  |
+| GeoelekTimeSeries.py         | Projects/geoelectric | analysis_monthly |                 | MARTAS telegram |              |                                  |
+| --------------------------   | Transfered to 2.0    |                  |                 |                 |              |                                  |
+| getprimary.py                | DataProducts         | 5min             | wic.cfg         | --              | martas.core  | done                             |
 
 
 >bash /home/cobs/ANALYSIS/DataProducts/GIC/cleanup_tempfiles.sh
